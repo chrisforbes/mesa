@@ -289,6 +289,21 @@ _mesa_CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 extern void GLAPIENTRY
 _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
 
+extern void GLAPIENTRY
+_mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
+		GLint internalformat, GLsizei width, GLsizei height,
+		GLboolean fixedsamplelocations);
+
+extern void GLAPIENTRY
+_mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
+		GLint internalformat, GLsizei width, GLsizei height,
+		GLsizei depth, GLboolean fixedsamplelocations);
+
+extern void GLAPIENTRY
+_mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val);
+
+extern void GLAPIENTRY
+_mesa_SampleMaski(GLuint index, GLbitfield mask);
 
 /*@}*/
 
