@@ -3941,3 +3941,23 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
    }
    _mesa_unlock_texture(ctx, texObj);
 }
+
+/** GL_ARB_texture_multisample */
+
+void GLAPIENTRY
+_mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
+      GLint internalformat, GLsizei width, GLsizei height,
+      GLboolean fixedsamplelocations)
+{
+   assert(!"Not implemented");
+   /* allocate a single 2d multisample texture */
+}
+
+void GLAPIENTRY
+_mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
+		GLint internalformat, GLsizei width, GLsizei height,
+		GLsizei depth, GLboolean fixedsamplelocations)
+{
+   assert(!"Not implemented");
+   /* allocate an array of 2d multisample textures */
+}
