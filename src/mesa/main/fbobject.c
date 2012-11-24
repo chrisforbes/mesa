@@ -2217,6 +2217,11 @@ _mesa_FramebufferTexture2D(GLenum target, GLenum attachment,
          error = (_mesa_is_gles(ctx) && ctx->Version < 30)
             || !ctx->Extensions.EXT_texture_array;
          break;
+      case GL_TEXTURE_2D_MULTISAMPLE:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+         error = _mesa_is_gles(ctx)
+            || !ctx->Extensions.ARB_texture_multisample;
+         break;
       default:
          error = GL_TRUE;
       }
