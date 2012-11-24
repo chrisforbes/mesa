@@ -3991,20 +3991,123 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
 
 /** GL_ARB_texture_multisample */
 
+static void
+teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
+      GLint internalformat, GLsizei width, GLsizei height, GLsizei depth,
+      GLboolean fixedsamplelocations)
+{
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLboolean sizeOK, dimensionsOK;
+   gl_format texFormat;
+   GLint baseformat;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!(ctx->Extensions.ARB_texture_multisample
+      && _mesa_is_desktop_gl(ctx))) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexImage%uDMultisample", dims);
+      return;
+   }
+
+   if ((dims == 2 && target != GL_TEXTURE_2D_MULTISAMPLE) ||
+         (dims == 3 && target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage%uDMultisample(target)", dims);
+      return;
+   }
+
+   /* TODO validate sample count */
+   /* should just ask the driver once IDR's internalformat_query bits land */
+
+   /* check that the specified internalformat is color/depth/stencil-renderable;
+    * refer GL3.1 spec 4.4.4 */
+   baseformat = _mesa_base_tex_format(ctx, internalformat);
+
+   if (!_mesa_is_legal_color_format(ctx, baseformat) &&
+         baseformat != GL_DEPTH_COMPONENT &&
+         baseformat != GL_DEPTH_STENCIL_EXT &&
+         baseformat != GL_STENCIL_INDEX) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexImage%uDMultisample(internalformat=%s ->%s)",
+            dims,
+            _mesa_lookup_enum_by_nr(internalformat),
+            _mesa_lookup_enum_by_nr(baseformat));
+      return;
+   }
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
+
+   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
+         internalformat, GL_NONE, GL_NONE);
+   assert(texFormat != MESA_FORMAT_NONE);
+
+   dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,
+         width, height, depth, 0);
+
+   sizeOK = ctx->Driver.TestProxyTexImage(ctx, target, 0, texFormat,
+         width, height, depth, 0);
+
+   if (_mesa_is_proxy_texture(target)) {
+      if (dimensionsOK && sizeOK) {
+         _mesa_init_teximage_fields(ctx, texImage,
+               width, height, depth, 0, internalformat, texFormat);
+         texObj->NumSamples = samples;
+         texObj->FixedSampleLocations = fixedsamplelocations;
+      }
+      else {
+         /* clear all image fields */
+         _mesa_init_teximage_fields(ctx, texImage,
+               0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+      }
+   }
+   else {
+      if (!dimensionsOK) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+               "glTexImage%uDMultisample(invalid width or height)", dims);
+         return;
+      }
+
+      if (!sizeOK) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+               "glTexImage%uDMultisample(texture too large)", dims);
+         return;
+      }
+
+      assert(width > 0);
+      assert(height > 0);
+      assert(depth > 0);
+
+      _mesa_init_teximage_fields(ctx, texImage,
+            width, height, depth, 0, internalformat, texFormat);
+
+      texObj->NumSamples = samples;
+      texObj->FixedSampleLocations = fixedsamplelocations;
+
+      if (!ctx->Driver.AllocTextureStorage(ctx, texObj, 1,
+               width, height, depth)) {
+         /* tidy up the texture image state. strictly speaking,
+          * we're allowed to just leave this in whatever state we
+          * like, but being tidy is good. */
+         _mesa_init_teximage_fields(ctx, texImage,
+               0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+      }
+   }
+}
+
 void GLAPIENTRY
 _mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
       GLint internalformat, GLsizei width, GLsizei height,
       GLboolean fixedsamplelocations)
 {
-   assert(!"Not implemented");
-   /* allocate a single 2d multisample texture */
+   teximagemultisample(2, target, samples, internalformat,
+         width, height, 1, fixedsamplelocations);
 }
 
 void GLAPIENTRY
 _mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
-		GLint internalformat, GLsizei width, GLsizei height,
-		GLsizei depth, GLboolean fixedsamplelocations)
+      GLint internalformat, GLsizei width, GLsizei height,
+      GLsizei depth, GLboolean fixedsamplelocations)
 {
-   assert(!"Not implemented");
-   /* allocate an array of 2d multisample textures */
+   teximagemultisample(3, target, samples, internalformat,
+         width, height, depth, fixedsamplelocations);
 }
