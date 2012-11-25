@@ -1114,6 +1114,19 @@ get_tex_level_parameter_image(struct gl_context *ctx,
 	    *params = GL_NONE;
          break;
 
+      /* GL_ARB_texture_multisample */
+      case GL_TEXTURE_SAMPLES:
+         if (!ctx->Extensions.ARB_texture_multisample)
+            goto invalid_pname;
+         *params = img->NumSamples;
+         break;
+
+      case GL_TEXTURE_FIXED_SAMPLE_LOCATIONS:
+         if (!ctx->Extensions.ARB_texture_multisample)
+            goto invalid_pname;
+         *params = img->FixedSampleLocations;
+         break;
+
       default:
          goto invalid_pname;
    }
