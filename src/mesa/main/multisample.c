@@ -64,14 +64,31 @@ _mesa_init_multisample(struct gl_context *ctx)
 void GLAPIENTRY
 _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 {
-	assert(!"Not implemented");
-	// TODO: make this work
+   GET_CURRENT_CONTEXT(ctx);
+
+   switch (pname) {
+   case GL_SAMPLE_POSITION: {
+      int samples = ctx->DrawBuffer->Visual.samples;
+
+      if (index >= samples) {
+         _mesa_error( ctx, GL_INVALID_VALUE, "glGetMultisamplefv(index)" );
+         return;
+      }
+
+      ctx->Driver.GetSampleLocation(ctx, ctx->DrawBuffer, index, val);
+      return;
+   }
+
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMultisamplefv(pname)" );
+      return;
+   }
 }
 
 void GLAPIENTRY
 _mesa_SampleMaski(GLuint index, GLbitfield mask)
 {
-	assert(!"Not implemented");
-	// TODO: make this work
+   assert(!"Not implemented");
+   // TODO: make this work
 }
 
