@@ -337,6 +337,7 @@ EXTRA_EXT(ARB_uniform_buffer_object);
 EXTRA_EXT(ARB_timer_query);
 EXTRA_EXT(ARB_map_buffer_alignment);
 EXTRA_EXT(ARB_texture_cube_map_array);
+EXTRA_EXT(ARB_texture_multisample);
 
 static const int
 extra_NV_primitive_restart[] = {
@@ -794,6 +795,14 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_TEXTURE_BUFFER_FORMAT_ARB:
       v->value_int = ctx->Texture.Unit[ctx->Texture.CurrentUnit]
          .CurrentTex[TEXTURE_BUFFER_INDEX]->BufferObjectFormat;
+      break;
+
+   /* GL_ARB_texture_multisample */
+   case GL_TEXTURE_BINDING_2D_MULTISAMPLE:
+   case GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY:
+      unit = ctx->Texture.CurrentUnit;
+      v->value_int =
+         ctx->Texture.Unit[unit].CurrentTex[d->offset]->Name;
       break;
 
    /* GL_ARB_sampler_objects */
