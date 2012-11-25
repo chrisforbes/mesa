@@ -1205,6 +1205,8 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->HeightLog2 = 0;
    img->DepthLog2 = 0;
    img->TexFormat = MESA_FORMAT_NONE;
+   img->NumSamples = 0;
+   img->FixedSampleLocations = GL_TRUE;
 }
 
 
@@ -1247,6 +1249,9 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
 
    img->Width2 = width - 2 * border;   /* == 1 << img->WidthLog2; */
    img->WidthLog2 = _mesa_logbase2(img->Width2);
+
+   img->NumSamples = 0;
+   img->FixedSampleLocations = GL_TRUE;
 
    switch(target) {
    case GL_TEXTURE_1D:

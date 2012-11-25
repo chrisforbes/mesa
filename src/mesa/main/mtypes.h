@@ -1216,6 +1216,10 @@ struct gl_texture_image
    GLuint Level;                /**< Which mipmap level am I? */
    /** Cube map face: index into gl_texture_object::Image[] array */
    GLuint Face;
+
+   /** GL_ARB_texture_multisample */
+   GLuint NumSamples;               /**< Sample count, or 0 for non-multisample */
+   GLboolean FixedSampleLocations;  /**< Same sample locations for all pixels? */
 };
 
 
