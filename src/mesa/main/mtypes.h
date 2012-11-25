@@ -1302,6 +1302,10 @@ struct gl_texture_object
 
    /** GL_OES_EGL_image_external */
    GLint RequiredTextureImageUnits;
+
+   /** GL_ARB_texture_multisample */
+   GLuint NumSamples;               /**< Sample count, or 0 for non-multisample */
+   GLboolean FixedSampleLocations;  /**< Same sample locations for all pixels? */
 };
 
 
