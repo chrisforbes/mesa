@@ -2970,6 +2970,11 @@ struct gl_constants
     * Drivers that support transform feedback must set this value to GL_FALSE.
     */
    GLboolean DisableVaryingPacking;
+
+   /** GL_ARB_texture_multisample */
+   GLint MaxColorTextureSamples;
+   GLint MaxDepthTextureSamples;
+   GLint MaxIntegerSamples;
 };
 
 
