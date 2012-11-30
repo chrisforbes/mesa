@@ -59,6 +59,10 @@ _mesa_init_multisample(struct gl_context *ctx)
    ctx->Multisample.SampleCoverage = GL_FALSE;
    ctx->Multisample.SampleCoverageValue = 1.0;
    ctx->Multisample.SampleCoverageInvert = GL_FALSE;
+
+   /* ARB_texture_multisample / GL3.2 additions */
+   ctx->Multisample.SampleMask = GL_FALSE;
+   ctx->Multisample.SampleMaskValue = ~(GLbitfield)0;
 }
 
 void GLAPIENTRY
@@ -88,7 +92,15 @@ _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 void GLAPIENTRY
 _mesa_SampleMaski(GLuint index, GLbitfield mask)
 {
-   assert(!"Not implemented");
-   // TODO: make this work
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+
+   if (index != 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glSampleMaski(index)");
+      return;
+   }
+
+   ctx->Multisample.SampleMaskValue = mask;
+   ctx->NewState |= _NEW_MULTISAMPLE;
 }
 
