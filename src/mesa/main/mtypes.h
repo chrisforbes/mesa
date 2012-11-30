@@ -3004,6 +3004,11 @@ struct gl_constants
     * backslash character ('\') in GLSL source.
     */
    GLboolean DisableGLSLLineContinuations;
+
+   /** GL_ARB_texture_multisample */
+   GLint MaxColorTextureSamples;
+   GLint MaxDepthTextureSamples;
+   GLint MaxIntegerSamples;
 };
 
 
