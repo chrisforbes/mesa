@@ -72,6 +72,9 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
       functions->EndTransformFeedback = gen7_end_transform_feedback;
    else
       functions->EndTransformFeedback = brw_end_transform_feedback;
+
+   if (screen->gen >= 6)
+      functions->GetSampleLocation = gen6_get_sample_position;
 }
 
 bool
