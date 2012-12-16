@@ -701,6 +701,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLenum intFormat = GL_NONE; /* color buffers' internal format */
    GLuint minWidth = ~0, minHeight = ~0, maxWidth = 0, maxHeight = 0;
    GLint numSamples = -1;
+   GLint fixedSampleLocations = -1;
    GLint i;
    GLuint j;
 
@@ -722,6 +723,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       struct gl_renderbuffer_attachment *att;
       GLenum f;
       gl_format attFormat;
+      struct gl_texture_image *texImg = NULL;
 
       /*
        * XXX for ARB_fbo, only check color buffers that are named by
@@ -761,8 +763,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       /* get width, height, format of the renderbuffer/texture
        */
       if (att->Type == GL_TEXTURE) {
-         const struct gl_texture_image *texImg =
-            _mesa_get_attachment_teximage(att);
+         texImg = _mesa_get_attachment_teximage(att);
          minWidth = MIN2(minWidth, texImg->Width);
          maxWidth = MAX2(maxWidth, texImg->Width);
          minHeight = MIN2(minHeight, texImg->Height);
@@ -776,6 +777,12 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
             fbo_incomplete("texture attachment incomplete", -1);
             return;
          }
+
+         if (numSamples < 0)
+            numSamples = texImg->NumSamples;
+
+         if (fixedSampleLocations < 0)
+            fixedSampleLocations = texImg->FixedSampleLocations;
       }
       else if (att->Type == GL_RENDERBUFFER_EXT) {
          minWidth = MIN2(minWidth, att->Renderbuffer->Width);
@@ -785,21 +792,23 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          f = att->Renderbuffer->InternalFormat;
          attFormat = att->Renderbuffer->Format;
          numImages++;
+
+         if (numSamples < 0)
+            numSamples = att->Renderbuffer->NumSamples;
+
+         /* RENDERBUFFER has fixedSampleLocations implicitly true */
+         if (fixedSampleLocations < 0)
+            fixedSampleLocations = GL_TRUE;
       }
       else {
          assert(att->Type == GL_NONE);
          continue;
       }
 
-      if (att->Renderbuffer && numSamples < 0) {
-         /* first buffer */
-         numSamples = att->Renderbuffer->NumSamples;
-      }
-
       /* check if integer color */
       fb->_IntegerColor = _mesa_is_format_integer_color(attFormat);
 
-      /* Error-check width, height, format, samples
+      /* Error-check width, height, format, samples, fixedSampleLocations
        */
       if (numImages == 1) {
          /* save format, num samples */
@@ -822,10 +831,22 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
                return;
             }
          }
-         if (att->Renderbuffer &&
-             att->Renderbuffer->NumSamples != numSamples) {
+
+         if ((att->Type == GL_RENDERBUFFER &&
+                  att->Renderbuffer->NumSamples != numSamples) ||
+             (att->Type == GL_TEXTURE &&
+              texImg->NumSamples != numSamples)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE;
-            fbo_incomplete("inconsistant number of samples", i);
+            fbo_incomplete("inconsistent number of samples", i);
+            return;
+         }
+
+         if ((att->Type == GL_RENDERBUFFER &&
+               GL_TRUE != fixedSampleLocations) ||
+             (att->Type == GL_TEXTURE &&
+               texImg->FixedSampleLocations != fixedSampleLocations)) {
+            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE;
+            fbo_incomplete("inconsistent fixed sample locations", i);
             return;
          }
       }
