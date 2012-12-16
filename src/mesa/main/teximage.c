@@ -1373,6 +1373,8 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
 
    case GL_TEXTURE_2D:
    case GL_PROXY_TEXTURE_2D:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1455,6 +1457,8 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
 
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
