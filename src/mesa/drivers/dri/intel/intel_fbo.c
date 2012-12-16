@@ -509,6 +509,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    rb->_BaseFormat = image->_BaseFormat;
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;
+   rb->NumSamples = mt->num_samples;
 
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_nop_alloc_storage;
