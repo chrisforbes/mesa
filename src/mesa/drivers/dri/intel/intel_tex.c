@@ -71,6 +71,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    switch (texobj->Target) {
    case GL_TEXTURE_3D:
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       slices = image->Depth;
       break;
    case GL_TEXTURE_1D_ARRAY:
@@ -91,9 +92,20 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
           __FUNCTION__, texobj, image->Level,
           image->Width, image->Height, image->Depth, intel_texobj->mt);
    } else {
-      intel_image->mt = intel_miptree_create_for_teximage(intel, intel_texobj,
-                                                          intel_image,
-                                                          false);
+
+      if (texobj->NumSamples) {
+         /* Treat multisample textures exactly like renderbuffers */
+         intel_image->mt = intel_miptree_create_for_renderbuffer(intel,
+               image->TexFormat, image->Width, image->Height, image->Depth,
+               texobj->NumSamples);
+         /* Renderbuffer path doesn't bother to set the mt's target, so do it here */
+         intel_image->mt->target = texobj->Target;
+      }
+      else {
+         intel_image->mt = intel_miptree_create_for_teximage(intel, intel_texobj,
+                                                             intel_image,
+                                                             false);
+      }
 
       /* Even if the object currently has a mipmap tree associated
        * with it, this one is a more likely candidate to represent the

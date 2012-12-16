@@ -405,12 +405,14 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
  *     - The target is GL_TEXTURE_2D.
  *     - There are no levels other than the base level 0.
  *     - Depth is 1.
+ *     XXX: this description is quite bogus now.
  */
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
                                       uint32_t height,
+                                      uint32_t depth,
                                       uint32_t num_samples);
 
 /** \brief Assert that the level and layer are valid for the miptree. */

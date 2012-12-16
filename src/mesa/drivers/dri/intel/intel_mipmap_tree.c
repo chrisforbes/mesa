@@ -404,6 +404,7 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
                                                           format,
                                                           region->width,
                                                           region->height,
+                                                          1,
                                                           num_samples);
    if (!multisample_mt) {
       intel_miptree_release(&singlesample_mt);
@@ -427,10 +428,10 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
                                       uint32_t height,
+                                      uint32_t depth,
                                       uint32_t num_samples)
 {
    struct intel_mipmap_tree *mt;
-   uint32_t depth = 1;
    enum intel_msaa_layout msaa_layout = INTEL_MSAA_LAYOUT_NONE;
    const uint32_t singlesample_width = width;
    const uint32_t singlesample_height = height;
@@ -491,6 +492,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
          }
       } else {
          /* Non-interleaved */
+         assert(depth == 1);  /* XXX: do we ever hit this path with multisample arrays? */
          depth = num_samples;
       }
    }
@@ -508,6 +510,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    }
 
    if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      assert(depth == 1);  /* XXX: multisample arrays interaction with MCS? */
       ok = intel_miptree_alloc_mcs(intel, mt, num_samples);
       if (!ok)
          goto fail;
@@ -624,9 +627,27 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
-   if (width != mt->level[level].width ||
-       height != mt->level[level].height ||
-       depth != mt->level[level].depth)
+   if (mt->target == GL_TEXTURE_2D_MULTISAMPLE ||
+         mt->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+      /* nonzero level here is always bogus */
+      assert(level == 0);
+
+      if (width != mt->singlesample_width0 ||
+            height != mt->singlesample_height0 ||
+            depth != mt->level[level].depth) {
+         return false;
+      }
+   }
+   else {
+      /* all normal textures, renderbuffers, etc */
+      if (width != mt->level[level].width ||
+          height != mt->level[level].height ||
+          depth != mt->level[level].depth) {
+         return false;
+      }
+   }
+
+   if (image->TexObject->NumSamples != mt->num_samples)
       return false;
 
    return true;
@@ -1644,6 +1665,7 @@ intel_miptree_map_multisample(struct intel_context *intel,
                                                mt->format,
                                                mt->singlesample_width0,
                                                mt->singlesample_height0,
+                                               1,
                                                0 /*num_samples*/);
       if (!mt->singlesample_mt)
          goto fail;

@@ -270,7 +270,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       return true;
 
    irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
-						   width, height,
+						   width, height, 1,
                                                    rb->NumSamples);
    if (!irb->mt)
       return false;
@@ -509,6 +509,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    rb->_BaseFormat = image->_BaseFormat;
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;
+   rb->NumSamples = mt->num_samples;
 
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_nop_alloc_storage;
