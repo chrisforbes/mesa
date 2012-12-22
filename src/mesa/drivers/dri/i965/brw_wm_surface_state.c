@@ -837,7 +837,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = 0;
+   surf[4] = brw_get_surface_num_multisamples(intelObj->mt->num_samples);
 
    surf[5] = (mt->align_h == 4) ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
 
