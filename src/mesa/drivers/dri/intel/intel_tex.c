@@ -107,6 +107,9 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
           image->Width, image->Height, image->Depth, intel_image->mt);
    }
 
+   /* Make sure that what we just generated actually works */
+   assert(intel_miptree_match_image(intel_texobj->mt, image));
+
    return true;
 }
 
