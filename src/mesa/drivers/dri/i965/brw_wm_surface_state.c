@@ -814,6 +814,14 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
+   /* XXX: this is fairly nasty */
+   if (tObj->Target == GL_TEXTURE_2D_MULTISAMPLE ||
+         tObj->Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+      /* surface_state wants pixel dimensions, not samples */
+      width = intelObj->mt->singlesample_width0;
+      height = intelObj->mt->singlesample_height0;
+   }
+
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &binding_table[surf_index]);
 
@@ -837,7 +845,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = 0;
+   surf[4] = brw_get_surface_num_multisamples(intelObj->mt->num_samples);
 
    surf[5] = (mt->align_h == 4) ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
 
