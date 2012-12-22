@@ -107,7 +107,13 @@ _mesa_is_texture_complete(const struct gl_texture_object *texObj,
         (sampler->MinFilter != GL_NEAREST &&
          sampler->MinFilter != GL_NEAREST_MIPMAP_NEAREST))) {
       /* If the format is integer, only nearest filtering is allowed */
-      return GL_FALSE;
+      /* ignore this for texture targets that don't have filtering state:
+       * multisample, multisample array, maybe texture buffer (but TBO
+       * bypasses validation entirely) */
+      if (texObj->Target != GL_TEXTURE_2D_MULTISAMPLE &&
+         texObj->Target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+         return GL_FALSE;
+      }
    }
 
    if (_mesa_is_mipmap_filter(sampler))
