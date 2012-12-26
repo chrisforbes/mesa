@@ -507,9 +507,18 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    rb->Format = image->TexFormat;
    rb->InternalFormat = image->InternalFormat;
    rb->_BaseFormat = image->_BaseFormat;
-   rb->Width = mt->level[level].width;
-   rb->Height = mt->level[level].height;
-   rb->NumSamples = mt->num_samples;
+
+   if (mt->num_samples) {
+      /* silly hack */
+      rb->Width = mt->singlesample_width0;
+      rb->Height = mt->singlesample_height0;
+      rb->NumSamples = mt->num_samples;
+   }
+   else {
+      rb->Width = mt->level[level].width;
+      rb->Height = mt->level[level].height;
+      rb->NumSamples = mt->num_samples;
+   }
 
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_nop_alloc_storage;
