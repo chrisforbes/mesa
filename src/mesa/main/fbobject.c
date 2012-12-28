@@ -503,22 +503,6 @@ _mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
 
 
 /**
- * Is the given base format a legal format for a depth/stencil renderbuffer?
- */
-static GLboolean
-is_legal_depth_format(const struct gl_context *ctx, GLenum baseFormat)
-{
-   switch (baseFormat) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_STENCIL_EXT:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
  * Test if an attachment point is complete and update its Complete field.
  * \param format if GL_COLOR, this is a color attachment point,
  *               if GL_DEPTH, this is a depth component attachment point,
@@ -600,8 +584,13 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
              baseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
+         else if (ctx->Extensions.ARB_texture_multisample &&
+               baseFormat == GL_STENCIL_INDEX) {
+            /* OK */
+         }
          else {
-            /* no such thing as stencil-only textures */
+            /* no such thing as stencil-only textures before
+             * multisample textures */
             att_incomplete("illegal stencil texture");
             att->Complete = GL_FALSE;
             return;
@@ -751,12 +740,6 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          f = texImg->_BaseFormat;
          attFormat = texImg->TexFormat;
          numImages++;
-         if (!_mesa_is_legal_color_format(ctx, f) &&
-             !is_legal_depth_format(ctx, f)) {
-            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
-            fbo_incomplete("texture attachment incomplete", -1);
-            return;
-         }
 
          if (numSamples < 0)
             numSamples = att->Texture->NumSamples;

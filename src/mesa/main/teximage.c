@@ -4004,7 +4004,6 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    struct gl_texture_image *texImage;
    GLboolean sizeOK, dimensionsOK;
    gl_format texFormat;
-   GLint baseformat;
 
    GET_CURRENT_CONTEXT(ctx);
 
@@ -4023,26 +4022,41 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    /* TODO validate sample count */
    /* should just ask the driver once IDR's internalformat_query bits land */
 
+   /* in the mean time,
+    * _mesa_is_enum_format_integer(),
+    * _mesa_is_depth_or_stencil_format(), will be useful [glformats.c]
+    * for determining which limit to check vs.
+    */
+
    /* check that the specified internalformat is color/depth/stencil-renderable;
     * refer GL3.1 spec 4.4.4 */
-   baseformat = _mesa_base_tex_format(ctx, internalformat);
 
-   if (!_mesa_is_legal_color_format(ctx, baseformat) &&
-         baseformat != GL_DEPTH_COMPONENT &&
-         baseformat != GL_DEPTH_STENCIL_EXT &&
-         baseformat != GL_STENCIL_INDEX) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexImage%uDMultisample(internalformat=%s ->%s)",
+   if (!_mesa_base_fbo_format(ctx, internalformat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "glTexImage%uDMultisample(internalformat=%s)",
             dims,
-            _mesa_lookup_enum_by_nr(internalformat),
-            _mesa_lookup_enum_by_nr(baseformat));
+            _mesa_lookup_enum_by_nr(internalformat));
       return;
    }
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
 
-   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
-         internalformat, GL_NONE, GL_NONE);
+   switch(internalformat) {
+      /* XXX horrid hack: _mesa_choose_texture_format will be
+       * very upset by these. a similar hack exists in the i965
+       * renderbufferstorage path. maybe i should fix properly... */
+      case GL_STENCIL_INDEX:
+      case GL_STENCIL_INDEX1:
+      case GL_STENCIL_INDEX4:
+      case GL_STENCIL_INDEX8:
+      case GL_STENCIL_INDEX16:   /* 16 bits of stencil to S8 seems really bogus */
+         texFormat = MESA_FORMAT_S8;
+         break;
+      default:
+         texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
+               internalformat, GL_NONE, GL_NONE);
+   }
    assert(texFormat != MESA_FORMAT_NONE);
 
    dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,
