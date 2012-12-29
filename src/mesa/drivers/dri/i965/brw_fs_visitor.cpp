@@ -1039,8 +1039,19 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf:
       mlen = header_present + 4 * reg_width;
 
-      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
-               lod));
+      if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_MS) {
+         /* for multisample samplers, hardwire lod=0 */
+         emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
+                  fs_reg(0)));
+         /* .. and emit the sample index (which the frontend puts where the lod
+          * would normally be */
+         emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
+         mlen += reg_width;
+      }
+      else {
+         emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
+                  lod));
+      }
       inst = emit(SHADER_OPCODE_TXF, dst);
       break;
    }
