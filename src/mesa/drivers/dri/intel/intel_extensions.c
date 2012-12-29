@@ -117,6 +117,11 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_timer_query = true;
    }
 
+   /* SNB-only for now; IVB support is similar but
+    * requires a little more work */
+   if (intel->gen == 6)
+      ctx->Extensions.ARB_texture_multisample = true;
+
    if (intel->gen >= 4) {
       ctx->Extensions.ARB_color_buffer_float = true;
       ctx->Extensions.ARB_depth_buffer_float = true;
