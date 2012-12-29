@@ -4042,21 +4042,8 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
 
-   switch(internalformat) {
-      /* XXX horrid hack: _mesa_choose_texture_format will be
-       * very upset by these. a similar hack exists in the i965
-       * renderbufferstorage path. maybe i should fix properly... */
-      case GL_STENCIL_INDEX:
-      case GL_STENCIL_INDEX1:
-      case GL_STENCIL_INDEX4:
-      case GL_STENCIL_INDEX8:
-      case GL_STENCIL_INDEX16:   /* 16 bits of stencil to S8 seems really bogus */
-         texFormat = MESA_FORMAT_S8;
-         break;
-      default:
-         texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
-               internalformat, GL_NONE, GL_NONE);
-   }
+   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
+         internalformat, GL_NONE, GL_NONE);
    assert(texFormat != MESA_FORMAT_NONE);
 
    dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,

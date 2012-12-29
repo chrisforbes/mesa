@@ -230,31 +230,14 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);
 
-   switch (internalFormat) {
-   default:
-      /* Use the same format-choice logic as for textures.
-       * Renderbuffers aren't any different from textures for us,
-       * except they're less useful because you can't texture with
-       * them.
-       */
-      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
-							 internalFormat,
-							 GL_NONE, GL_NONE);
-      break;
-   case GL_STENCIL_INDEX:
-   case GL_STENCIL_INDEX1_EXT:
-   case GL_STENCIL_INDEX4_EXT:
-   case GL_STENCIL_INDEX8_EXT:
-   case GL_STENCIL_INDEX16_EXT:
-      /* These aren't actual texture formats, so force them here. */
-      if (intel->has_separate_stencil) {
-	 rb->Format = MESA_FORMAT_S8;
-      } else {
-	 assert(!intel->must_use_separate_stencil);
-	 rb->Format = MESA_FORMAT_S8_Z24;
-      }
-      break;
-   }
+   /* Use the same format-choice logic as for textures.
+    * Renderbuffers aren't any different from textures for us,
+    * except they're less useful because you can't texture with
+    * them.
+    */
+   rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, GL_RENDERBUFFER,
+                                                      internalFormat,
+                                                      GL_NONE, GL_NONE);
 
    rb->Width = width;
    rb->Height = height;

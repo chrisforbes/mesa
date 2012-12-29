@@ -458,6 +458,27 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
+   if (ctx->Extensions.ARB_texture_multisample) {
+      switch (internalFormat) {
+         case GL_STENCIL_INDEX:
+         case GL_STENCIL_INDEX1:
+         case GL_STENCIL_INDEX4:
+         case GL_STENCIL_INDEX8:
+         case GL_STENCIL_INDEX16:
+            switch (target) {
+               case GL_TEXTURE_2D_MULTISAMPLE:
+               case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+               case GL_RENDERBUFFER:
+                  RETURN_IF_SUPPORTED(MESA_FORMAT_S8);
+                  RETURN_IF_SUPPORTED(MESA_FORMAT_S8_Z24);
+                  break;
+            }
+            break;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.ATI_envmap_bumpmap) {
       switch (internalFormat) {
          case GL_DUDV_ATI:
