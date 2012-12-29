@@ -2069,8 +2069,19 @@ vec4_visitor::visit(ir_texture *ir)
 	 }
 	 emit(MOV(dst_reg(MRF, mrf, ir->lod_info.lod->type, writemask), lod));
       } else if (ir->op == ir_txf) {
-	 emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, WRITEMASK_W),
-		  lod));
+         if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_MS) {
+            /* for multisample samplers, actual lod is always 0, and the
+             * extra parameter is the sample index */
+            emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, WRITEMASK_W),
+                     src_reg(0)));
+            emit(MOV(dst_reg(MRF, param_base + 1, ir->lod_info.lod->type, WRITEMASK_X),
+                     lod));   /* sample_index */
+            inst->mlen++;     /* spilled over into a second reg of args */
+         }
+         else {
+            emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, WRITEMASK_W),
+                     lod));
+         }
       } else if (ir->op == ir_txd) {
 	 const glsl_type *type = ir->lod_info.grad.dPdx->type;
 
