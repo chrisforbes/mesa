@@ -134,6 +134,38 @@ _mesa_Frustum( GLdouble left, GLdouble right,
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
 
+void GLAPIENTRY
+_mesa_MatrixFrustumEXT( GLenum matrixMode,
+                        GLdouble left, GLdouble right,
+                        GLdouble bottom, GLdouble top,
+                        GLdouble nearval, GLdouble farval )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_matrix_stack *stack = get_named_matrix_stack(ctx, matrixMode);
+
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMatrixFrustumEXT(mode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (nearval <= 0.0 ||
+       farval <= 0.0 ||
+       nearval == farval ||
+       left == right ||
+       top == bottom)
+   {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glMatrixFrustumEXT");
+      return;
+   }
+
+   _math_matrix_frustum(stack->Top,
+                        (GLfloat) left, (GLfloat) right,
+                        (GLfloat) bottom, (GLfloat) top,
+                        (GLfloat) nearval, (GLfloat) farval);
+   ctx->NewState |= stack->DirtyFlag;
+}
 
 /**
  * Apply an orthographic projection matrix.
@@ -178,6 +210,37 @@ _mesa_Ortho( GLdouble left, GLdouble right,
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
 
+void GLAPIENTRY
+_mesa_MatrixOrthoEXT( GLenum matrixMode,
+                      GLdouble left, GLdouble right,
+                      GLdouble bottom, GLdouble top,
+                      GLdouble nearval, GLdouble farval )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_matrix_stack *stack = get_named_matrix_stack(ctx, matrixMode);
+
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMatrixOrthoEXT(mode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (left == right ||
+       bottom == top ||
+       nearval == farval)
+   {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glMatrixOrthoEXT");
+      return;
+   }
+
+   _math_matrix_ortho(stack->Top,
+                      (GLfloat) left, (GLfloat) right,
+                      (GLfloat) bottom, (GLfloat) top,
+                      (GLfloat) nearval, (GLfloat) farval);
+   ctx->NewState |= stack->DirtyFlag;
+}
+
 /**
  * Set the current matrix stack.
  *
@@ -212,6 +275,19 @@ _mesa_MatrixMode( GLenum mode )
    }
 }
 
+static GLboolean
+push_matrix( struct gl_context *ctx, struct gl_matrix_stack *stack )
+{
+   if (stack->Depth + 1 >= stack->MaxDepth)
+      return GL_FALSE;
+
+   _math_matrix_copy( &stack->Stack[stack->Depth + 1],
+                      &stack->Stack[stack->Depth] );
+   stack->Depth++;
+   stack->Top = &(stack->Stack[stack->Depth]);
+   ctx->NewState |= stack->DirtyFlag;
+   return GL_TRUE;
+}
 
 /**
  * Push the current matrix stack.
@@ -233,7 +309,7 @@ _mesa_PushMatrix( void )
       _mesa_debug(ctx, "glPushMatrix %s\n",
                   _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
-   if (stack->Depth + 1 >= stack->MaxDepth) {
+   if (!push_matrix(ctx, stack)) {
       if (ctx->Transform.MatrixMode == GL_TEXTURE) {
          _mesa_error(ctx,  GL_STACK_OVERFLOW,
                      "glPushMatrix(mode=GL_TEXTURE, unit=%d)",
@@ -243,15 +319,46 @@ _mesa_PushMatrix( void )
          _mesa_error(ctx,  GL_STACK_OVERFLOW, "glPushMatrix(mode=%s)",
                      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
       }
-      return;
    }
-   _math_matrix_copy( &stack->Stack[stack->Depth + 1],
-                      &stack->Stack[stack->Depth] );
-   stack->Depth++;
-   stack->Top = &(stack->Stack[stack->Depth]);
-   ctx->NewState |= stack->DirtyFlag;
 }
 
+void GLAPIENTRY
+_mesa_MatrixPushEXT( GLenum matrixMode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_matrix_stack *stack = get_named_matrix_stack(ctx, matrixMode);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMatrixPushEXT(mode)");
+      return;
+   }
+
+   if (!push_matrix(ctx, stack)) {
+      if (matrixMode == GL_TEXTURE) {
+         _mesa_error(ctx, GL_STACK_OVERFLOW,
+               "glMatrixPushEXT(mode=GL_TEXTURE, unit=%d)",
+               ctx->Texture.CurrentUnit);
+      }
+      else {
+         _mesa_error(ctx, GL_STACK_OVERFLOW,
+                     "glMatrixPushEXT(mode=%s)",
+                     _mesa_lookup_enum_by_nr(matrixMode));
+      }
+   }
+}
+
+static GLboolean
+pop_matrix( struct gl_context *ctx, struct gl_matrix_stack *stack )
+{
+   if (stack->Depth == 0)
+      return GL_FALSE;
+
+   stack->Depth--;
+   stack->Top = &(stack->Stack[stack->Depth]);
+   ctx->NewState |= stack->DirtyFlag;
+   return GL_TRUE;
+}
 
 /**
  * Pop the current matrix stack.
@@ -273,21 +380,41 @@ _mesa_PopMatrix( void )
       _mesa_debug(ctx, "glPopMatrix %s\n",
                   _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
-   if (stack->Depth == 0) {
+   if (!pop_matrix(ctx, stack)) {
       if (ctx->Transform.MatrixMode == GL_TEXTURE) {
-         _mesa_error(ctx,  GL_STACK_UNDERFLOW,
+         _mesa_error(ctx, GL_STACK_UNDERFLOW,
                      "glPopMatrix(mode=GL_TEXTURE, unit=%d)",
                       ctx->Texture.CurrentUnit);
       }
       else {
-         _mesa_error(ctx,  GL_STACK_UNDERFLOW, "glPopMatrix(mode=%s)",
+         _mesa_error(ctx, GL_STACK_UNDERFLOW, "glPopMatrix(mode=%s)",
                      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
       }
+   }
+}
+
+void GLAPIENTRY
+_mesa_MatrixPopEXT( GLenum matrixMode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_matrix_stack *stack = get_named_matrix_stack(ctx, matrixMode);
+
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMatrixPopEXT(mode)");
       return;
    }
-   stack->Depth--;
-   stack->Top = &(stack->Stack[stack->Depth]);
-   ctx->NewState |= stack->DirtyFlag;
+
+   if (!pop_matrix(ctx, stack)) {
+      if (matrixMode == GL_TEXTURE) {
+         _mesa_error(ctx, GL_STACK_UNDERFLOW,
+                     "glMatrixPopEXT(mode=GL_TEXTURE, unit=%d)",
+                      ctx->Texture.CurrentUnit);
+      }
+      else {
+         _mesa_error(ctx, GL_STACK_UNDERFLOW, "glMatrixPopEXT(mode=%s)",
+                     _mesa_lookup_enum_by_nr(matrixMode));
+      }
+   }
 }
 
 
@@ -311,6 +438,24 @@ _mesa_LoadIdentity( void )
 
    _math_matrix_set_identity( ctx->CurrentStack->Top );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
+}
+
+void GLAPIENTRY
+_mesa_MatrixLoadIdentityEXT( GLenum matrixMode )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+   stack = get_named_matrix_stack(ctx, matrixMode);
+
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixLoadIdentityEXT(mode)\n");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_set_identity( stack->Top );
+   ctx->NewState |= stack->DirtyFlag;
 }
 
 
@@ -345,6 +490,33 @@ _mesa_LoadMatrixf( const GLfloat *m )
 
 
 /**
+ * Replace the named matrix with a given matrix.
+ *
+ * \param matrixMode matrix to replace
+ * \param m matrix
+ *
+ * \sa glLoadMatrixf().
+ */
+void GLAPIENTRY
+_mesa_MatrixLoadfEXT( GLenum matrixMode, const GLfloat *m )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+   if (!m) return;
+
+   stack = get_named_matrix_stack(ctx, matrixMode);
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixLoadfEXT(matrixMode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_loadf(stack->Top, m);
+   ctx->NewState |= stack->DirtyFlag;
+}
+
+/**
  * Multiply the current matrix with a given matrix.
  *
  * \param m matrix.
@@ -372,6 +544,24 @@ _mesa_MultMatrixf( const GLfloat *m )
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
 
+void GLAPIENTRY
+_mesa_MatrixMultfEXT( GLenum matrixMode, const GLfloat *m )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+   if (!m) return;
+
+   stack = get_named_matrix_stack(ctx, matrixMode);
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixMultfEXT(matrixMode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_mul_floats(stack->Top, m);
+   ctx->NewState |= stack->DirtyFlag;
+}
 
 /**
  * Multiply the current matrix with a rotation matrix.
@@ -398,6 +588,25 @@ _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
    }
 }
 
+void GLAPIENTRY
+_mesa_MatrixRotatefEXT( GLenum matrixMode, GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+   if (angle == 0.0f) return;
+
+   stack = get_named_matrix_stack(ctx, matrixMode);
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixRotatefEXT(matrixMode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_rotate(stack->Top, angle, x, y, z);
+   ctx->NewState |= stack->DirtyFlag;
+}
+
 
 /**
  * Multiply the current matrix with a general scaling matrix.
@@ -419,6 +628,24 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    _math_matrix_scale( ctx->CurrentStack->Top, x, y, z);
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
+}
+
+void GLAPIENTRY
+_mesa_MatrixScalefEXT( GLenum matrixMode, GLfloat x, GLfloat y, GLfloat z )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+
+   stack = get_named_matrix_stack(ctx, matrixMode);
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixScalefEXT(matrixMode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_scale(stack->Top, x, y, z);
+   ctx->NewState |= stack->DirtyFlag;
 }
 
 
@@ -444,6 +671,24 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
 
+void GLAPIENTRY
+_mesa_MatrixTranslatefEXT( GLenum matrixMode, GLfloat x, GLfloat y, GLfloat z )
+{
+   struct gl_matrix_stack *stack;
+   GET_CURRENT_CONTEXT(ctx);
+
+   stack = get_named_matrix_stack(ctx, matrixMode);
+   if (!stack) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "glMatrixTranslatefEXT(matrixMode)");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _math_matrix_translate(stack->Top, x, y, z);
+   ctx->NewState |= stack->DirtyFlag;
+}
+
  
 void GLAPIENTRY
 _mesa_LoadMatrixd( const GLdouble *m )
@@ -457,6 +702,17 @@ _mesa_LoadMatrixd( const GLdouble *m )
 }
 
 void GLAPIENTRY
+_mesa_MatrixLoaddEXT( GLenum matrixMode, const GLdouble *m )
+{
+   GLint i;
+   GLfloat f[16];
+   if (!m) return;
+   for (i = 0; i < 16; i++)
+      f[i] = (GLfloat) m[i];
+   _mesa_MatrixLoadfEXT(matrixMode, f);
+}
+
+void GLAPIENTRY
 _mesa_MultMatrixd( const GLdouble *m )
 {
    GLint i;
@@ -467,11 +723,29 @@ _mesa_MultMatrixd( const GLdouble *m )
    _mesa_MultMatrixf( f );
 }
 
+void GLAPIENTRY
+_mesa_MatrixMultdEXT( GLenum matrixMode, const GLdouble *m )
+{
+   GLint i;
+   GLfloat f[16];
+   if (!m) return;
+   for (i = 0; i < 16; i++)
+      f[i] = (GLfloat) m[i];
+   _mesa_MatrixMultfEXT(matrixMode, f);
+}
 
 void GLAPIENTRY
 _mesa_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 {
    _mesa_Rotatef((GLfloat) angle, (GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
+
+void GLAPIENTRY
+_mesa_MatrixRotatedEXT( GLenum matrixMode, GLdouble angle,
+      GLdouble x, GLdouble y, GLdouble z )
+{
+   _mesa_MatrixRotatefEXT(matrixMode, (GLfloat) angle,
+         (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -481,6 +755,12 @@ _mesa_Scaled( GLdouble x, GLdouble y, GLdouble z )
    _mesa_Scalef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
+void GLAPIENTRY
+_mesa_MatrixScaledEXT( GLenum matrixMode, GLdouble x, GLdouble y, GLdouble z )
+{
+   _mesa_MatrixScalefEXT(matrixMode, (GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
+
 
 void GLAPIENTRY
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
@@ -488,6 +768,11 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
    _mesa_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
+void GLAPIENTRY
+_mesa_MatrixTranslatedEXT( GLenum matrixMode, GLdouble x, GLdouble y, GLdouble z )
+{
+   _mesa_MatrixTranslatefEXT(matrixMode, (GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
 
 void GLAPIENTRY
 _mesa_LoadTransposeMatrixf( const GLfloat *m )
