@@ -160,6 +160,10 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
    }
 
+   if (brw->gen >= 7) {
+      ctx->Extensions.ARB_texture_gather = true;
+   }
+
    if (ctx->API == API_OPENGL_CORE)
       ctx->Extensions.ARB_base_instance = true;
    if (ctx->API != API_OPENGL_CORE)
