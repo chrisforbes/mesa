@@ -531,7 +531,8 @@ backend_instruction::is_tex()
            opcode == SHADER_OPCODE_TXF_MS ||
            opcode == SHADER_OPCODE_TXL ||
            opcode == SHADER_OPCODE_TXS ||
-           opcode == SHADER_OPCODE_LOD);
+           opcode == SHADER_OPCODE_LOD ||
+           opcode == SHADER_OPCODE_TG4);
 }
 
 bool
