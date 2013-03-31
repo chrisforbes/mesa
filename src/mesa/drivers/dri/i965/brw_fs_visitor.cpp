@@ -1163,6 +1163,12 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_lod:
       inst = emit(SHADER_OPCODE_LOD, dst);
       break;
+   case ir_tg4:
+      inst = emit(SHADER_OPCODE_TG4, dst);
+      break;
+   default:
+      fail("unrecognized texture opcode");
+      break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -1187,9 +1193,12 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    bool header_present = false;
    int offsets[3];
 
-   if (ir->offset && ir->op != ir_txf) {
-      /* The offsets set up by the ir_texture visitor are in the
+   if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf)) {
+      /* * The offsets set up by the ir_texture visitor are in the
        * m1 header, so we can't go headerless.
+       *
+       * * ir4_tg4 needs to place its channel select in the header,
+       * for interaction with ARB_texture_swizzle
        */
       header_present = true;
       mlen++;
@@ -1205,6 +1214,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
+   case ir_tg4:
       break;
    case ir_txb:
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
@@ -1319,6 +1329,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst); break;
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
    case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst); break;
+   case ir_tg4: inst = emit(SHADER_OPCODE_TG4, dst); break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -1473,6 +1484,7 @@ fs_visitor::visit(ir_texture *ir)
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
+   case ir_tg4:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
@@ -1495,6 +1507,8 @@ fs_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
       break;
+   default:
+      assert(!"Unrecognized texture opcode");
    };
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
@@ -1519,6 +1533,9 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
+   if (ir->op == ir_tg4)
+      inst->texture_offset |= gather_channel(ir, sampler) << 16; // M0.2:16-17
+
    inst->sampler = sampler;
 
    if (ir->shadow_comparitor)
@@ -1539,6 +1556,24 @@ fs_visitor::visit(ir_texture *ir)
 }
 
 /**
+ * Set up the gather channel based on the swizzle, for gather4.
+ */
+uint32_t
+fs_visitor::gather_channel(ir_texture *ir, int sampler)
+{
+   int swiz = GET_SWZ(c->key.tex.swizzles[sampler], 0 /* red */);
+   switch (swiz) {
+      case SWIZZLE_X: return 0;
+      case SWIZZLE_Y: return 1;
+      case SWIZZLE_Z: return 2;
+      case SWIZZLE_W: return 3;
+      default:
+         /* zero, one swizzles */
+         return 0;
+   }
+}
+
+/**
  * Swizzle the result of a texture result.  This is necessary for
  * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
  */
@@ -1547,8 +1582,31 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 {
    this->result = orig_val;
 
+   /* txs,lod don't actually sample the texture, so swizzling the result
+    * makes no sense.
+    */
    if (ir->op == ir_txs || ir->op == ir_lod)
       return;
+
+   /* tg4 does the channel select in hardware for 'real' swizzles, but can't
+    * do the degenerate ZERO/ONE cases, so we do them here:
+    *
+    * blast all the output channels with zero or one as appropriate
+    */
+   if (ir->op == ir_tg4) {
+      int swiz = GET_SWZ(c->key.tex.swizzles[sampler], 0);
+      if (swiz != SWIZZLE_ZERO && swiz != SWIZZLE_ONE)
+         return;
+
+      fs_reg res = fs_reg(this, glsl_type::vec4_type);
+      this->result = res;
+
+      for (int i=0; i<4; i++) {
+         emit(MOV(res, fs_reg(swiz == SWIZZLE_ZERO ? 0.0f : 1.0f)));
+         res.reg_offset++;
+      }
+      return;
+   }
 
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
