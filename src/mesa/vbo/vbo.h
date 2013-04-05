@@ -53,6 +53,8 @@ struct _mesa_prim {
    GLint basevertex;
    GLuint num_instances;
    GLuint base_instance;
+
+   GLsizeiptr indirect_offset;
 };
 
 /* Would like to call this a "vbo_index_buffer", but this would be
@@ -89,7 +91,8 @@ typedef void (*vbo_draw_func)( struct gl_context *ctx,
 			       GLboolean index_bounds_valid,
 			       GLuint min_index,
 			       GLuint max_index,
-			       struct gl_transform_feedback_object *tfb_vertcount );
+			       struct gl_transform_feedback_object *tfb_vertcount,
+			       const struct gl_buffer_object *indirect );
 
 
 
