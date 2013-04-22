@@ -342,7 +342,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
     * FlushRange time.
     */
    if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
-       drm_intel_bo_busy(intel_obj->buffer)) {
+//       drm_intel_bo_busy(intel_obj->buffer)) {
+         1) {
       if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
 	 intel_obj->range_map_buffer = malloc(length);
 	 obj->Pointer = intel_obj->range_map_buffer;
