@@ -762,6 +762,7 @@ intelInitContext(struct intel_context *intel,
       ctx->Const.MaxClipPlanes = 8;
 
    ctx->Const.StripTextureBorder = GL_TRUE;
+   ctx->Const.MinMapBufferAlignment = 64;
 
    /* reinitialize the context point state.
     * It depend on constants in __struct gl_contextRec::Const
