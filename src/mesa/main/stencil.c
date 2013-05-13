@@ -113,6 +113,42 @@ _mesa_ClearStencil( GLint s )
    ctx->Stencil.Clear = (GLuint) s;
 }
 
+/**
+ * Set the function and reference value for stencil testing.
+ * Assumes all validation and clamping has already been done.
+ *
+ * This is used as a helper by the StencilFunc* API, and also directly
+ * called by meta to restore the state without smashing the reference
+ * value if the stencil depth is different from the depth it was
+ * validated against.
+ */
+void
+_mesa_stencil_func(struct gl_context *ctx,
+                   GLenum face,
+                   GLenum func,
+                   GLint ref,
+                   GLuint mask)
+{
+   FLUSH_VERTICES(ctx, _NEW_STENCIL);
+
+   if (face != GL_BACK) {
+      /* set front */
+      ctx->Stencil.Function[0] = func;
+      ctx->Stencil.Ref[0] = ref;
+      ctx->Stencil.ValueMask[0] = mask;
+   }
+   if (face != GL_FRONT) {
+      /* set back */
+      ctx->Stencil.Function[1] = func;
+      ctx->Stencil.Ref[1] = ref;
+      ctx->Stencil.ValueMask[1] = mask;
+   }
+   if (ctx->Driver.StencilFuncSeparate) {
+      ctx->Driver.StencilFuncSeparate(ctx, face, func, ref, mask);
+   }
+}
+
+
 
 /**
  * Set the function and reference value for stencil testing.
@@ -158,17 +194,9 @@ _mesa_StencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLui
        ctx->Stencil.Ref[0] == ref &&
        ctx->Stencil.Ref[1] == ref)
       return;
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.Function[0]  = frontfunc;
-   ctx->Stencil.Function[1]  = backfunc;
-   ctx->Stencil.Ref[0]       = ctx->Stencil.Ref[1]       = ref;
-   ctx->Stencil.ValueMask[0] = ctx->Stencil.ValueMask[1] = mask;
-   if (ctx->Driver.StencilFuncSeparate) {
-      ctx->Driver.StencilFuncSeparate(ctx, GL_FRONT,
-                                      frontfunc, ref, mask);
-      ctx->Driver.StencilFuncSeparate(ctx, GL_BACK,
-                                      backfunc, ref, mask);
-   }
+
+   _mesa_stencil_func(ctx, GL_FRONT, frontfunc, ref, mask);
+   _mesa_stencil_func(ctx, GL_BACK, backfunc, ref, mask);
 }
 
 
@@ -478,24 +506,7 @@ _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
    }
 
    ref = CLAMP(ref, 0, stencilMax);
-
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
-
-   if (face != GL_BACK) {
-      /* set front */
-      ctx->Stencil.Function[0] = func;
-      ctx->Stencil.Ref[0] = ref;
-      ctx->Stencil.ValueMask[0] = mask;
-   }
-   if (face != GL_FRONT) {
-      /* set back */
-      ctx->Stencil.Function[1] = func;
-      ctx->Stencil.Ref[1] = ref;
-      ctx->Stencil.ValueMask[1] = mask;
-   }
-   if (ctx->Driver.StencilFuncSeparate) {
-      ctx->Driver.StencilFuncSeparate(ctx, face, func, ref, mask);
-   }
+   _mesa_stencil_func(ctx, face, func, ref, mask);
 }
 
 

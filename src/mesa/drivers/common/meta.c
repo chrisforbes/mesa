@@ -987,19 +987,19 @@ _mesa_meta_end(struct gl_context *ctx)
                                     ? GL_BACK : GL_FRONT);
       }
       /* front state */
-      _mesa_StencilFuncSeparate(GL_FRONT,
-                                stencil->Function[0],
-                                stencil->Ref[0],
-                                stencil->ValueMask[0]);
+      _mesa_stencil_func(ctx, GL_FRONT,
+                         stencil->Function[0],
+                         stencil->Ref[0],
+                         stencil->ValueMask[0]);
       _mesa_StencilMaskSeparate(GL_FRONT, stencil->WriteMask[0]);
       _mesa_StencilOpSeparate(GL_FRONT, stencil->FailFunc[0],
                               stencil->ZFailFunc[0],
                               stencil->ZPassFunc[0]);
       /* back state */
-      _mesa_StencilFuncSeparate(GL_BACK,
-                                stencil->Function[1],
-                                stencil->Ref[1],
-                                stencil->ValueMask[1]);
+      _mesa_stencil_func(ctx, GL_BACK,
+                         stencil->Function[1],
+                         stencil->Ref[1],
+                         stencil->ValueMask[1]);
       _mesa_StencilMaskSeparate(GL_BACK, stencil->WriteMask[1]);
       _mesa_StencilOpSeparate(GL_BACK, stencil->FailFunc[1],
                               stencil->ZFailFunc[1],
