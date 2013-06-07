@@ -131,10 +131,7 @@ const struct brw_tracked_state brw_sf_vp = {
 int
 brw_sf_compute_urb_entry_read_offset(struct intel_context *intel)
 {
-   if (intel->gen == 5)
-      return 3;
-   else
-      return 1;
+   return 1;
 }
 
 static void upload_sf_unit( struct brw_context *brw )
