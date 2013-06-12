@@ -26,6 +26,7 @@
 
 #include "brw_blorp.h"
 #include "brw_defines.h"
+#include "gen5_blorp.h"
 #include "gen6_blorp.h"
 #include "gen7_blorp.h"
 
@@ -172,6 +173,9 @@ brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
    struct brw_context *brw = brw_context(&intel->ctx);
 
    switch (intel->gen) {
+   case 5:
+      gen5_blorp_exec(intel, params);
+      break;
    case 6:
       gen6_blorp_exec(intel, params);
       break;
@@ -179,7 +183,7 @@ brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
       gen7_blorp_exec(intel, params);
       break;
    default:
-      /* BLORP is not supported before Gen6. */
+      /* BLORP is not supported before Gen5. */
       assert(false);
       break;
    }
