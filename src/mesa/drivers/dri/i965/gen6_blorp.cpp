@@ -378,7 +378,7 @@ gen6_blorp_emit_wm_constants(struct brw_context *brw,
 /* SURFACE_STATE for renderbuffer or texture surface (see
  * brw_update_renderbuffer_surface and brw_update_texture_surface)
  */
-static uint32_t
+uint32_t
 gen6_blorp_emit_surface_state(struct brw_context *brw,
                               const brw_blorp_params *params,
                               const brw_blorp_surface_info *surface,
@@ -473,7 +473,7 @@ gen6_blorp_emit_binding_table(struct brw_context *brw,
 /**
  * SAMPLER_STATE.  See brw_update_sampler_state().
  */
-static uint32_t
+uint32_t
 gen6_blorp_emit_sampler_state(struct brw_context *brw,
                               const brw_blorp_params *params)
 {

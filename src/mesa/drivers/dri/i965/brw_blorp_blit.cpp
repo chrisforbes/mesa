@@ -357,8 +357,8 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    struct intel_mipmap_tree *src_mt = src_irb->mt;
    struct intel_mipmap_tree *dst_mt = intel_image->mt;
 
-   /* BLORP is not supported before Gen6. */
-   if (brw->gen < 6)
+   /* BLORP is not supported before Gen5. */
+   if (brw->gen < 5)
       return false;
 
    if (!color_formats_match(src_mt->format, dst_mt->format)) {
@@ -434,8 +434,8 @@ brw_blorp_framebuffer(struct brw_context *brw,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter)
 {
-   /* BLORP is not supported before Gen6. */
-   if (brw->gen < 6)
+   /* BLORP is not supported before Gen5. */
+   if (brw->gen < 5)
       return mask;
 
    static GLbitfield buffer_bits[] = {
@@ -841,6 +841,8 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     * irrelevant, because we are going to fetch all samples.
     */
    if (key->blend && !key->blit_scaled) {
+      /* Pre-Gen6 should never take this path -- no multisampling! */
+      assert(brw->gen >= 6);
       if (brw->gen == 6) {
          /* Gen6 hardware an automatically blend using the SAMPLE message */
          single_to_blend();
@@ -1775,6 +1777,10 @@ brw_blorp_blit_program::sample(struct brw_reg dst)
 void
 brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
 {
+   static const sampler_message_arg gen5_args[2] = {
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_V_INT,
+   };
    static const sampler_message_arg gen6_args[5] = {
       SAMPLER_MESSAGE_ARG_U_INT,
       SAMPLER_MESSAGE_ARG_V_INT,
@@ -1800,6 +1806,9 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
    };
 
    switch (brw->gen) {
+   case 5:
+      texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen5_args, 2);
+      break;
    case 6:
       texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
                      s_is_zero ? 2 : 5);
