@@ -189,7 +189,7 @@ gen5_blorp_emit_vertices(struct brw_context *brw,
 }
 
 
-/* 3DSTATE_URB
+/* CMD_URB_FENCE, CMD_CS_URB_STATE
  *
  * Assign the entire URB to the VS. Even though the VS disabled, URB space
  * is still needed because the clipper loads the VUE's from the URB. From
@@ -233,30 +233,26 @@ gen5_blorp_emit_urb_config(struct brw_context *brw,
    ADVANCE_BATCH();
 }
 
-/* ALL FIXED TO HERE ---- */
 
-/* BLEND_STATE */
-uint32_t
-gen5_blorp_emit_blend_state(struct brw_context *brw,
+/* COLOR_CALC_STATE */
+static uint32_t
+gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
                             const brw_blorp_params *params)
 {
-   uint32_t cc_blend_state_offset;
+   uint32_t cc_unit_state_offset;
 
-   struct gen6_blend_state *blend = (struct gen6_blend_state *)
-      brw_state_batch(brw, AUB_TRACE_BLEND_STATE,
-                      sizeof(struct gen6_blend_state), 64,
-                      &cc_blend_state_offset);
+   struct brw_cc_unit_state *cc = (struct brw_cc_unit_state *)
+      brw_state_batch(brw, AUB_TRACE_CC_STATE,
+                      sizeof(struct brw_cc_unit_state), 64,
+                      &cc_unit_state_offset);
 
-   memset(blend, 0, sizeof(*blend));
+   memset(cc, 0, sizeof(*cc));
 
-   blend->blend1.pre_blend_clamp_enable = 1;
-   blend->blend1.post_blend_clamp_enable = 1;
-   blend->blend1.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
+   cc->cc6.clamp_post_alpha_blend = 1;
+   cc->cc6.clamp_pre_alpha_blend = 1;
+   cc->cc6.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
 
-   blend->blend1.write_disable_r = params->color_write_disable[0];
-   blend->blend1.write_disable_g = params->color_write_disable[1];
-   blend->blend1.write_disable_b = params->color_write_disable[2];
-   blend->blend1.write_disable_a = params->color_write_disable[3];
+   /* color mask lives in WM_STATE */
 
    /* When blitting from an XRGB source to a ARGB destination, we need to
     * interpret the missing channel as 1.0.  Blending can do that for us:
@@ -266,38 +262,22 @@ gen5_blorp_emit_blend_state(struct brw_context *brw,
    if (params->src.mt &&
        _mesa_get_format_bits(params->dst.mt->format, GL_ALPHA_BITS) > 0 &&
        _mesa_get_format_bits(params->src.mt->format, GL_ALPHA_BITS) == 0) {
-      blend->blend0.blend_enable = 1;
-      blend->blend0.ia_blend_enable = 1;
+      cc->cc3.blend_enable = 1;
+      cc->cc3.ia_blend_enable = 1;
 
-      blend->blend0.blend_func = BRW_BLENDFUNCTION_ADD;
-      blend->blend0.ia_blend_func = BRW_BLENDFUNCTION_ADD;
+      cc->cc6.blend_function = BRW_BLENDFUNCTION_ADD;
+      cc->cc5.ia_blend_function = BRW_BLENDFUNCTION_ADD;
 
-      blend->blend0.source_blend_factor = BRW_BLENDFACTOR_SRC_COLOR;
-      blend->blend0.dest_blend_factor = BRW_BLENDFACTOR_ZERO;
-      blend->blend0.ia_source_blend_factor = BRW_BLENDFACTOR_ONE;
-      blend->blend0.ia_dest_blend_factor = BRW_BLENDFACTOR_ZERO;
+      cc->cc6.src_blend_factor = BRW_BLENDFACTOR_SRC_COLOR;
+      cc->cc6.dest_blend_factor = BRW_BLENDFACTOR_ZERO;
+      cc->cc5.ia_src_blend_factor = BRW_BLENDFACTOR_ONE;
+      cc->cc5.ia_dest_blend_factor = BRW_BLENDFACTOR_ZERO;
    }
 
-   return cc_blend_state_offset;
+   return cc_unit_state_offset;
 }
 
-
-/* CC_STATE */
-uint32_t
-gen6_blorp_emit_cc_state(struct brw_context *brw,
-                         const brw_blorp_params *params)
-{
-   uint32_t cc_state_offset;
-
-   struct gen6_color_calc_state *cc = (struct gen6_color_calc_state *)
-      brw_state_batch(brw, AUB_TRACE_CC_STATE,
-                      sizeof(gen6_color_calc_state), 64,
-                      &cc_state_offset);
-   memset(cc, 0, sizeof(*cc));
-
-   return cc_state_offset;
-}
-
+/* ALL FIXED TO HERE ---- */
 
 /**
  * \param out_offset is relative to
@@ -1046,8 +1026,7 @@ gen5_blorp_exec(struct intel_context *intel,
    // DONE TO HERE ----
    if (params->use_wm_prog) {
       assert(!"not done");
-//      cc_blend_state_offset = gen6_blorp_emit_blend_state(brw, params);
-//      cc_state_offset = gen6_blorp_emit_cc_state(brw, params);
+      cc_state_offset = gen5_blorp_emit_cc_unit_state(brw, params);
    }
    depthstencil_offset = gen6_blorp_emit_depth_stencil_state(brw, params);
    gen6_blorp_emit_cc_state_pointers(brw, params, cc_blend_state_offset,
