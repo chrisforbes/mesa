@@ -239,9 +239,24 @@ static uint32_t
 gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
                             const brw_blorp_params *params)
 {
-   uint32_t cc_unit_state_offset;
+   struct intel_context *intel = &brw->intel;
 
-   struct brw_cc_unit_state *cc = (struct brw_cc_unit_state *)
+   uint32_t cc_unit_state_offset;
+   uint32_t cc_vp_offset;
+
+   struct brw_cc_unit_state *cc;
+   struct brw_cc_viewport *ccv;
+
+   /* CC_VP_STATE */
+   ccv = (struct brw_cc_viewport *)
+      brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
+                      sizeof(struct brw_cc_viewport), 32,
+                      &cc_vp_offset);
+   ccv->min_depth = 0.0;
+   ccv->max_depth = 1.0;
+
+   /* CC_STATE */
+   cc = (struct brw_cc_unit_state *)
       brw_state_batch(brw, AUB_TRACE_CC_STATE,
                       sizeof(struct brw_cc_unit_state), 64,
                       &cc_unit_state_offset);
@@ -252,7 +267,7 @@ gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
    cc->cc6.clamp_pre_alpha_blend = 1;
    cc->cc6.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
 
-   /* color mask lives in WM_STATE */
+   /* NOTE: pre-Gen6, color mask lives in WM_STATE */
 
    /* When blitting from an XRGB source to a ARGB destination, we need to
     * interpret the missing channel as 1.0.  Blending can do that for us:
@@ -274,41 +289,27 @@ gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
       cc->cc5.ia_dest_blend_factor = BRW_BLENDFACTOR_ZERO;
    }
 
+   /* depth */
+   cc->cc2.depth_write_enable = 1;
+   if (params->hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE) {
+      cc->cc2.depth_test = 1;
+      cc->cc2.depth_test_function = COMPAREFUNC_NEVER;
+   }
+
+   /* viewport state pointer and relocation */
+   cc->cc4.cc_viewport_state_offset = (intel->batch.bo->offset +
+         brw->cc.vp_offset) >> 5;   /* reloc */
+
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+         (cc_unit_state_offset +
+         offsetof(struct brw_cc_unit_state, cc4)),
+         intel->batch.bo, cc_vp_offset,
+         I915_GEM_DOMAIN_INSTRUCTION, 0);
+
    return cc_unit_state_offset;
 }
 
 /* ALL FIXED TO HERE ---- */
-
-/**
- * \param out_offset is relative to
- *        CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
- */
-uint32_t
-gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,
-                                    const brw_blorp_params *params)
-{
-   uint32_t depthstencil_offset;
-
-   struct gen6_depth_stencil_state *state;
-   state = (struct gen6_depth_stencil_state *)
-      brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
-                      sizeof(*state), 64,
-                      &depthstencil_offset);
-   memset(state, 0, sizeof(*state));
-
-   /* See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
-    *   - 7.5.3.1 Depth Buffer Clear
-    *   - 7.5.3.2 Depth Buffer Resolve
-    *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
-    */
-   state->ds2.depth_write_enable = 1;
-   if (params->hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE) {
-      state->ds2.depth_test_enable = 1;
-      state->ds2.depth_test_func = COMPAREFUNC_NEVER;
-   }
-
-   return depthstencil_offset;
-}
 
 
 /* 3DSTATE_CC_STATE_POINTERS
