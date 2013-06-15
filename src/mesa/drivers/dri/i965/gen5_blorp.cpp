@@ -311,35 +311,10 @@ gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
 
 /* ALL FIXED TO HERE ---- */
 
-
-/* 3DSTATE_CC_STATE_POINTERS
- *
- * The pointer offsets are relative to
- * CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
- *
- * The HiZ op doesn't use BLEND_STATE or COLOR_CALC_STATE.
- */
-static void
-gen6_blorp_emit_cc_state_pointers(struct brw_context *brw,
-                                  const brw_blorp_params *params,
-                                  uint32_t cc_blend_state_offset,
-                                  uint32_t depthstencil_offset,
-                                  uint32_t cc_state_offset)
-{
-   struct intel_context *intel = &brw->intel;
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
-   OUT_BATCH(cc_blend_state_offset | 1); /* BLEND_STATE offset */
-   OUT_BATCH(depthstencil_offset | 1); /* DEPTH_STENCIL_STATE offset */
-   OUT_BATCH(cc_state_offset | 1); /* COLOR_CALC_STATE offset */
-   ADVANCE_BATCH();
-}
-
-
 /* WM push constants */
+/*
 uint32_t
-gen6_blorp_emit_wm_constants(struct brw_context *brw,
+gen5_blorp_emit_wm_constants(struct brw_context *brw,
                              const brw_blorp_params *params)
 {
    uint32_t wm_push_const_offset;
@@ -352,11 +327,13 @@ gen6_blorp_emit_wm_constants(struct brw_context *brw,
 
    return wm_push_const_offset;
 }
+*/
 
 
 /* SURFACE_STATE for renderbuffer or texture surface (see
  * brw_update_renderbuffer_surface and brw_update_texture_surface)
  */
+/*
 static uint32_t
 gen6_blorp_emit_surface_state(struct brw_context *brw,
                               const brw_blorp_params *params,
@@ -367,13 +344,13 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t width = surface->width;
    uint32_t height = surface->height;
    if (surface->num_samples > 1) {
-      /* Since gen6 uses INTEL_MSAA_LAYOUT_IMS, width and height are measured
-       * in samples.  But SURFACE_STATE wants them in pixels, so we need to
-       * divide them each by 2.
-       */
+      // Since gen6 uses INTEL_MSAA_LAYOUT_IMS, width and height are measured
+       // in samples.  But SURFACE_STATE wants them in pixels, so we need to
+       // divide them each by 2.
+       //
       width /= 2;
       height /= 2;
-   }
+      }
    struct intel_region *region = surface->mt->region;
    uint32_t tile_x, tile_y;
 
@@ -386,7 +363,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
               BRW_SURFACE_CUBEFACE_ENABLES |
               surface->brw_surfaceformat << BRW_SURFACE_FORMAT_SHIFT);
 
-   /* reloc */
+   // reloc
    surf[1] = (surface->compute_tile_offsets(&tile_x, &tile_y) +
               region->bo->offset);
 
@@ -406,9 +383,9 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
 
    surf[4] = brw_get_surface_num_multisamples(surface->num_samples);
 
-   /* Note that the low bits of these fields are missing, so
-    * there's the possibility of getting in trouble.
-    */
+   // Note that the low bits of these fields are missing, so
+   // * there's the possibility of getting in trouble.
+    
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
    surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
@@ -416,7 +393,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
               (surface->mt->align_h == 4 ?
                BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
-   /* Emit relocation to surface contents */
+   // Emit relocation to surface contents
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
                            wm_surf_offset + 4,
                            region->bo,
@@ -425,9 +402,11 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
 
    return wm_surf_offset;
 }
+*/
 
 
 /* BINDING_TABLE.  See brw_wm_binding_table(). */
+/*
 uint32_t
 gen6_blorp_emit_binding_table(struct brw_context *brw,
                               const brw_blorp_params *params,
@@ -439,7 +418,7 @@ gen6_blorp_emit_binding_table(struct brw_context *brw,
       brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
                       sizeof(uint32_t) *
                       BRW_BLORP_NUM_BINDING_TABLE_ENTRIES,
-                      32, /* alignment */
+                      32, // alignment
                       &wm_bind_bo_offset);
    bind[BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX] =
       wm_surf_offset_renderbuffer;
@@ -447,11 +426,13 @@ gen6_blorp_emit_binding_table(struct brw_context *brw,
 
    return wm_bind_bo_offset;
 }
+*/
 
 
 /**
  * SAMPLER_STATE.  See brw_update_sampler_state().
  */
+/*
 static uint32_t
 gen6_blorp_emit_sampler_state(struct brw_context *brw,
                               const brw_blorp_params *params)
@@ -474,20 +455,19 @@ gen6_blorp_emit_sampler_state(struct brw_context *brw,
 
    sampler->ss0.min_mag_neq = 1;
 
-   /* Set LOD bias: 
-    */
+   // Set LOD bias: 
    sampler->ss0.lod_bias = 0;
 
-   sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
-   sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
+   sampler->ss0.lod_preclamp = 1; // OpenGL mode 
+   sampler->ss0.default_color_mode = 0; // OpenGL/DX10 mode 
 
-   /* Set BaseMipLevel, MaxLOD, MinLOD: 
+   // Set BaseMipLevel, MaxLOD, MinLOD: 
     *
     * XXX: I don't think that using firstLevel, lastLevel works,
     * because we always setup the surface state as if firstLevel ==
     * level zero.  Probably have to subtract firstLevel from each of
     * these:
-    */
+    //
    sampler->ss0.base_level = U_FIXED(0, 1);
 
    sampler->ss1.max_lod = U_FIXED(0, 6);
@@ -504,11 +484,12 @@ gen6_blorp_emit_sampler_state(struct brw_context *brw,
 
    return sampler_offset;
 }
-
+*/
 
 /**
  * 3DSTATE_SAMPLER_STATE_POINTERS.  See upload_sampler_state_pointers().
  */
+/*
 static void
 gen6_blorp_emit_sampler_state_pointers(struct brw_context *brw,
                                        const brw_blorp_params *params,
@@ -522,111 +503,95 @@ gen6_blorp_emit_sampler_state_pointers(struct brw_context *brw,
              GS_SAMPLER_STATE_CHANGE |
              PS_SAMPLER_STATE_CHANGE |
              (4 - 2));
-   OUT_BATCH(0); /* VS */
-   OUT_BATCH(0); /* GS */
+   OUT_BATCH(0); //VS
+   OUT_BATCH(0); //GS
    OUT_BATCH(sampler_offset);
    ADVANCE_BATCH();
 }
+*/
 
 
-/* 3DSTATE_VS
+/* VS_STATE
  *
  * Disable vertex shader.
  */
-void
-gen6_blorp_emit_vs_disable(struct brw_context *brw,
+static uint32_t
+gen5_blorp_emit_vs_disable(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
+   struct brw_vs_unit_state *vs;
+   uint32_t vs_offset;
 
-   if (intel->gen == 6) {
-      /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
-       * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
-       *
-       *   [DevSNB] A pipeline flush must be programmed prior to a
-       *   3DSTATE_VS command that causes the VS Function Enable to
-       *   toggle. Pipeline flush can be executed by sending a PIPE_CONTROL
-       *   command with CS stall bit set and a post sync operation.
-       */
-      intel_emit_post_sync_nonzero_flush(intel);
-   }
-
-   /* Disable the push constant buffers. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(6);
-   OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   vs = (struct brw_vs_unit_state *)brw_state_batch(brw, AUB_TRACE_VS_STATE,
+         sizeof(*vs), 32, &vs_offset);
+   memset(vs, 0, sizeof(*vs));
+   return vs_offset;
 }
 
 
-/* 3DSTATE_GS
- *
- * Disable the geometry shader.
- */
-void
-gen6_blorp_emit_gs_disable(struct brw_context *brw,
-                           const brw_blorp_params *params)
-{
-   struct intel_context *intel = &brw->intel;
-
-   /* Disable all the constant buffers. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(7);
-   OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-}
-
-
-/* 3DSTATE_CLIP
+/* CLIP_STATE
  *
  * Disable the clipper.
- *
- * The BLORP op emits a rectangle primitive, which requires clipping to
- * be disabled. From page 10 of the Sandy Bridge PRM Volume 2 Part 1
- * Section 1.3 "3D Primitives Overview":
- *    RECTLIST:
- *    Either the CLIP unit should be DISABLED, or the CLIP unit's Clip
- *    Mode should be set to a value other than CLIPMODE_NORMAL.
- *
- * Also disable perspective divide. This doesn't change the clipper's
- * output, but does spare a few electrons.
  */
-void
-gen6_blorp_emit_clip_disable(struct brw_context *brw,
+static uint32_t
+gen5_blorp_emit_clip_disable(struct brw_context *brw,
                              const brw_blorp_params *params)
+{
+   struct brw_clip_unit_state *clip;
+   uint32_t clip_offset;
+
+   clip = (struct brw_clip_unit_state *)brw_state_batch(brw, AUB_TRACE_CLIP_STATE,
+         sizeof(*clip), 32, &clip_offset);
+   memset(clip, 0, sizeof(*clip));
+
+   clip->clip5.clip_mode = BRW_CLIPMODE_ACCEPT_ALL;
+
+   return clip_offset;
+}
+
+
+/* SF_STATE
+ */
+static uint32_t
+gen5_blorp_emit_sf_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   assert(!"undone");
+   return 0;
+}
+
+
+/* WM_STATE
+ */
+static uint32_t
+gen5_blorp_emit_wm_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   assert(!"undone");
+   return 0;
+}
+
+
+/* 3DSTATE_PIPELINED_POINTERS */
+static void
+gen5_blorp_emit_pipelined_pointers(struct brw_context *brw,
+                                   const brw_blorp_params *params,
+                                   uint32_t vs_offset,/* uint32_t gs_offset,*/
+                                   uint32_t clip_offset, uint32_t sf_offset,
+                                   uint32_t wm_offset, uint32_t cc_state_offset)
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(GEN6_CLIP_PERSPECTIVE_DIVIDE_DISABLE);
-   OUT_BATCH(0);
+   /* do we need a w/a flush here, or is the one done earlier good enough? */
+
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7-2));
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, vs_offset);
+   OUT_BATCH(0);  /* gs */
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, clip_offset | 1);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, sf_offset);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, wm_offset);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, cc_state_offset);
    ADVANCE_BATCH();
 }
 
@@ -649,6 +614,7 @@ gen6_blorp_emit_clip_disable(struct brw_context *brw,
  *     is rendered as a solid object. This setting is required when
  *     (rendering rectangle (RECTLIST) objects.
  */
+/*
 static void
 gen6_blorp_emit_sf_config(struct brw_context *brw,
                           const brw_blorp_params *params)
@@ -657,20 +623,21 @@ gen6_blorp_emit_sf_config(struct brw_context *brw,
 
    BEGIN_BATCH(20);
    OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
-   OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | /* only position */
+   OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | // only position
              1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
              0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
-   OUT_BATCH(0); /* dw2 */
+   OUT_BATCH(0); //dw2
    OUT_BATCH(params->num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
    for (int i = 0; i < 16; ++i)
       OUT_BATCH(0);
    ADVANCE_BATCH();
-}
+}*/
 
 
 /**
  * Enable or disable thread dispatch and set the HiZ op appropriately.
  */
+/*
 static void
 gen6_blorp_emit_wm_config(struct brw_context *brw,
                           const brw_blorp_params *params,
@@ -680,14 +647,14 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5, dw6;
 
-   /* Even when thread dispatch is disabled, max threads (dw5.25:31) must be
+   // Even when thread dispatch is disabled, max threads (dw5.25:31) must be
     * nonzero to prevent the GPU from hanging. See the valid ranges in the
     * BSpec, Volume 2a.11 Windower, Section 3DSTATE_WM, Dword 5.25:31
     * "Maximum Number Of Threads".
     *
     * To be safe (and to minimize extraneous code) we go ahead and fully
     * configure the WM state whether or not there is a WM program.
-    */
+    //
 
    dw2 = dw4 = dw5 = dw6 = 0;
    switch (params->hiz_op) {
@@ -709,14 +676,14 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
    dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5;
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
-   dw6 |= 0 << GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT; /* No interp */
-   dw6 |= 0 << GEN6_WM_NUM_SF_OUTPUTS_SHIFT; /* No inputs from SF */
+   dw6 |= 0 << GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT; // No interp
+   dw6 |= 0 << GEN6_WM_NUM_SF_OUTPUTS_SHIFT; // No inputs from SF
    if (params->use_wm_prog) {
-      dw2 |= 1 << GEN6_WM_SAMPLER_COUNT_SHIFT; /* Up to 4 samplers */
+      dw2 |= 1 << GEN6_WM_SAMPLER_COUNT_SHIFT; // Up to 4 samplers
       dw4 |= prog_data->first_curbe_grf << GEN6_WM_DISPATCH_START_GRF_SHIFT_0;
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
-      dw5 |= GEN6_WM_KILL_ENABLE; /* TODO: temporarily smash on */
-      dw5 |= GEN6_WM_DISPATCH_ENABLE; /* We are rendering */
+      dw5 |= GEN6_WM_KILL_ENABLE; // TODO: temporarily smash on
+      dw5 |= GEN6_WM_DISPATCH_ENABLE; // We are rendering
    }
 
    if (params->num_samples > 1) {
@@ -734,16 +701,17 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
    OUT_BATCH(params->use_wm_prog ? prog_offset : 0);
    OUT_BATCH(dw2);
-   OUT_BATCH(0); /* No scratch needed */
+   OUT_BATCH(0); // No scratch needed
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
    OUT_BATCH(dw6);
-   OUT_BATCH(0); /* No other programs */
-   OUT_BATCH(0); /* No other programs */
+   OUT_BATCH(0); // No other programs
+   OUT_BATCH(0); // No other programs
    ADVANCE_BATCH();
 }
+*/
 
-
+/*
 static void
 gen6_blorp_emit_constant_ps(struct brw_context *brw,
                             const brw_blorp_params *params,
@@ -751,15 +719,15 @@ gen6_blorp_emit_constant_ps(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
 
-   /* Make sure the push constants fill an exact integer number of
+   // Make sure the push constants fill an exact integer number of
     * registers.
-    */
+    //
    assert(sizeof(brw_blorp_wm_push_constants) % 32 == 0);
 
-   /* There must be at least one register worth of push constant data. */
+   // There must be at least one register worth of push constant data. //
    assert(BRW_BLORP_NUM_PUSH_CONST_REGS > 0);
 
-   /* Enable push constant buffer 0. */
+   // Enable push constant buffer 0. //
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 |
              GEN6_CONSTANT_BUFFER_0_ENABLE |
@@ -769,15 +737,15 @@ gen6_blorp_emit_constant_ps(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
-}
+}*/
 
+/*
 static void
 gen6_blorp_emit_constant_ps_disable(struct brw_context *brw,
                                     const brw_blorp_params *params)
 {
    struct intel_context *intel = &brw->intel;
 
-   /* Disable the push constant buffers. */
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (5 - 2));
    OUT_BATCH(0);
@@ -785,11 +753,12 @@ gen6_blorp_emit_constant_ps_disable(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
-}
+}o*/
 
 /**
  * 3DSTATE_BINDING_TABLE_POINTERS
  */
+/*
 static void
 gen6_blorp_emit_binding_table_pointers(struct brw_context *brw,
                                        const brw_blorp_params *params,
@@ -801,13 +770,13 @@ gen6_blorp_emit_binding_table_pointers(struct brw_context *brw,
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 |
              GEN6_BINDING_TABLE_MODIFY_PS |
              (4 - 2));
-   OUT_BATCH(0); /* vs -- ignored */
-   OUT_BATCH(0); /* gs -- ignored */
-   OUT_BATCH(wm_bind_bo_offset); /* wm/ps */
+   OUT_BATCH(0); //vs
+   OUT_BATCH(0); //gs
+   OUT_BATCH(wm_bind_bo_offset); //wm/ps
    ADVANCE_BATCH();
-}
+}*/
 
-
+/*
 static void
 gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
@@ -824,7 +793,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                    NULL,
                                    &tile_mask_x, &tile_mask_y);
 
-   /* 3DSTATE_DEPTH_BUFFER */
+   // 3DSTATE_DEPTH_BUFFER
    {
       uint32_t tile_x = draw_x & tile_mask_x;
       uint32_t tile_y = draw_y & tile_mask_y;
@@ -833,7 +802,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                          draw_x & ~tile_mask_x,
                                          draw_y & ~tile_mask_y, false);
 
-      /* According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
+      // According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
        * (3DSTATE_DEPTH_BUFFER dw5), in the documentation for "Depth
        * Coordinate Offset X/Y":
        *
@@ -847,7 +816,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
        * So, to avoid hanging the GPU, just smash the low order 3 bits of
        * tile_x and tile_y to 0.  This is a temporary workaround until we come
        * up with a better solution.
-       */
+       //
       WARN_ONCE((tile_x & 7) || (tile_y & 7),
                 "Depth/stencil buffer needs alignment to 8-pixel boundaries.\n"
                 "Truncating offset, bad rendering may occur.\n");
@@ -861,10 +830,10 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
       OUT_BATCH((params->depth.mt->region->pitch - 1) |
                 params->depth_format << 18 |
-                1 << 21 | /* separate stencil enable */
-                1 << 22 | /* hiz enable */
+                1 << 21 | // separate stencil enable //
+                1 << 22 | // hiz enable //
                 BRW_TILEWALK_YMAJOR << 26 |
-                1 << 27 | /* y-tiled */
+                1 << 27 | // y-tiled //
                 BRW_SURFACE_2D << 29);
       OUT_RELOC(params->depth.mt->region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
@@ -879,7 +848,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       ADVANCE_BATCH();
    }
 
-   /* 3DSTATE_HIER_DEPTH_BUFFER */
+   // 3DSTATE_HIER_DEPTH_BUFFER
    {
       struct intel_region *hiz_region = params->depth.mt->hiz_mt->region;
       uint32_t hiz_offset =
@@ -896,7 +865,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       ADVANCE_BATCH();
    }
 
-   /* 3DSTATE_STENCIL_BUFFER */
+   // 3DSTATE_STENCIL_BUFFER
    {
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
@@ -904,9 +873,9 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
-}
+}*/
 
-
+/*
 static void
 gen6_blorp_emit_depth_disable(struct brw_context *brw,
                               const brw_blorp_params *params)
@@ -923,7 +892,7 @@ gen6_blorp_emit_depth_disable(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
-}
+}*/
 
 
 /* 3DSTATE_CLEAR_PARAMS
@@ -932,6 +901,7 @@ gen6_blorp_emit_depth_disable(struct brw_context *brw,
  *   [DevSNB] 3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE
  *   packet when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
  */
+/*
 static void
 gen6_blorp_emit_clear_params(struct brw_context *brw,
                              const brw_blorp_params *params)
@@ -944,43 +914,15 @@ gen6_blorp_emit_clear_params(struct brw_context *brw,
 	     (2 - 2));
    OUT_BATCH(params->depth.mt ? params->depth.mt->depth_clear_value : 0);
    ADVANCE_BATCH();
-}
-
-
-/* 3DSTATE_DRAWING_RECTANGLE */
-/* same as Gen6 */
-
-/* 3DSTATE_VIEWPORT_STATE_POINTERS */
-void
-gen6_blorp_emit_viewport_state(struct brw_context *brw,
-			       const brw_blorp_params *params)
-{
-   struct intel_context *intel = &brw->intel;
-   struct brw_cc_viewport *ccv;
-   uint32_t cc_vp_offset;
-
-   ccv = (struct brw_cc_viewport *)brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
-						   sizeof(*ccv), 32,
-						   &cc_vp_offset);
-
-   ccv->min_depth = 0.0;
-   ccv->max_depth = 1.0;
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS << 16 | (4 - 2) |
-	     GEN6_CC_VIEWPORT_MODIFY);
-   OUT_BATCH(0); /* clip VP */
-   OUT_BATCH(0); /* SF VP */
-   OUT_BATCH(cc_vp_offset);
-   ADVANCE_BATCH();
-}
+}*/
 
 
 /* 3DPRIMITIVE */
 static void
-gen6_blorp_emit_primitive(struct brw_context *brw,
+gen5_blorp_emit_primitive(struct brw_context *brw,
                           const brw_blorp_params *params)
 {
+   /* is this right for gen5 too? */
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(6);
@@ -1012,11 +954,13 @@ gen5_blorp_exec(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
    brw_blorp_prog_data *prog_data = NULL;
-   uint32_t cc_blend_state_offset = 0;
-   uint32_t cc_state_offset = 0;
-   uint32_t depthstencil_offset;
    uint32_t wm_push_const_offset = 0;
    uint32_t wm_bind_bo_offset = 0;
+   uint32_t vs_offset = 0;
+   uint32_t clip_offset = 0;
+   uint32_t sf_offset = 0;
+   uint32_t wm_offset = 0;
+   uint32_t cc_state_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
    gen6_blorp_emit_batch_head(brw, params);
@@ -1024,14 +968,10 @@ gen5_blorp_exec(struct intel_context *intel,
    gen5_blorp_emit_state_base_address(brw, params);
    gen5_blorp_emit_vertices(brw, params);
    gen5_blorp_emit_urb_config(brw, params);
-   // DONE TO HERE ----
    if (params->use_wm_prog) {
-      assert(!"not done");
       cc_state_offset = gen5_blorp_emit_cc_unit_state(brw, params);
    }
-   depthstencil_offset = gen6_blorp_emit_depth_stencil_state(brw, params);
-   gen6_blorp_emit_cc_state_pointers(brw, params, cc_blend_state_offset,
-                                     depthstencil_offset, cc_state_offset);
+   // DONE TO HERE ----
    if (params->use_wm_prog) {
       assert(!"not done");
 /*      uint32_t wm_surf_offset_renderbuffer;
@@ -1054,10 +994,16 @@ gen5_blorp_exec(struct intel_context *intel,
       sampler_offset = gen6_blorp_emit_sampler_state(brw, params);
       gen6_blorp_emit_sampler_state_pointers(brw, params, sampler_offset); */
    }
-   gen6_blorp_emit_vs_disable(brw, params);
-   gen6_blorp_emit_gs_disable(brw, params);
-   gen6_blorp_emit_clip_disable(brw, params);
-   gen6_blorp_emit_sf_config(brw, params);
+
+   vs_offset = gen5_blorp_emit_vs_disable(brw, params);
+   clip_offset = gen5_blorp_emit_clip_disable(brw, params);
+   sf_offset = gen5_blorp_emit_sf_config(brw, params);
+   wm_offset = gen5_blorp_emit_wm_config(brw, params);
+
+   gen5_blorp_emit_pipelined_pointers(brw, params, vs_offset,
+         clip_offset, sf_offset, wm_offset, cc_state_offset);
+
+/*
    if (params->use_wm_prog)
       gen6_blorp_emit_constant_ps(brw, params, wm_push_const_offset);
    else
@@ -1070,9 +1016,12 @@ gen5_blorp_exec(struct intel_context *intel,
    if (params->depth.mt)
       gen6_blorp_emit_depth_stencil_config(brw, params);
    else
-      gen6_blorp_emit_depth_disable(brw, params);
-   gen6_blorp_emit_clear_params(brw, params);
+      gen6_blorp_emit_depth_disable(brw, params);*/
+
+   //gen6_blorp_emit_clear_params(brw, params);
+   //
    gen6_blorp_emit_drawing_rectangle(brw, params);    /* same as Gen6 */
-   gen6_blorp_emit_primitive(brw, params);
+
+   gen5_blorp_emit_primitive(brw, params);
 }
 
