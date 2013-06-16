@@ -688,6 +688,9 @@ gen5_blorp_exec(struct intel_context *intel,
    }
 
    /* TODO: sf program */
+   /* TODO: URB partition is wrong -- CS needs some entries to be able to
+    *          store the CURBE */
+   /* TODO: WM clear color isnt set anywhere yet */
 
    vs_offset = gen5_blorp_emit_vs_disable(brw, params);
    sf_offset = gen5_blorp_emit_sf_config(brw, params);
