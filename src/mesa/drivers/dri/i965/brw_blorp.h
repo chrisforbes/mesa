@@ -381,6 +381,12 @@ gen6_blorp_emit_vs_disable(struct brw_context *brw,
                            const brw_blorp_params *params);
 
 uint32_t
+gen6_blorp_emit_surface_state(struct brw_context *brw,
+                              const brw_blorp_params *params,
+                              const brw_blorp_surface_info *surface,
+                              uint32_t read_domains, uint32_t write_domain);
+
+uint32_t
 gen6_blorp_emit_binding_table(struct brw_context *brw,
                               const brw_blorp_params *params,
                               uint32_t wm_surf_offset_renderbuffer,
