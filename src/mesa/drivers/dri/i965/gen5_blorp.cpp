@@ -328,27 +328,6 @@ gen5_blorp_emit_vs_disable(struct brw_context *brw,
 }
 
 
-/* CLIP_STATE
- *
- * Disable the clipper.
- */
-static uint32_t
-gen5_blorp_emit_clip_disable(struct brw_context *brw,
-                             const brw_blorp_params *params)
-{
-   struct brw_clip_unit_state *clip;
-   uint32_t clip_offset;
-
-   clip = (struct brw_clip_unit_state *)brw_state_batch(brw, AUB_TRACE_CLIP_STATE,
-         sizeof(*clip), 32, &clip_offset);
-   memset(clip, 0, sizeof(*clip));
-
-   clip->clip5.clip_mode = BRW_CLIPMODE_ACCEPT_ALL;
-
-   return clip_offset;
-}
-
-
 /* SF_STATE
  */
 static uint32_t
@@ -357,6 +336,34 @@ gen5_blorp_emit_sf_config(struct brw_context *brw,
 {
    assert(!"undone");
    return 0;
+}
+
+
+/* CONSTANT_BUFFER
+ */
+
+static void
+gen5_blorp_emit_constant_buffer(struct brw_context *brw,
+                                const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+   uint32_t const_buffer_offset = 0;
+
+   if (!params->use_wm_prog)
+   {
+      BEGIN_BATCH(2);
+      OUT_BATCH((CMD_CONST_BUFFER << 16) | (2-2));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+      return;
+   }
+
+   const_buffer_offset = gen6_blorp_emit_wm_constants(brw, params);
+   /* issue CMD_CONST_BUFFER to load them to CURBE */
+   BEGIN_BATCH(2);
+   OUT_BATCH((CMD_CONST_BUFFER << 16) | (1<<8) | (2-2));  /* .8 = valid */
+   OUT_BATCH(const_buffer_offset + (BRW_BLORP_NUM_PUSH_CONST_REGS - 1));
+   ADVANCE_BATCH();
 }
 
 
@@ -369,8 +376,69 @@ gen5_blorp_emit_wm_config(struct brw_context *brw,
                           uint32_t prog_offset,
                           brw_blorp_prog_data *prog_data)
 {
-   assert(!"undone");
-   return 0;
+   struct intel_context *intel = &brw->intel;
+   struct brw_wm_unit_state *wm;
+   uint32_t wm_offset;
+
+   wm = (struct brw_wm_unit_state *)brw_state_batch(brw, AUB_TRACE_WM_STATE,
+         sizeof(*wm), 32, &wm_offset);
+   memset(wm, 0, sizeof(*wm));
+
+   switch (params->hiz_op) {
+   case GEN6_HIZ_OP_DEPTH_CLEAR:
+      wm->wm5.depth_buffer_clear = 1;
+      break;
+   case GEN6_HIZ_OP_DEPTH_RESOLVE:
+      wm->wm5.depth_buffer_resolve_enable = 1;
+      break;
+   case GEN6_HIZ_OP_HIZ_RESOLVE:
+      wm->wm5.hierarchical_depth_buffer_resolve_enable = 1;
+      break;
+   case GEN6_HIZ_OP_NONE:
+      break;
+   default:
+      assert(!"not reached");
+      break;
+   }
+
+   if (params->use_wm_prog) {
+      wm->thread0.kernel_start_pointer = prog_offset;
+
+      wm->thread3.dispatch_grf_start_reg = prog_data->first_curbe_grf;
+      wm->thread3.const_urb_entry_read_offset = 0; /* at the start of the curbe */
+      wm->thread3.const_urb_entry_read_length = BRW_BLORP_NUM_PUSH_CONST_REGS;
+
+      wm->wm5.thread_dispatch_enable = 1;
+      wm->wm5.program_uses_killpixel = 1; /* Gen6 BLORP forces this on -- WHY? */
+   }
+
+   wm->wm5.enable_8_pix = 1;
+   wm->wm5.max_threads = brw->max_wm_threads - 1;
+   wm->wm5.early_depth_test = 1;
+
+   /* TODO: push constants */
+
+   /* samplers */
+   wm->wm4.sampler_count = 0; /* gen5 w/a: requires this to be zero.
+                               * this is just a hint anyway.
+                               * if this gets enabled for g45, we should set
+                               * this to 1. (block of 4 samplers)
+                               */
+
+   if (params->use_wm_prog) {
+      wm->wm4.sampler_state_pointer = sampler_offset >> 5;
+      /* reloc for sampler state ptr */
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+            wm_offset + offsetof(struct brw_wm_unit_state, wm4),
+            intel->batch.bo,
+            sampler_offset | wm->wm4.stats_enable | (wm->wm4.sampler_count << 2),
+            I915_GEM_DOMAIN_INSTRUCTION, 0);
+   }
+   else {
+      wm->wm4.sampler_state_pointer = 0;
+   }
+
+   return wm_offset;
 }
 
 
@@ -378,8 +446,7 @@ gen5_blorp_emit_wm_config(struct brw_context *brw,
 static void
 gen5_blorp_emit_pipelined_pointers(struct brw_context *brw,
                                    const brw_blorp_params *params,
-                                   uint32_t vs_offset,/* uint32_t gs_offset,*/
-                                   uint32_t clip_offset, uint32_t sf_offset,
+                                   uint32_t vs_offset, uint32_t sf_offset,
                                    uint32_t wm_offset, uint32_t cc_state_offset)
 {
    struct intel_context *intel = &brw->intel;
@@ -389,8 +456,8 @@ gen5_blorp_emit_pipelined_pointers(struct brw_context *brw,
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7-2));
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, vs_offset);
-   OUT_BATCH(0);  /* gs */
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, clip_offset | 1);
+   OUT_BATCH(0);  /* gs, disabled */
+   OUT_BATCH(0);  /* clip, disabled */
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, sf_offset);
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, wm_offset);
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, cc_state_offset);
@@ -585,7 +652,6 @@ gen5_blorp_exec(struct intel_context *intel,
    brw_blorp_prog_data *prog_data = NULL;
    uint32_t wm_bind_bo_offset = 0;
    uint32_t vs_offset = 0;
-   uint32_t clip_offset = 0;
    uint32_t sf_offset = 0;
    uint32_t wm_offset = 0;
    uint32_t cc_state_offset = 0;
@@ -622,16 +688,16 @@ gen5_blorp_exec(struct intel_context *intel,
    }
 
    /* TODO: sf program */
-   /* TODO: wm push constants */
 
    vs_offset = gen5_blorp_emit_vs_disable(brw, params);
-   clip_offset = gen5_blorp_emit_clip_disable(brw, params);
    sf_offset = gen5_blorp_emit_sf_config(brw, params);
    wm_offset = gen5_blorp_emit_wm_config(brw, params, sampler_offset,
          prog_offset, prog_data);
 
    gen5_blorp_emit_pipelined_pointers(brw, params, vs_offset,
-         clip_offset, sf_offset, wm_offset, cc_state_offset);
+         sf_offset, wm_offset, cc_state_offset);
+
+   gen5_blorp_emit_constant_buffer(brw, params);
 
    if (params->use_wm_prog)
       gen5_blorp_emit_binding_table_pointers(brw, params, wm_bind_bo_offset);
