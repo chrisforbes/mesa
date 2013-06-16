@@ -309,26 +309,6 @@ gen5_blorp_emit_cc_unit_state(struct brw_context *brw,
    return cc_unit_state_offset;
 }
 
-/* ALL FIXED TO HERE ---- */
-
-/* WM push constants */
-/*
-uint32_t
-gen5_blorp_emit_wm_constants(struct brw_context *brw,
-                             const brw_blorp_params *params)
-{
-   uint32_t wm_push_const_offset;
-
-   void *constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
-                                     sizeof(params->wm_push_consts),
-                                     32, &wm_push_const_offset);
-   memcpy(constants, &params->wm_push_consts,
-          sizeof(params->wm_push_consts));
-
-   return wm_push_const_offset;
-}
-*/
-
 
 /* VS_STATE
  *
@@ -603,7 +583,6 @@ gen5_blorp_exec(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
    brw_blorp_prog_data *prog_data = NULL;
-   uint32_t wm_push_const_offset = 0;
    uint32_t wm_bind_bo_offset = 0;
    uint32_t vs_offset = 0;
    uint32_t clip_offset = 0;
@@ -621,12 +600,9 @@ gen5_blorp_exec(struct intel_context *intel,
    if (params->use_wm_prog) {
       cc_state_offset = gen5_blorp_emit_cc_unit_state(brw, params);
    }
-   // DONE TO HERE ----
    if (params->use_wm_prog) {
       uint32_t wm_surf_offset_renderbuffer;
       uint32_t wm_surf_offset_texture = 0;
-      /*TODO: push constants -- CURBE? */
-//      wm_push_const_offset = gen6_blorp_emit_wm_constants(brw, params);
       /* same as gen6 */
       wm_surf_offset_renderbuffer =
          gen6_blorp_emit_surface_state(brw, params, &params->dst,
@@ -646,13 +622,7 @@ gen5_blorp_exec(struct intel_context *intel,
    }
 
    /* TODO: sf program */
-/*
-   if (params->use_wm_prog)
-      gen6_blorp_emit_constant_ps(brw, params, wm_push_const_offset);
-   else
-      gen6_blorp_emit_constant_ps_disable(brw, params);
-   gen6_blorp_emit_wm_config(brw, params, prog_offset, prog_data);
-   */
+   /* TODO: wm push constants */
 
    vs_offset = gen5_blorp_emit_vs_disable(brw, params);
    clip_offset = gen5_blorp_emit_clip_disable(brw, params);
