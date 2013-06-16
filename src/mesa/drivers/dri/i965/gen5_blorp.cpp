@@ -347,7 +347,6 @@ gen5_blorp_emit_constant_buffer(struct brw_context *brw,
                                 const brw_blorp_params *params)
 {
    struct intel_context *intel = &brw->intel;
-   uint32_t const_buffer_offset = 0;
 
    if (!params->use_wm_prog)
    {
@@ -357,13 +356,14 @@ gen5_blorp_emit_constant_buffer(struct brw_context *brw,
       ADVANCE_BATCH();
       return;
    }
-
-   const_buffer_offset = gen6_blorp_emit_wm_constants(brw, params);
-   /* issue CMD_CONST_BUFFER to load them to CURBE */
-   BEGIN_BATCH(2);
-   OUT_BATCH((CMD_CONST_BUFFER << 16) | (1<<8) | (2-2));  /* .8 = valid */
-   OUT_BATCH(const_buffer_offset + (BRW_BLORP_NUM_PUSH_CONST_REGS - 1));
-   ADVANCE_BATCH();
+   else {
+      uint32_t const_buffer_offset = gen6_blorp_emit_wm_constants(brw, params);
+      /* issue CMD_CONST_BUFFER to load them to CURBE */
+      BEGIN_BATCH(2);
+      OUT_BATCH((CMD_CONST_BUFFER << 16) | (1<<8) | (2-2));  /* .8 = valid */
+      OUT_BATCH(const_buffer_offset + (BRW_BLORP_NUM_PUSH_CONST_REGS - 1));
+      ADVANCE_BATCH();
+   }
 }
 
 
@@ -597,20 +597,20 @@ gen5_blorp_emit_depth_disable(struct brw_context *brw,
  *   [DevSNB] 3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE
  *   packet when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
  */
-/*
+
 static void
-gen6_blorp_emit_clear_params(struct brw_context *brw,
+gen5_blorp_emit_clear_params(struct brw_context *brw,
                              const brw_blorp_params *params)
 {
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
-	     GEN5_DEPTH_CLEAR_VALID |
-	     (2 - 2));
+             GEN5_DEPTH_CLEAR_VALID |
+             (2 - 2));
    OUT_BATCH(params->depth.mt ? params->depth.mt->depth_clear_value : 0);
    ADVANCE_BATCH();
-}*/
+}
 
 
 /* 3DPRIMITIVE */
@@ -709,8 +709,7 @@ gen5_blorp_exec(struct intel_context *intel,
    else
       gen5_blorp_emit_depth_disable(brw, params);
 
-   //gen6_blorp_emit_clear_params(brw, params);
-   //
+   gen5_blorp_emit_clear_params(brw, params);
    gen6_blorp_emit_drawing_rectangle(brw, params);    /* same as Gen6 */
 
    gen5_blorp_emit_primitive(brw, params);
