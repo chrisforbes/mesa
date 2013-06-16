@@ -221,7 +221,7 @@ gen5_blorp_emit_urb_config(struct brw_context *brw,
       while (--pad);
    }
 
-   BEGIN_BATCH(5);
+   BEGIN_BATCH(3);
    OUT_BATCH(CMD_URB_FENCE << 16 | (3-2) | 0x3f00);   /* vs|gs|clp|sf|vfe|cs */
    OUT_BATCH(brw->urb.max_vs_entries);                /* the whole URB to VS */
    OUT_BATCH(0);
