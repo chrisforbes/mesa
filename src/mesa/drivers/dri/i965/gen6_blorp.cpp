@@ -477,7 +477,7 @@ gen6_blorp_emit_binding_table(struct brw_context *brw,
 /**
  * SAMPLER_STATE.  See brw_update_sampler_state().
  */
-static uint32_t
+uint32_t
 gen6_blorp_emit_sampler_state(struct brw_context *brw,
                               const brw_blorp_params *params)
 {
