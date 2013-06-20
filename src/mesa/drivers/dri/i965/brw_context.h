@@ -610,6 +610,7 @@ enum brw_cache_id {
    BRW_WM_PROG,
    BRW_BLORP_BLIT_PROG,
    BRW_BLORP_CONST_COLOR_PROG,
+   BRW_BLORP_SF_PROG, /* Gen5 blorp SF program */
    BRW_SAMPLER,
    BRW_WM_UNIT,
    BRW_SF_PROG,

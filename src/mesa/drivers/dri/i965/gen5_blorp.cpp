@@ -634,6 +634,35 @@ gen5_blorp_emit_primitive(struct brw_context *brw,
 }
 
 
+/* compile the primitive setup program */
+static uint32_t
+gen5_blorp_get_sf_prog(struct brw_context *brw,
+                       const brw_blorp_params *params)
+{
+   uint32_t prog_offset;
+   /* a dummy thing that can be used as a program key. the SF program is ALWAYS
+    * the same for blorp ops.
+    */
+   struct sf_key { int x; } sf_key = { 0 };
+
+   if (!brw_search_cache(&brw->cache, BRW_BLORP_SF_PROG,
+            &sf_key, sizeof(sf_key)) {
+
+         /* compile */
+         GLuint program_size;
+         GLuint const *program = gen5_blorp_compile_sf_prog(brw, &program_size);
+
+         /* upload */
+         brw_upload_cache(&brw->cache, BRW_BLORP_SF_PROG,
+            &sf_key, sizeof(sf_key)),
+            program, program_size,
+            0, 0,
+            &prog_offset, 
+         }
+
+}
+
+
 /**
  * \brief Execute a blit or render pass operation.
  *
