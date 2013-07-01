@@ -279,6 +279,8 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->nr_color_regions, key->nr_color_regions);
    found |= key_debug(intel, "sample alpha to coverage",
                       old_key->sample_alpha_to_coverage, key->sample_alpha_to_coverage);
+   found |= key_debug(intel, "MRT alpha test w/a",
+                      old_key->alpha_test, key->alpha_test);
    found |= key_debug(intel, "rendering to FBO",
                       old_key->render_to_fbo, key->render_to_fbo);
    found |= key_debug(intel, "fragment color clamping",
@@ -463,6 +465,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->nr_color_regions = ctx->DrawBuffer->_NumColorDrawBuffers;
   /* _NEW_MULTISAMPLE */
    key->sample_alpha_to_coverage = ctx->Multisample.SampleAlphaToCoverage;
+   /* _NEW_COLOR */
+   key->alpha_test = ctx->Color.AlphaEnabled;
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    if (intel->gen < 6)

@@ -2255,7 +2255,7 @@ fs_visitor::emit_fb_writes()
       src0_alpha_to_render_target = intel->gen >= 6 &&
 				    !do_dual_src &&
 				    c->key.nr_color_regions > 1 &&
-				    c->key.sample_alpha_to_coverage;
+				    (c->key.sample_alpha_to_coverage || c->key.alpha_test);
       /* m2, m3 header */
       nr += 2;
    }

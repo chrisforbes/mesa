@@ -129,7 +129,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
 
          if (inst->target > 0 &&
 	     c->key.nr_color_regions > 1 &&
-	     c->key.sample_alpha_to_coverage) {
+	     (c->key.sample_alpha_to_coverage || c->key.alpha_test)) {
             /* Set "Source0 Alpha Present to RenderTarget" bit in message
              * header.
              */
