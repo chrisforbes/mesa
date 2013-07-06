@@ -138,6 +138,7 @@ brw_upload_sf_prog(struct brw_context *brw)
    struct brw_sf_prog_key key;
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
+   int i;
 
    memset(&key, 0, sizeof(key));
 
@@ -193,7 +194,13 @@ brw_upload_sf_prog(struct brw_context *brw)
    memcpy(key.interpolation_mode, brw->interpolation_mode, BRW_VARYING_SLOT_COUNT);
 
    /* _NEW_LIGHT | _NEW_PROGRAM */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
+   key.has_flat_shading = 0;
+   for (i = 0; i < BRW_VARYING_SLOT_COUNT; i++) {
+      if (brw->interpolation_mode[i] == INTERP_QUALIFIER_FLAT) {
+         key.has_flat_shading = 1;
+         break;
+      }
+   }
    key.do_twoside_color = ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
                            ctx->VertexProgram._TwoSideEnabled);
 
