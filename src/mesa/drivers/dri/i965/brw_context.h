@@ -154,6 +154,7 @@ enum brw_state_id {
    BRW_STATE_STATS_WM,
    BRW_STATE_UNIFORM_BUFFER,
    BRW_STATE_META_IN_PROGRESS,
+   BRW_STATE_INTERPOLATION_MAP,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -186,6 +187,7 @@ enum brw_state_id {
 #define BRW_NEW_STATS_WM		(1 << BRW_STATE_STATS_WM)
 #define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
+#define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -1202,6 +1204,11 @@ struct brw_context
 
    uint32_t render_target_format[MESA_FORMAT_COUNT];
    bool format_supported_as_render_target[MESA_FORMAT_COUNT];
+
+   /* Interpolation modes, one byte per vue slot.
+    * Used Gen4/5 by the clip|sf|wm stages. Ignored on Gen6+.
+    */
+   unsigned char interpolation_mode[BRW_VARYING_SLOT_COUNT];
 
    /* PrimitiveRestart */
    struct {
