@@ -1079,6 +1079,11 @@ struct brw_context
    uint32_t render_target_format[MESA_FORMAT_COUNT];
    bool format_supported_as_render_target[MESA_FORMAT_COUNT];
 
+   /* Interpolation modes, one byte per vue slot.
+    * Used Gen4/5 by the clip|sf|wm stages. Ignored on Gen6+.
+    */
+   unsigned char interpolation_mode[BRW_VARYING_SLOT_COUNT];
+
    /* PrimitiveRestart */
    struct {
       bool in_progress;

@@ -195,6 +195,9 @@ brw_upload_sf_prog(struct brw_context *brw)
    key.do_twoside_color = ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
                            ctx->VertexProgram._TwoSideEnabled);
 
+   /* BRW_NEW_FRAGMENT_PROGRAM | _NEW_LIGHT */
+   memcpy(key.interpolation_mode, brw->interpolation_mode, BRW_VARYING_SLOT_COUNT);
+
    /* _NEW_POLYGON */
    if (key.do_twoside_color) {
       /* If we're rendering to a FBO, we have to invert the polygon
@@ -216,7 +219,9 @@ const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
       .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT |
                 _NEW_TRANSFORM | _NEW_BUFFERS | _NEW_PROGRAM),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE | BRW_NEW_VUE_MAP_GEOM_OUT)
+      .brw   = (BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_FRAGMENT_PROGRAM)
    },
    .emit = brw_upload_sf_prog
 };

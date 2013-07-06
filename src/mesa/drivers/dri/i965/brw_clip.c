@@ -48,6 +48,57 @@
 #define BACK_UNFILLED_BIT   0x2
 
 
+/* Set up interpolation modes for every element in the VUE */
+static void
+brw_setup_vue_interpolation(struct brw_context *brw)
+{
+   const struct gl_fragment_program *fprog = brw->fragment_program;
+   /* XXX: is this the right vue_map? (GS!) */
+   struct brw_vue_map *vue_map = &brw->vue_map_geom_out;
+
+   /* XXX: stuffing this in the context is not really good enough */
+   memset(brw->interpolation_mode, INTERP_QUALIFIER_NONE, BRW_VARYING_SLOT_COUNT);
+
+   if (!fprog)
+      return;
+
+   for (int i=0; i < vue_map->num_slots; i++) {
+      int varying = vue_map->slot_to_varying[i];
+      if (varying == -1)
+         continue;
+
+      /* HPOS always wants noperspective. setting it up here allows
+       * us to not need a w/a in the SF program. */
+      if (varying == VARYING_SLOT_POS) {
+         brw->interpolation_mode[i] = INTERP_QUALIFIER_NOPERSPECTIVE;
+         continue;
+      }
+
+      int frag_attrib = varying;
+      if (varying == VARYING_SLOT_BFC0 || varying == VARYING_SLOT_BFC1)
+         frag_attrib = varying - VARYING_SLOT_BFC0 + VARYING_SLOT_COL0;
+
+      if (!(fprog->Base.InputsRead & BITFIELD64_BIT(frag_attrib)))
+         continue;
+
+      enum glsl_interp_qualifier mode = fprog->InterpQualifier[frag_attrib];
+
+      /* If the mode is not specified, the default varies: Color values
+       * follow GL_SHADE_MODEL; everything else is smooth.
+       */
+      if (mode == INTERP_QUALIFIER_NONE) {
+         if (frag_attrib == VARYING_SLOT_COL0 || frag_attrib == VARYING_SLOT_COL1)
+            mode = brw->intel.ctx.Light.ShadeModel == GL_FLAT
+               ? INTERP_QUALIFIER_FLAT : INTERP_QUALIFIER_SMOOTH;
+         else
+            mode = INTERP_QUALIFIER_SMOOTH;
+      }
+
+      brw->interpolation_mode[i] = mode;
+   }
+}
+
+
 static void compile_clip_prog( struct brw_context *brw,
 			     struct brw_clip_prog_key *key )
 {
@@ -143,6 +194,11 @@ brw_upload_clip_prog(struct brw_context *brw)
 
    /* Populate the key:
     */
+
+   /* BRW_NEW_FRAGMENT_PROGRAM, _NEW_LIGHT */
+   brw_setup_vue_interpolation(brw);
+   memcpy(key.interpolation_mode, brw->interpolation_mode, BRW_VARYING_SLOT_COUNT);
+
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->intel.reduced_primitive;
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
@@ -258,7 +314,9 @@ const struct brw_tracked_state brw_clip_prog = {
 		_NEW_TRANSFORM |
 		_NEW_POLYGON | 
 		_NEW_BUFFERS),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE | BRW_NEW_VUE_MAP_GEOM_OUT)
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
+                BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT)
    },
    .emit = brw_upload_clip_prog
 };
