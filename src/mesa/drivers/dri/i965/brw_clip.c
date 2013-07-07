@@ -136,6 +136,7 @@ brw_upload_clip_prog(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    struct brw_clip_prog_key key;
+   int i;
 
    memset(&key, 0, sizeof(key));
 
@@ -149,8 +150,16 @@ brw_upload_clip_prog(struct brw_context *brw)
    key.primitive = brw->reduced_primitive;
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    key.attrs = brw->vue_map_geom_out.slots_valid;
-   /* _NEW_LIGHT */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
+
+   /* BRW_NEW_FRAGMENT_PROGRAM, _NEW_LIGHT */
+   key.has_flat_shading = 0;
+   for (i = 0; i < brw->vue_map_geom_out.num_slots; i++) {
+      if (key.interpolation_mode[i] == INTERP_QUALIFIER_FLAT) {
+         key.has_flat_shading = 1;
+         break;
+      }
+   }
+
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    /* _NEW_TRANSFORM (also part of VUE map)*/
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);

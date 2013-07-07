@@ -46,7 +46,7 @@ struct brw_clip_prog_key {
    unsigned char interpolation_mode[BRW_VARYING_SLOT_COUNT];
    GLuint primitive:4;
    GLuint nr_userclip:4;
-   GLuint do_flat_shading:1;
+   GLuint has_flat_shading:1;
    GLuint pv_first:1;
    GLuint do_unfilled:1;
    GLuint fill_cw:2;		/* includes cull information */
@@ -173,8 +173,8 @@ void brw_clip_kill_thread(struct brw_clip_compile *c);
 struct brw_reg brw_clip_plane_stride( struct brw_clip_compile *c );
 struct brw_reg brw_clip_plane0_address( struct brw_clip_compile *c );
 
-void brw_clip_copy_colors( struct brw_clip_compile *c,
-			   GLuint to, GLuint from );
+void brw_clip_copy_flatshaded_attributes( struct brw_clip_compile *c,
+                                          GLuint to, GLuint from );
 
 void brw_clip_init_clipmask( struct brw_clip_compile *c );
 
