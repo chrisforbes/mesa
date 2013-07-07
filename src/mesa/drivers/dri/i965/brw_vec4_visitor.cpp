@@ -2601,16 +2601,17 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 
       current_annotation = "Clipping flags";
       for (i = 0; i < key->nr_userclip_plane_consts; i++) {
-	 vec4_instruction *inst;
-         gl_varying_slot slot = (prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)
-            ? VARYING_SLOT_CLIP_VERTEX : VARYING_SLOT_POS;
+         vec4_instruction *inst;
+         gl_varying_slot slot = VARYING_SLOT_CLIP_DIST0 + (i>=4);
+         src_reg dist = src_reg(output_reg[slot]);
+         int channel = i & 3;
+         dist.swizzle = BRW_SWIZZLE4(channel, channel, channel, channel);
 
-	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[slot]),
-                         src_reg(this->userplane[i])));
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
+         inst = emit(CMP(dst_null_f(), dist));
+         inst->conditional_mod = BRW_CONDITIONAL_L;
 
-	 inst = emit(OR(header1_w, src_reg(header1_w), 1u << i));
-	 inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(OR(header1_w, src_reg(header1_w), 1u << i));
+         inst->predicate = BRW_PREDICATE_NORMAL;
       }
 
       /* i965 clipping workaround:
