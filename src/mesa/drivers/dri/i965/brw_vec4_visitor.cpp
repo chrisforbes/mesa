@@ -2724,15 +2724,6 @@ vec4_visitor::emit_urb_slot(int mrf, int varying)
       current_annotation = "gl_Position";
       emit(MOV(reg, src_reg(output_reg[VARYING_SLOT_POS])));
       break;
-   case VARYING_SLOT_CLIP_DIST0:
-   case VARYING_SLOT_CLIP_DIST1:
-      if (this->key->uses_clip_distance) {
-         emit_generic_urb_slot(reg, varying);
-      } else {
-         current_annotation = "user clip distances";
-         emit_clip_distances(hw_reg, (varying - VARYING_SLOT_CLIP_DIST0) * 4);
-      }
-      break;
    case VARYING_SLOT_EDGE:
       /* This is present when doing unfilled polygons.  We're supposed to copy
        * the edge flag from the user-provided vertex array
@@ -2831,6 +2822,13 @@ vec4_visitor::emit_vertex()
 
    if (intel->gen < 6) {
       emit_ndc_computation();
+   }
+
+   /* Lower legacy ff and ClipVertex clipping to clip distances */
+   if (key->userclip_active && !key->uses_clip_distance) {
+      current_annotation = "user clip distances";
+      emit_clip_distances(output_reg[VARYING_SLOT_CLIP_DIST0], 0);
+      emit_clip_distances(output_reg[VARYING_SLOT_CLIP_DIST1], 4);
    }
 
    /* Set up the VUE data for the first URB write */
