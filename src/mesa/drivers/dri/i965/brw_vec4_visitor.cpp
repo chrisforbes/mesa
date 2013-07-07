@@ -2652,14 +2652,6 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 void
 vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
 {
-   if (intel->gen < 6) {
-      /* Clip distance slots are set aside in gen5, but they are not used.  It
-       * is not clear whether we actually need to set aside space for them,
-       * but the performance cost is negligible.
-       */
-      return;
-   }
-
    /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special Variables):
     *
     *     "If a linked set of shaders forming the vertex stage contains no
