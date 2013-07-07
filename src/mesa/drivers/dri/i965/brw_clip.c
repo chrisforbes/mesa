@@ -214,6 +214,14 @@ brw_upload_clip_prog(struct brw_context *brw)
       }
    }
 
+   key.has_noperspective_shading = 0;
+   for (i = 0; i < brw->vue_map_geom_out.num_slots; i++) {
+      if (key.interpolation_mode[i] == INTERP_QUALIFIER_NOPERSPECTIVE) {
+         key.has_noperspective_shading = 1;
+         break;
+      }
+   }
+
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    /* _NEW_TRANSFORM (also part of VUE map)*/
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
