@@ -273,9 +273,9 @@ void brw_clip_tri( struct brw_clip_compile *c )
    brw_MOV(p, get_addr_reg(freelist_ptr), brw_address(c->reg.vertex[3]) );
 
    /* Set the initial vertex source mask: The first 6 planes are the bounds
-    * of the view volume; the next 6 planes are the user clipping planes.
+    * of the view volume; the next 8 planes are the user clipping planes.
     */
-   brw_MOV(p, c->reg.vertex_src_mask, brw_imm_ud(0xfc0));
+   brw_MOV(p, c->reg.vertex_src_mask, brw_imm_ud(0x3fc0));
 
    brw_DO(p, BRW_EXECUTE_1);
    {

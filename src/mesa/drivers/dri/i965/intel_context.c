@@ -549,7 +549,7 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   if (intel->gen >= 6)
+   if (intel->gen >= 5 || intel->is_g4x)
       ctx->Const.MaxClipPlanes = 8;
 
    ctx->Const.StripTextureBorder = GL_TRUE;
