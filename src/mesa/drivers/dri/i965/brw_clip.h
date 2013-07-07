@@ -47,6 +47,7 @@ struct brw_clip_prog_key {
    GLuint primitive:4;
    GLuint nr_userclip:4;
    GLuint has_flat_shading:1;
+   GLuint has_noperspective_shading:1;
    GLuint pv_first:1;
    GLuint do_unfilled:1;
    GLuint fill_cw:2;		/* includes cull information */
