@@ -105,6 +105,6 @@ void brw_emit_point_setup( struct brw_sf_compile *c, bool allocate );
 void brw_emit_point_sprite_setup( struct brw_sf_compile *c, bool allocate );
 void brw_emit_anyprim_setup( struct brw_sf_compile *c );
 
-#define BRW_SF_URB_ENTRY_READ_OFFSET 1
+#define BRW_SF_URB_ENTRY_READ_OFFSET 2
 
 #endif
