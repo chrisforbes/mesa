@@ -155,6 +155,7 @@ intelInitExtensions(struct gl_context *ctx)
    if (brw->gen >= 5) {
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
+      ctx->Extensions.EXT_gpu_shader4 = true;
    }
 
    if (ctx->API == API_OPENGL_CORE)
