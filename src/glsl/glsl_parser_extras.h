@@ -290,6 +290,8 @@ struct _mesa_glsl_parse_state {
    bool AMD_vertex_shader_layer_warn;
    bool ARB_shading_language_420pack_enable;
    bool ARB_shading_language_420pack_warn;
+   bool EXT_gpu_shader4_enable;
+   bool EXT_gpu_shader4_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
