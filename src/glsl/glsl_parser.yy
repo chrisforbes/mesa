@@ -1549,6 +1549,7 @@ basic_type_specifier_nonarray:
    | FLOAT_TOK              { $$ = "float"; }
    | INT_TOK                { $$ = "int"; }
    | UINT_TOK               { $$ = "uint"; }
+   | UNSIGNED INT_TOK       { $$ = "uint"; }
    | BOOL_TOK               { $$ = "bool"; }
    | VEC2                   { $$ = "vec2"; }
    | VEC3                   { $$ = "vec3"; }

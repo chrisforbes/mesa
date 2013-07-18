@@ -464,7 +464,7 @@ short		KEYWORD(110, 100, 0, 0, SHORT_TOK);
 double		KEYWORD(110, 100, 400, 0, DOUBLE_TOK);
 half		KEYWORD(110, 100, 0, 0, HALF);
 fixed		KEYWORD(110, 100, 0, 0, FIXED_TOK);
-unsigned	KEYWORD(110, 100, 0, 0, UNSIGNED);
+unsigned	KEYWORD_WITH_ALT(110, 100, 0, 0, yyextra->EXT_gpu_shader4_enable, UNSIGNED);
 input		KEYWORD(110, 100, 0, 0, INPUT_TOK);
 output		KEYWORD(110, 100, 0, 0, OUTPUT);
 hvec2		KEYWORD(110, 100, 0, 0, HVEC2);
