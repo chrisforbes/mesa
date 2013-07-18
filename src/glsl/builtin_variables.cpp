@@ -731,6 +731,15 @@ builtin_variable_generator::generate_fs_special_vars()
       if (state->AMD_shader_stencil_export_warn)
          var->warn_extension = "GL_AMD_shader_stencil_export";
    }
+
+   /* EXT_gpu_shader4 makes gl_PrimitiveID available in the FS; 1.50 will
+    * probably want this too. */
+   if (state->EXT_gpu_shader4_enable) {
+      ir_variable *const var =
+         add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
+      if (state->EXT_gpu_shader4_warn)
+         var->warn_extension = "GL_EXT_gpu_shader4";
+   }
 }
 
 
