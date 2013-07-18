@@ -285,11 +285,11 @@ out		return OUT_TOK;
 inout		return INOUT_TOK;
 uniform		return UNIFORM;
 varying		DEPRECATED_ES_KEYWORD(VARYING);
-centroid	KEYWORD(120, 300, 120, 300, CENTROID);
+centroid	KEYWORD_WITH_ALT(120, 300, 120, 300, yyextra->EXT_gpu_shader4_enable, CENTROID);
 invariant	KEYWORD(120, 100, 120, 100, INVARIANT);
-flat		KEYWORD(130, 100, 130, 300, FLAT);
+flat		KEYWORD_WITH_ALT(130, 100, 130, 300, yyextra->EXT_gpu_shader4_enable, FLAT);
 smooth		KEYWORD(130, 300, 130, 300, SMOOTH);
-noperspective	KEYWORD(130, 300, 130, 0, NOPERSPECTIVE);
+noperspective	KEYWORD_WITH_ALT(130, 300, 130, 0, yyextra->EXT_gpu_shader4_enable, NOPERSPECTIVE);
 
 sampler1D	DEPRECATED_ES_KEYWORD(SAMPLER1D);
 sampler2D	return SAMPLER2D;
