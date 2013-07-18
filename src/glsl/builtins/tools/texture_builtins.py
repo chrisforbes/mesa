@@ -653,6 +653,106 @@ def generate_texture_functions(fs):
     generate_sigs("", "lod", "CubeArrayShadow")
     end_function(fs, "textureQueryLOD")
 
+    # EXT_gpu_shader4 texture functions with silly names.
+    start_function("textureSize1D")
+    generate_fiu_sigs("txs", "1D")
+    end_function(fs, "textureSize1D")
+
+    start_function("textureSize2D")
+    generate_fiu_sigs("txs", "2D")
+    end_function(fs, "textureSize2D")
+
+    start_function("textureSize3D")
+    generate_fiu_sigs("txs", "3D")
+    end_function(fs, "textureSize3D")
+
+    start_function("textureSize1DArray")
+    generate_fiu_sigs("txs", "1DArray")
+    end_function(fs, "textureSize1DArray")
+
+    start_function("textureSize2DArray")
+    generate_fiu_sigs("txs", "2DArray")
+    end_function(fs, "textureSize2DArray")
+
+    start_function("textureSizeCube")
+    generate_fiu_sigs("txs", "Cube")
+    end_function(fs, "textureSizeCube")
+
+    start_function("textureSize2DRect")
+    generate_fiu_sigs("txs", "2DRect")
+    end_function(fs, "textureSize2DRect")
+
+    start_function("textureSizeBuffer")
+    generate_fiu_sigs("txs", "Buffer")
+    end_function(fs, "textureSizeBuffer")
+
+    start_function("texelFetch1D")
+    generate_fiu_sigs("txf", "1D")
+    end_function(fs, "texelFetch1D")
+
+    start_function("texelFetch2D")
+    generate_fiu_sigs("txf", "2D")
+    end_function(fs, "texelFetch2D")
+
+    start_function("texelFetch3D")
+    generate_fiu_sigs("txf", "3D")
+    end_function(fs, "texelFetch3D")
+
+    start_function("texelFetch1DArray")
+    generate_fiu_sigs("txf", "1DArray")
+    end_function(fs, "texelFetch1DArray")
+
+    start_function("texelFetch2DArray")
+    generate_fiu_sigs("txf", "2DArray")
+    end_function(fs, "texelFetch2DArray")
+
+    start_function("texelFetch2DRect")
+    generate_fiu_sigs("txf", "2DRect")
+    end_function(fs, "texelFetch2DRect")
+
+    start_function("texelFetch1DOffset")
+    generate_fiu_sigs("txf", "1D", Offset)
+    end_function(fs, "texelFetch1DOffset")
+
+    start_function("texelFetch2DOffset")
+    generate_fiu_sigs("txf", "2D", Offset)
+    end_function(fs, "texelFetch2DOffset")
+
+    start_function("texelFetch3DOffset")
+    generate_fiu_sigs("txf", "3D", Offset)
+    end_function(fs, "texelFetch3DOffset")
+
+    start_function("texelFetch1DArrayOffset")
+    generate_fiu_sigs("txf", "1DArray", Offset)
+    end_function(fs, "texelFetch1DArrayOffset")
+
+    start_function("texelFetch2DArrayOffset")
+    generate_fiu_sigs("txf", "2DArray", Offset)
+    end_function(fs, "texelFetch2DArrayOffset")
+
+    start_function("texture1DOffset")
+    generate_fiu_sigs("tex", "1D", Offset)
+    end_function(fs, "texture1DOffset")
+
+    start_function("texture2DOffset")
+    generate_fiu_sigs("tex", "2D", Offset)
+    end_function(fs, "texture2DOffset")
+
+    start_function("texture2DRectOffset")
+    generate_fiu_sigs("tex", "2DRect", Offset)
+    end_function(fs, "texture2DRectOffset")
+
+    start_function("texture3DOffset")
+    generate_fiu_sigs("tex", "3D", Offset)
+    end_function(fs, "texture3DOffset")
+
+    start_function("texture1DArrayOffset")
+    generate_fiu_sigs("tex", "1DArray", Offset)
+    end_function(fs, "texture1DArrayOffset")
+
+    start_function("texture2DArrayOffset")
+    generate_fiu_sigs("tex", "2DArray", Offset)
+    end_function(fs, "texture2DArrayOffset")
     sys.stdout = sys.__stdout__
     return fs
 
