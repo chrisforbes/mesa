@@ -113,6 +113,9 @@ struct brw_clip_compile {
        * defined clipping plane.
        */
       struct brw_reg vertex_src_mask;
+
+      /* Offset into the vertex of the current plane's clipdistance value */
+      struct brw_reg clipdistance_offset;
    } reg;
 
    /* Number of registers storing VUE data */
