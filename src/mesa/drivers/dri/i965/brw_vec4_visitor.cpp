@@ -2599,7 +2599,6 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
       header1_w.writemask = WRITEMASK_W;
-      GLuint i;
 
       emit(MOV(header1, 0u));
 
@@ -2611,18 +2610,22 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 	 emit(AND(header1_w, src_reg(header1_w), 0x7ff << 8));
       }
 
-      current_annotation = "Clipping flags";
-      for (i = 0; i < key->nr_userclip_plane_consts; i++) {
-	 vec4_instruction *inst;
-         gl_varying_slot slot = (prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)
-            ? VARYING_SLOT_CLIP_VERTEX : VARYING_SLOT_POS;
+      if (key->userclip_active) {
+         current_annotation = "Clipping flags";
+         dst_reg temp = dst_reg(this, glsl_type::uint_type);
+         dst_reg temp2 = dst_reg(this, glsl_type::uint_type);
 
-	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[slot]),
-                         src_reg(this->userplane[i])));
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
+         emit(CMP(temp, src_reg(output_reg[VARYING_SLOT_CLIP_DIST0]), src_reg(0.0f), BRW_CONDITIONAL_L));
+         emit(AND(temp2, src_reg(temp), src_reg(0x0fu)));
 
-	 inst = emit(OR(header1_w, src_reg(header1_w), 1u << i));
-	 inst->predicate = BRW_PREDICATE_NORMAL;
+         emit(CMP(temp, src_reg(output_reg[VARYING_SLOT_CLIP_DIST1]), src_reg(0.0f), BRW_CONDITIONAL_L));
+         emit(AND(temp, src_reg(temp), src_reg(0x0fu)));
+         emit(SHL(temp, src_reg(temp), src_reg(4)));
+         emit(OR(temp2, src_reg(temp2), src_reg(temp)));
+
+         /* mask just the enabled planes */
+         emit(AND(temp2, src_reg(temp2), src_reg(ctx->Transform.ClipPlanesEnabled)));
+         emit(OR(header1_w, src_reg(header1_w), src_reg(temp2)));
       }
 
       /* i965 clipping workaround:
