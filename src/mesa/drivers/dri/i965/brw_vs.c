@@ -94,11 +94,11 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
        */
       assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
       assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
+      assign_vue_slot(vue_map, VARYING_SLOT_POS);
       if (userclip_active) {
          assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST0);
          assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST1);
       }
-      assign_vue_slot(vue_map, VARYING_SLOT_POS);
       break;
    case 6:
    case 7:

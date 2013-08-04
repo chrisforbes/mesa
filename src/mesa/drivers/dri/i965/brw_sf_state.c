@@ -149,8 +149,6 @@ static void upload_sf_unit( struct brw_context *brw )
 
    sf->thread3.dispatch_grf_start_reg = 3;
    sf->thread3.urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
-   if (ctx->Transform.ClipPlanesEnabled != 0)
-      sf->thread3.urb_entry_read_offset += 1;
 
    /* CACHE_NEW_SF_PROG */
    sf->thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;
