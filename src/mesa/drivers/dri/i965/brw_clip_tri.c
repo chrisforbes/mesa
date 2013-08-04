@@ -241,16 +241,19 @@ load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
    brw_AND(p, vec1(brw_null_reg()), c->reg.vertex_src_mask, brw_imm_ud(1));
    brw_IF(p, BRW_EXECUTE_1);
    {
-      brw_MOV(p, dst, deref_4f(vtx, clip_offset));
+      struct brw_indirect temp_ptr = brw_indirect(7, 0);
+      brw_ADD(p, get_addr_reg(temp_ptr), get_addr_reg(vtx), c->reg.clipdistance_offset);
+      brw_MOV(p, vec1(dst), deref_1f(temp_ptr, 0));
    }
    brw_ELSE(p);
    {
       brw_MOV(p, dst, deref_4f(vtx, hpos_offset));
+      brw_DP4(p, dst, dst, c->reg.plane_equation);
    }
    brw_ENDIF(p);
 
    brw_set_conditionalmod(p, cond);
-   brw_DP4(p, dst, dst, c->reg.plane_equation);
+   brw_CMP(p, brw_null_reg(), cond, vec1(dst), brw_imm_f(0.0f));
 }
 
 
