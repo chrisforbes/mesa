@@ -1248,6 +1248,12 @@ fs_visitor::calculate_urb_setup()
          if (i == VARYING_SLOT_PSIZ)
             continue;
 
+         /* Clip distances are 'valid' in the VUE map, but are packed in the
+          * header part, which the SF doesn't get to see.
+          */
+         if (i == VARYING_SLOT_CLIP_DIST0 || i == VARYING_SLOT_CLIP_DIST1)
+            continue;
+
 	 if (c->key.input_slots_valid & BITFIELD64_BIT(i)) {
 	    /* The back color slot is skipped when the front color is
 	     * also written to.  In addition, some slots can be
