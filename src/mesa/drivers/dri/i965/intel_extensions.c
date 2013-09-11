@@ -148,6 +148,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.OES_depth_texture_cube_map = true;
       ctx->Extensions.ARB_shading_language_packing = true;
       ctx->Extensions.ARB_texture_multisample = true;
+      ctx->Extensions.ARB_texture_gather = true;
 
       /* Test if the kernel has the ioctl. */
       if (drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &dummy) == 0)
@@ -158,10 +159,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
       ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
-   }
-
-   if (brw->gen >= 7) {
-      ctx->Extensions.ARB_texture_gather = true;
    }
 
    if (ctx->API == API_OPENGL_CORE)

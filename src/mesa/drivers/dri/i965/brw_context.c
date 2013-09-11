@@ -171,6 +171,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.MaxColorTextureSamples = 4;
       ctx->Const.MaxDepthTextureSamples = 4;
       ctx->Const.MaxIntegerSamples = 4;
+      ctx->Const.MaxProgramTextureGatherComponents = 1;
    } else if (brw->gen >= 7) {
       ctx->Const.MaxSamples = 8;
       ctx->Const.MaxColorTextureSamples = 8;
