@@ -2351,6 +2351,43 @@ vec4_visitor::visit(ir_texture *ir)
       }
    }
 
+   if (ir->op == ir_tg4 && brw->gen == 6 && (
+         ir->type->base_type == GLSL_TYPE_UINT ||
+         ir->type->base_type == GLSL_TYPE_INT)) {
+
+      /* On Gen6, gather4 with an int/uint sampler only returns correct data in the
+       * r/g channels. To get all 4 channels, we will issue 2 gather4's, and then shuffle
+       * the b/a channels into the correct locations.
+       *
+       * gather4's sampling pattern is:
+       *       a b
+       *       r g
+       */
+
+      vec4_instruction *inst2 = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
+      inst2->sampler = inst->sampler;
+      inst2->header_present = true;
+      inst2->dst = dst_reg(this, ir->type);
+      inst2->dst.writemask = WRITEMASK_XYZW;
+      inst2->shadow_compare = false;
+      if (inst->header_present) {
+         inst2->base_mrf = inst->base_mrf;
+         inst2->mlen = inst->mlen;
+      }
+      else {
+         inst2->base_mrf = inst->base_mrf - 1;
+         inst2->mlen = inst->mlen + 1;
+      }
+
+      inst2->texture_offset = inst->texture_offset & ~0x0f0;
+      inst2->texture_offset |= (inst->texture_offset + 0x0f0) & 0x0f0;
+      emit(inst2);
+
+      src_reg temp2(inst2->dst);
+      temp2.swizzle = BRW_SWIZZLE4(SWIZZLE_Y, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
+      emit(MOV(with_writemask(inst->dst, WRITEMASK_ZW), temp2));
+   }
+
    swizzle_result(ir, src_reg(inst->dst), sampler);
 }
 

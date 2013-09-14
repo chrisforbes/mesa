@@ -1552,6 +1552,47 @@ fs_visitor::visit(ir_texture *ir)
       }
    }
 
+   if (ir->op == ir_tg4 && brw->gen == 6 && (
+            ir->type->base_type == GLSL_TYPE_UINT ||
+            ir->type->base_type == GLSL_TYPE_INT)) {
+      /* On Gen6, gather4 with an int/uint sampler only returns correct data in the
+       * r/g channels. To get all 4 channels, we will issue 2 gather4's, and then shuffle
+       * the b/a channels into the correct locations.
+       *
+       * gather4's sampling pattern is:
+       *       a b
+       *       r g
+       */
+
+      fs_reg temp_dst = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 4, 1));
+      fs_inst *inst2 = emit(SHADER_OPCODE_TG4, temp_dst);
+      inst2->sampler = sampler;
+      inst2->regs_written = 4;
+      inst2->src[0] = reg_undef;
+      inst2->header_present = true;
+      /* All the MRFs are already set up, except for the header. If the original
+       * didn't use a header at all, add it.
+       */
+      if (!inst->header_present) {
+         inst2->mlen = inst->mlen + 1;
+         inst2->base_mrf = inst->base_mrf - 1;
+      }
+      else {
+         inst2->mlen = inst->mlen;
+         inst2->base_mrf = inst->base_mrf;
+      }
+      /* Adjust texel offset: (u',v',w') = (u,v-1,w) */
+      inst2->texture_offset = inst->texture_offset & ~0x0f0;
+      inst2->texture_offset |= (inst->texture_offset + 0x0f0) & 0x0f0;
+
+      fs_reg dst2 = dst;
+      dst2.reg_offset += 3;
+      emit(MOV(dst2, temp_dst));    /* dst.a = temp_dst.r */
+      dst2.reg_offset--;
+      temp_dst.reg_offset++;
+      emit(MOV(dst2, temp_dst));    /* dst.b = temp_dst.g */
+   }
+
    swizzle_result(ir, dst, sampler);
 }
 
