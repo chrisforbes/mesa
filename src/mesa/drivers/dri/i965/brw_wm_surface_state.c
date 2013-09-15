@@ -246,7 +246,8 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
 static void
 brw_update_texture_surface(struct gl_context *ctx,
                            unsigned unit,
-                           uint32_t *surf_offset)
+                           uint32_t *surf_offset,
+                           uint32_t (*tex_format_override)(uint32_t))
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -265,14 +266,17 @@ brw_update_texture_surface(struct gl_context *ctx,
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, surf_offset);
 
+   uint32_t tex_format = translate_tex_format(brw,
+                                              mt->format,
+                                              tObj->DepthMode,
+                                              sampler->sRGBDecode);
+   if (tex_format_override)
+      tex_format = tex_format_override(tex_format);
+
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACE_CUBEFACE_ENABLES |
-	      (translate_tex_format(brw,
-                                    mt->format,
-				    tObj->DepthMode,
-				    sampler->sRGBDecode) <<
-	       BRW_SURFACE_FORMAT_SHIFT));
+	      tex_format << BRW_SURFACE_FORMAT_SHIFT);
 
    surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
 
@@ -753,7 +757,44 @@ update_stage_texture_surfaces(struct brw_context *brw,
 
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s);
+            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s, 0);
+         }
+      }
+   }
+}
+
+
+static uint32_t
+gather_format_override(uint32_t format) {
+   if (format == BRW_SURFACEFORMAT_R32G32_FLOAT)
+      return BRW_SURFACEFORMAT_R32G32_FLOAT_LD;
+   else
+      return format;
+}
+
+
+static void
+update_stage_texture_surfaces_gather(struct brw_context *brw,
+                              const struct gl_program *prog,
+                              uint32_t *surf_offset)
+{
+   if (!prog)
+      return;
+
+   struct gl_context *ctx = &brw->ctx;
+
+   unsigned num_samplers = _mesa_fls(prog->SamplersUsed);
+
+   for (unsigned s = 0; s < num_samplers; s++) {
+      surf_offset[s] = 0;
+
+      if (prog->SamplersUsed & (1 << s)) {
+         const unsigned unit = prog->SamplerUnits[s];
+
+         /* _NEW_TEXTURE */
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s,
+                  gather_format_override);
          }
       }
    }
@@ -785,6 +826,17 @@ brw_update_texture_surfaces(struct brw_context *brw)
    update_stage_texture_surfaces(brw, fs,
                                  brw->wm.base.surf_offset +
                                  SURF_INDEX_TEXTURE(0));
+
+   /* emit alternate set of surface state for gather */
+   update_stage_texture_surfaces_gather(brw, vs,
+                                 brw->vs.base.surf_offset +
+                                 SURF_INDEX_VEC4_GATHER_TEXTURE(0));
+   update_stage_texture_surfaces_gather(brw, gs,
+                                 brw->gs.base.surf_offset +
+                                 SURF_INDEX_VEC4_GATHER_TEXTURE(0));
+   update_stage_texture_surfaces_gather(brw, fs,
+                                 brw->wm.base.surf_offset +
+                                 SURF_INDEX_GATHER_TEXTURE(0));
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }

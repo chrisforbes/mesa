@@ -275,7 +275,8 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
 static void
 gen7_update_texture_surface(struct gl_context *ctx,
                             unsigned unit,
-                            uint32_t *surf_offset)
+                            uint32_t *surf_offset,
+                            uint32_t (*tex_format_override)(uint32_t))
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -298,6 +299,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
                                               mt->format,
                                               tObj->DepthMode,
                                               sampler->sRGBDecode);
+   if (tex_format_override)
+      tex_format = tex_format_override(tex_format);
 
    surf[0] = translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
              tex_format << BRW_SURFACE_FORMAT_SHIFT |
