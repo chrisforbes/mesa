@@ -323,7 +323,8 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 				     GLuint nr_prims,
 				     const struct _mesa_index_buffer *ib,
 				     GLuint min_index,
-				     GLuint max_index )
+				     GLuint max_index,
+				     const struct gl_buffer_object *indirect)
 {
    struct brw_context *brw = brw_context(ctx);
    bool retval = true;
@@ -376,6 +377,9 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    brw->vb.min_index = min_index;
    brw->vb.max_index = max_index;
    brw->state.dirty.brw |= BRW_NEW_VERTICES;
+
+   brw->indirect_buffer.indb = indirect;
+   brw->state.dirty.brw |= BRW_NEW_INDIRECT_BUFFER;
 
    for (i = 0; i < nr_prims; i++) {
       int estimated_max_prim_size;
@@ -506,7 +510,7 @@ void brw_draw_prims( struct gl_context *ctx,
     * manage it.  swrast doesn't support our featureset, so we can't fall back
     * to it.
     */
-   brw_try_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index);
+   brw_try_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index, indirect);
 }
 
 void brw_draw_init( struct brw_context *brw )
