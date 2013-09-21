@@ -933,3 +933,35 @@ const struct brw_tracked_state brw_index_buffer = {
    },
    .emit = brw_emit_index_buffer,
 };
+
+
+static void brw_upload_indirect_buffer(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   struct gl_buffer_object *bufferobj;
+   drm_intel_bo *bo;
+
+   bufferobj = brw->indirect_buffer.indb;
+   if (bufferobj == NULL)
+      return;
+
+   bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
+                               0, bufferobj->Size);
+   drm_intel_bo_reference(bo);
+
+   if (brw->indirect_buffer.bo != bo) {
+      drm_intel_bo_unreference(brw->indirect_buffer.bo);
+      brw->indirect_buffer.bo = bo;
+   }
+   else {
+      drm_intel_bo_unreference(bo);
+   }
+};
+
+
+const struct brw_tracked_state brw_indirect_buffer = {
+   .dirty = {
+      .brw = BRW_NEW_BATCH | BRW_NEW_INDIRECT_BUFFER,
+   },
+   .emit = brw_upload_indirect_buffer,
+};

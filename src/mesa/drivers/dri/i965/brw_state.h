@@ -131,6 +131,7 @@ extern const struct brw_tracked_state gen7_urb;
 extern const struct brw_tracked_state gen7_vs_state;
 extern const struct brw_tracked_state gen7_wm_state;
 extern const struct brw_tracked_state haswell_cut_index;
+extern const struct brw_tracked_state brw_indirect_buffer;
 
 
 /* brw_misc_state.c */
