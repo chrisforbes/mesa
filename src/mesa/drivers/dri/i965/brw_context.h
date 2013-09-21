@@ -185,6 +185,7 @@ enum brw_state_id {
    BRW_STATE_META_IN_PROGRESS,
    BRW_STATE_INTERPOLATION_MAP,
    BRW_STATE_PUSH_CONSTANT_ALLOCATION,
+   BRW_STATE_INDIRECT_BUFFER,
    BRW_NUM_STATE_BITS
 };
 
@@ -224,6 +225,7 @@ enum brw_state_id {
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
 #define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
 #define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1 << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
+#define BRW_NEW_INDIRECT_BUFFER         (1 << BRW_STATE_INDIRECT_BUFFER)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -1164,6 +1166,14 @@ struct brw_context
        */
       unsigned int start_vertex_offset;
    } ib;
+
+   struct {
+      /**
+       * Draw indirect buffer for this draw_prims call.
+       */
+      const struct gl_buffer_object *indb;
+      drm_intel_bo *bo;
+   } indirect_buffer;
 
    /* Active vertex program: 
     */
