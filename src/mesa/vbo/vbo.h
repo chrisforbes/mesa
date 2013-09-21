@@ -46,7 +46,8 @@ struct _mesa_prim {
    GLuint end:1;
    GLuint weak:1;
    GLuint no_current_update:1;
-   GLuint pad:19;
+   GLuint is_indirect:1;
+   GLuint pad:18;
 
    GLuint start;
    GLuint count;
