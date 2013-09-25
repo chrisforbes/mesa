@@ -781,8 +781,14 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
       if (psc == NULL)
          psc = applegl_create_screen(i, priv);
 #else
-      if (psc == NULL)
-	 psc = indirect_create_screen(i, priv);
+      if (psc == NULL) {
+         if (getenv("LIBGL_NEVER_INDIRECT") != NULL) {
+            printf("Would fall back to indirect rendering, but giving up"
+                   " due to LIBGL_NEVER_INDIRECT.\n");
+            abort();
+         }
+         psc = indirect_create_screen(i, priv);
+      }
 #endif
       priv->screens[i] = psc;
    }
