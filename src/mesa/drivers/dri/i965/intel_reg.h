@@ -126,3 +126,11 @@
 #define BCS_SWCTRL                      0x22200
 # define BCS_SWCTRL_SRC_Y               (1 << 0)
 # define BCS_SWCTRL_DST_Y               (1 << 1)
+
+/* Auto-Draw / Indirect Registers */
+#define GEN7_3DPRIM_END_OFFSET          0x2420
+#define GEN7_3DPRIM_START_VERTEX        0x2430
+#define GEN7_3DPRIM_VERTEX_COUNT        0x2434
+#define GEN7_3DPRIM_INSTANCE_COUNT      0x2438
+#define GEN7_3DPRIM_START_INSTANCE      0x243C
+#define GEN7_3DPRIM_BASE_VERTEX         0x2440
