@@ -168,6 +168,7 @@ static void brw_emit_prim(struct brw_context *brw,
    int vertex_access_type;
    int start_vertex_location;
    int base_vertex_location;
+   int indirect_flag;
 
    DBG("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode),
        prim->start, prim->count);
@@ -194,7 +195,7 @@ static void brw_emit_prim(struct brw_context *brw,
       verts_per_instance = prim->count;
 
    /* If nothing to emit, just return. */
-   if (verts_per_instance == 0)
+   if (verts_per_instance == 0 && !prim->is_indirect)
       return;
 
    /* If we're set to always flush, do it before and after the primitive emit.
@@ -206,9 +207,68 @@ static void brw_emit_prim(struct brw_context *brw,
       intel_batchbuffer_emit_mi_flush(brw);
    }
 
+   /* If indirect, emit a bunch of loads from the indirect BO. */
+   if (prim->is_indirect) {
+      indirect_flag = GEN7_3DPRIM_INDIRECT_PARAMETER_ENABLE;
+
+      if (prim->indexed) {
+         BEGIN_BATCH(15);
+
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_VERTEX_COUNT);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 0);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_INSTANCE_COUNT);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 4);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_START_VERTEX);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 8);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_BASE_VERTEX);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 12);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_START_INSTANCE);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 16);
+         ADVANCE_BATCH();
+      }
+      else {
+         BEGIN_BATCH(15);
+
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_VERTEX_COUNT);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 0);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_INSTANCE_COUNT);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 4);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_START_VERTEX);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 8);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_START_INSTANCE);
+         OUT_RELOC(brw->indirect_buffer.bo, I915_GEM_DOMAIN_VERTEX, 0,
+               prim->indirect_offset + 12);
+         OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+         OUT_BATCH(GEN7_3DPRIM_BASE_VERTEX);
+         OUT_BATCH(0);
+         ADVANCE_BATCH();
+      }
+   }
+   else {
+      indirect_flag = 0;
+   }
+
+
    if (brw->gen >= 7) {
       BEGIN_BATCH(7);
-      OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
+      OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2) | indirect_flag);
       OUT_BATCH(hw_prim | vertex_access_type);
    } else {
       BEGIN_BATCH(6);
