@@ -1251,11 +1251,12 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       next.reg_offset++;
    }
 
+   bool has_nonconstant_offset = ir->offset && !ir->offset->as_constant();
+
    /* Set up the LOD info */
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
-   case ir_tg4:
       break;
    case ir_txb:
       emit(MOV(next, lod));
@@ -1349,10 +1350,43 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
          next.reg_offset++;
       }
       break;
+   case ir_tg4:
+      if (has_nonconstant_offset) {
+         /* More crazy intermixing */
+         ir->offset->accept(this);
+         fs_reg offset_value = this->result;
+
+         for (int i = 0; i < 2; i++) { /* u, v */
+            emit(MOV(next, coordinate));
+            coordinate.reg_offset++;
+            next.reg_offset++;
+         }
+
+         for (int i = 0; i < 2; i++) { /* offu, offv */
+            emit(MOV(next.retype(BRW_REGISTER_TYPE_D), offset_value));
+            offset_value.reg_offset++;
+            next.reg_offset++;
+         }
+
+         if (ir->coordinate->type->vector_elements == 3) { /* r if present */
+            emit(MOV(next, coordinate));
+            coordinate.reg_offset++;
+            next.reg_offset++;
+         }
+      }
+      else {
+         /* just do the usual thing */
+         for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+            emit(MOV(next, coordinate));
+            coordinate.reg_offset++;
+            next.reg_offset++;
+         }
+      }
+      break;
    }
 
    /* Set up the coordinate (except for cases where it was done above) */
-   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_query_levels) {
+   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_query_levels && ir->op != ir_tg4) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(next, coordinate));
 	 coordinate.reg_offset++;
@@ -1372,14 +1406,18 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
    case ir_query_levels: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
    case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst, payload); break;
-   case ir_tg4: inst = emit(SHADER_OPCODE_TG4, dst, payload); break;
+   case ir_tg4:
+      if (has_nonconstant_offset)
+         inst = emit(SHADER_OPCODE_TG4_OFFSET, dst, payload);
+      else
+         inst = emit(SHADER_OPCODE_TG4, dst, payload);
+      break;
    }
    inst->base_mrf = -1;
    if (reg_width == 2)
       inst->mlen = next.reg_offset * reg_width - header_present;
    else
       inst->mlen = next.reg_offset * reg_width;
-
    inst->header_present = header_present;
    inst->regs_written = 4;
 
