@@ -521,7 +521,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       struct brw_reg header_reg;
 
       if (brw->gen >= 7) {
-         header_reg = src;
+         header_reg = retype(src, BRW_REGISTER_TYPE_UD);
       } else {
          assert(inst->base_mrf != -1);
          header_reg = retype(brw_message_reg(inst->base_mrf),
@@ -544,7 +544,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          brw_push_insn_state(p);
          brw_set_mask_control(p, BRW_MASK_DISABLE);
          brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-         brw_MOV(p, src, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+         brw_MOV(p, retype(src, BRW_REGISTER_TYPE_UD), retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
          brw_pop_insn_state(p);
       } else {
          /* Set up an implied move from g0 to the MRF. */
