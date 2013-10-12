@@ -50,20 +50,53 @@ public:
 ir_visitor_status
 brw_lower_unnormalized_offset_visitor::visit_leave(ir_texture *ir)
 {
-   if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_RECT ||
-       !ir->offset || ir->op != ir_tg4)
+   if (!ir->offset)
       return visit_continue;
+
+   if (ir->op == ir_tg4) {
+      if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_RECT)
+         return visit_continue;
+   }
+   else if (ir->op != ir_txf) {
+      return visit_continue;
+   }
 
    void *mem_ctx = ralloc_parent(ir);
 
-   ir->coordinate = new (mem_ctx) ir_expression(
-         ir_binop_add,
-         ir->coordinate,
-         new (mem_ctx) ir_expression(
-            ir_unop_i2f,
-            ir->offset));
-   ir->offset = NULL;
+   if (ir->op == ir_txf) {
+      ir_variable *var = new (mem_ctx) ir_variable(
+            ir->coordinate->type, "coordinate", ir_var_auto);
+      base_ir->insert_before(var);
 
+      ir_assignment *assign = new (mem_ctx) ir_assignment(
+            new (mem_ctx) ir_dereference_variable(var),
+            ir->coordinate,
+            NULL);
+      base_ir->insert_before(assign);
+
+      assign = new (mem_ctx) ir_assignment(
+            new (mem_ctx) ir_dereference_variable(var),
+            new (mem_ctx) ir_expression(
+               ir_binop_add,
+               new (mem_ctx) ir_swizzle(
+                  new (mem_ctx) ir_dereference_variable(var),
+                  0, 1, 2, 3, ir->offset->type->vector_elements),
+               ir->offset),
+            NULL);
+      assign->write_mask = (1 << ir->offset->type->vector_elements) - 1;
+      base_ir->insert_before(assign);
+
+      ir->coordinate = new (mem_ctx) ir_dereference_variable(var);
+   } else {
+      ir->coordinate = new (mem_ctx) ir_expression(
+            ir_binop_add,
+            ir->coordinate,
+            new (mem_ctx) ir_expression(
+               ir_unop_i2f,
+               ir->offset));
+   }
+
+   ir->offset = NULL;
 
    progress = true;
    return visit_continue;
