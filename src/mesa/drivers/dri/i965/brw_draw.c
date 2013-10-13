@@ -539,7 +539,7 @@ void brw_draw_prims( struct gl_context *ctx,
       return;
 
    /* Handle primitive restart if needed */
-   if (brw_handle_primitive_restart(ctx, prims, nr_prims, ib)) {
+   if (brw_handle_primitive_restart(ctx, prims, nr_prims, ib, indirect)) {
       /* The draw was handled, so we can exit now */
       return;
    }
