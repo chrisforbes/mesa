@@ -82,8 +82,8 @@ can_cut_index_handle_prims(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
 
    /* Otherwise Haswell can do it all. */
-   if (brw->gen >= 8 || brw->is_haswell)
-      return true;
+   //if (brw->gen >= 8 || brw->is_haswell)
+     // return true;
 
    if (!can_cut_index_handle_restart_index(ctx, ib)) {
       /* The primitive restart index can't be handled, so take
