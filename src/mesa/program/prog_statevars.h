@@ -104,6 +104,7 @@ typedef enum gl_state_index_ {
    STATE_TEXENV_COLOR,
 
    STATE_DEPTH_RANGE,
+   STATE_ALPHA_REF,             /**< alpha test reference value */
 
    STATE_VERTEX_PROGRAM,
    STATE_FRAGMENT_PROGRAM,

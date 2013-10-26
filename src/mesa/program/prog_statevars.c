@@ -355,6 +355,9 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       value[2] = ctx->Viewport.Far - ctx->Viewport.Near; /* far - near */
       value[3] = 1.0;
       return;
+   case STATE_ALPHA_REF:
+      value[0] = ctx->Color.AlphaRef;
+      return;
    case STATE_FRAGMENT_PROGRAM:
       {
          /* state[1] = {STATE_ENV, STATE_LOCAL} */
@@ -667,6 +670,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;
+   case STATE_ALPHA_REF:
+      return _NEW_COLOR;
 
    case STATE_FRAGMENT_PROGRAM:
    case STATE_VERTEX_PROGRAM:
@@ -855,6 +860,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_DEPTH_RANGE:
       append(dst, "depth.range");
       break;
+   case STATE_ALPHA_REF:
+      append(dst, "alpha.ref");
+      break;
    case STATE_VERTEX_PROGRAM:
    case STATE_FRAGMENT_PROGRAM:
       break;
@@ -1028,6 +1036,8 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
    case STATE_FOG_COLOR:
       break;
    case STATE_DEPTH_RANGE:
+      break;
+   case STATE_ALPHA_REF:
       break;
    case STATE_FRAGMENT_PROGRAM:
    case STATE_VERTEX_PROGRAM:
