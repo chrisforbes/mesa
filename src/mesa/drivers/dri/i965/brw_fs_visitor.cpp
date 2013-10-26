@@ -2471,6 +2471,19 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 }
 
 void
+fs_visitor::emit_alpha_test()
+{
+   this->current_annotation = "Alpha test";
+
+   /* TODO:
+    * - Read alpha ref value from gl_AlphaRefMESA
+    * - Get RT0 alpha
+    * - compare based on key->alpha_test_func
+    * - AND channel mask with comparison result
+    */
+}
+
+void
 fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
