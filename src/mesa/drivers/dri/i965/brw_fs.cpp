@@ -3060,6 +3060,9 @@ fs_visitor::run()
 
       emit(FS_OPCODE_PLACEHOLDER_HALT);
 
+      if (c->key.alpha_test_func)
+         emit_alpha_test();
+
       emit_fb_writes();
 
       split_virtual_grfs();
