@@ -488,6 +488,12 @@ static void brw_wm_populate_key( struct brw_context *brw,
                                          BRW_FS_VARYING_INPUT_MASK) > 16)
       key->input_slots_valid = brw->vue_map_geom_out.slots_valid;
 
+
+   /* _NEW_COLOR | _NEW_BUFFERS */
+   /* Func for shader-based alpha test */
+   if (brw->gen < 6 && ctx->DrawBuffer->_NumColorDrawBuffers > 1 && ctx->Color.AlphaEnabled)
+      key->alpha_test_func = ctx->Color.AlphaFunc;
+
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
 }

@@ -71,6 +71,7 @@ struct brw_wm_prog_key {
    GLushort drawable_height;
    GLbitfield64 input_slots_valid;
    GLuint program_string_id:32;
+   GLenum alpha_test_func;          /* < For Gen4/5 MRT alpha test */
 
    struct brw_sampler_prog_key_data tex;
 };
