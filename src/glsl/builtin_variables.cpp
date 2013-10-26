@@ -37,6 +37,10 @@ static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"diff", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
 };
 
+static struct gl_builtin_uniform_element gl_AlphaRefMESA_elements[] = {
+   {NULL, {STATE_ALPHA_REF, 0, 0}, SWIZZLE_XXXX},
+};
+
 static struct gl_builtin_uniform_element gl_ClipPlane_elements[] = {
    {NULL, {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW}
 };
@@ -286,6 +290,7 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_FogParamsOptimizedMESA),
    STATEVAR(gl_CurrentAttribVertMESA),
    STATEVAR(gl_CurrentAttribFragMESA),
+   STATEVAR(gl_AlphaRefMESA),
 
    {NULL, NULL, 0}
 };
@@ -650,6 +655,7 @@ builtin_variable_generator::generate_uniforms()
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange");
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA");
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA");
+   add_uniform(float_t, "gl_AlphaRefMESA");
 
    if (compatibility) {
       add_uniform(mat4_t, "gl_ModelViewMatrix");
