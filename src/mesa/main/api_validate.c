@@ -837,3 +837,156 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
 
    return GL_TRUE;
 }
+
+static GLboolean
+valid_draw_indirect(struct gl_context *ctx,
+                    GLenum mode, const GLvoid *indirect,
+                    GLsizei size, const char *name)
+{
+   const GLsizeiptr end = (GLsizeiptr)indirect + size;
+
+   if (!_mesa_valid_prim_mode(ctx, mode, name))
+      return GL_FALSE;
+
+   if ((GLsizeiptr)indirect & (sizeof(GLuint) - 1)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(indirect is not aligned)", name);
+      return GL_FALSE;
+   }
+
+   if (_mesa_is_bufferobj(ctx->DrawIndirectBuffer)) {
+      if (_mesa_bufferobj_mapped(ctx->DrawIndirectBuffer)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(DRAW_INDIRECT_BUFFER is mapped)", name);
+         return GL_FALSE;
+      }
+      if (ctx->DrawIndirectBuffer->Size < end) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(DRAW_INDIRECT_BUFFER too small)", name);
+         return GL_FALSE;
+      }
+   } else {
+      if (ctx->API != API_OPENGL_COMPAT) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s: no buffer bound to DRAW_INDIRECT_BUFFER", name);
+         return GL_FALSE;
+      }
+   }
+
+   if (!check_valid_to_render(ctx, name))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+static inline GLboolean
+valid_draw_indirect_elements(struct gl_context *ctx,
+                             GLenum mode, GLenum type, const GLvoid *indirect,
+                             GLsizeiptr size, const char *name)
+{
+   if (!valid_elements_type(ctx, type, name))
+      return GL_FALSE;
+
+   /*
+    * Unlike regular DrawElementsInstancedBaseVertex commands, the indices
+    * may not come from a client array and must come from an index buffer.
+    * If no element array buffer is bound, an INVALID_OPERATION error is
+    * generated.
+    */
+   if (!_mesa_is_bufferobj(ctx->Array.ArrayObj->ElementArrayBufferObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(no buffer bound to GL_ELEMENT_ARRAY_BUFFER)", name);
+      return GL_FALSE;
+   }
+
+   return valid_draw_indirect(ctx, mode, indirect, size, name);
+}
+
+static inline GLboolean
+valid_draw_indirect_multi(struct gl_context *ctx,
+                          GLsizei primcount, GLsizei stride,
+                          const char *name)
+{
+   if (primcount < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(primcount < 0)", name);
+      return GL_FALSE;
+   }
+
+   if (stride % 4) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(stride %% 4)", name);
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_validate_DrawArraysIndirect(struct gl_context *ctx,
+                                  GLenum mode,
+                                  const GLvoid *indirect)
+{
+   FLUSH_CURRENT(ctx, 0);
+
+   return valid_draw_indirect(ctx, mode,
+                              indirect, 4 * sizeof(GLuint),
+                              "glDrawArraysIndirect");
+}
+
+GLboolean
+_mesa_validate_DrawElementsIndirect(struct gl_context *ctx,
+                                    GLenum mode, GLenum type,
+                                    const GLvoid *indirect)
+{
+   FLUSH_CURRENT(ctx, 0);
+
+   return valid_draw_indirect_elements(ctx, mode, type,
+                                       indirect, 5 * sizeof(GLuint),
+                                       "glDrawElementsIndirect");
+}
+
+GLboolean
+_mesa_validate_MultiDrawArraysIndirect(struct gl_context *ctx,
+                                       GLenum mode,
+                                       const GLvoid *indirect,
+                                       GLsizei primcount, GLsizei stride)
+{
+   GLsizeiptr size = 0;
+   if (primcount) /* &(last command) + sizeof(DrawArraysIndirectCommand) */
+      size = (primcount - 1) * stride + 4 * sizeof(GLuint);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!valid_draw_indirect_multi(ctx, primcount, stride,
+                                  "glMultiDrawArraysIndirect"))
+      return GL_FALSE;
+
+   if (!valid_draw_indirect(ctx, mode, indirect, size,
+                            "glMultiDrawArraysIndirect"))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_validate_MultiDrawElementsIndirect(struct gl_context *ctx,
+                                         GLenum mode, GLenum type,
+                                         const GLvoid *indirect,
+                                         GLsizei primcount, GLsizei stride)
+{
+   GLsizeiptr size = 0;
+   if (primcount) /* &(last command) + sizeof(DrawElementsIndirectCommand) */
+      size = (primcount - 1) * stride + 5 * sizeof(GLuint);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!valid_draw_indirect_multi(ctx, primcount, stride,
+                                  "glMultiDrawElementsIndirect"))
+      return GL_FALSE;
+
+   if (!valid_draw_indirect_elements(ctx, mode, type,
+                                     indirect, size,
+                                     "glMultiDrawElementsIndirect"))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
