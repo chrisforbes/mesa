@@ -131,6 +131,24 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
 	 return false;
       }
 
+      /* Verify that shader_in parameters are shader inputs */
+      if (formal->mode == ir_var_shader_in) {
+         ir_variable *var = actual->variable_referenced();
+         if (var && var->mode != ir_var_shader_in) {
+            _mesa_glsl_error(&loc, state,
+                             "parameter `%s` must be a shader input",
+                             formal->name);
+            return false;
+         }
+
+         if (actual->ir_type == ir_type_swizzle) {
+            _mesa_glsl_error(&loc, state,
+                             "parameter `%s` must not be swizzled",
+                             formal->name);
+            return false;
+         }
+      }
+
       /* Verify that 'out' and 'inout' actual parameters are lvalues. */
       if (formal->mode == ir_var_function_out
           || formal->mode == ir_var_function_inout) {
@@ -306,6 +324,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
 	 switch (formal->mode) {
 	 case ir_var_const_in:
+         case ir_var_shader_in:
 	 case ir_var_function_in: {
 	    ir_rvalue *converted
 	       = convert_component(actual, formal->type);

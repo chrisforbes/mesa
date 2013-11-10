@@ -89,6 +89,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	 break;
 
       case ir_var_function_inout:
+      case ir_var_shader_in:
 	 /* Since there are no bi-directional automatic conversions (e.g.,
 	  * there is int -> float but no float -> int), inout parameters must
 	  * be exact matches.
