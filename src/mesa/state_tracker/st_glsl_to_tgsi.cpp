@@ -2007,6 +2007,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_binop_carry:
    case ir_binop_borrow:
    case ir_binop_imul_high:
+   case ir_unop_interpolate_at_centroid:
       /* This operation is not supported, or should have already been handled.
        */
       assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");

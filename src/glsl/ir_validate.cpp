@@ -410,6 +410,11 @@ ir_validate::visit_leave(ir_expression *ir)
       /* XXX what can we assert here? */
       break;
 
+   case ir_unop_interpolate_at_centroid:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[0]->type->is_float());
+      break;
+
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_mul:

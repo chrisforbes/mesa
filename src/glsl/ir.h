@@ -1193,9 +1193,16 @@ enum ir_expression_operation {
    ir_unop_noise,
 
    /**
+    * Interpolate fs input at centroid
+    *
+    * operand0 is the fs input.
+    */
+   ir_unop_interpolate_at_centroid,
+
+   /**
     * A sentinel marking the last of the unary operations.
     */
-   ir_last_unop = ir_unop_noise,
+   ir_last_unop = ir_unop_interpolate_at_centroid,
 
    ir_binop_add,
    ir_binop_sub,

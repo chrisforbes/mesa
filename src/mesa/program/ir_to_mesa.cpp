@@ -1501,6 +1501,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_carry:
    case ir_binop_borrow:
    case ir_binop_imul_high:
+   case ir_unop_interpolate_at_centroid:
       assert(!"not supported");
       break;
 
