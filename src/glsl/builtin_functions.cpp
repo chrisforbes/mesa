@@ -565,6 +565,7 @@ private:
    B1(usubBorrow)
    B1(mulExtended)
    B1(interpolateAtCentroid)
+   B1(interpolateAtOffset)
 
    ir_function_signature *_atomic_intrinsic(builtin_available_predicate avail);
    ir_function_signature *_atomic_op(const char *intrinsic,
@@ -2098,6 +2099,12 @@ builtin_builder::create_builtins()
                 _interpolateAtCentroid(glsl_type::vec2_type),
                 _interpolateAtCentroid(glsl_type::vec3_type),
                 _interpolateAtCentroid(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtOffset",
+                _interpolateAtOffset(glsl_type::float_type),
+                _interpolateAtOffset(glsl_type::vec2_type),
+                _interpolateAtOffset(glsl_type::vec3_type),
+                _interpolateAtOffset(glsl_type::vec4_type),
                 NULL);
 
    add_function("atomicCounter",
@@ -3983,6 +3990,18 @@ builtin_builder::_interpolateAtCentroid(const glsl_type *type)
    MAKE_SIG(type, gpu_shader5, 1, interpolant);
 
    body.emit(ret(interpolate_at_centroid(interpolant)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtOffset(const glsl_type *type)
+{
+   ir_variable *interpolant = new(mem_ctx) ir_variable(type, "interpolant", ir_var_shader_in);
+   ir_variable *offset = in_var(glsl_type::vec2_type, "offset");
+   MAKE_SIG(type, gpu_shader5, 2, interpolant, offset);
+
+   body.emit(ret(interpolate_at_offset(interpolant, offset)));
 
    return sig;
 }
