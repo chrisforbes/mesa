@@ -566,6 +566,7 @@ private:
    B1(mulExtended)
    B1(interpolateAtCentroid)
    B1(interpolateAtOffset)
+   B1(interpolateAtSample)
 
    ir_function_signature *_atomic_intrinsic(builtin_available_predicate avail);
    ir_function_signature *_atomic_op(const char *intrinsic,
@@ -2105,6 +2106,12 @@ builtin_builder::create_builtins()
                 _interpolateAtOffset(glsl_type::vec2_type),
                 _interpolateAtOffset(glsl_type::vec3_type),
                 _interpolateAtOffset(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtSample",
+                _interpolateAtSample(glsl_type::float_type),
+                _interpolateAtSample(glsl_type::vec2_type),
+                _interpolateAtSample(glsl_type::vec3_type),
+                _interpolateAtSample(glsl_type::vec4_type),
                 NULL);
 
    add_function("atomicCounter",
@@ -4003,6 +4010,29 @@ builtin_builder::_interpolateAtOffset(const glsl_type *type)
 
    body.emit(ret(interpolate_at_offset(interpolant, offset)));
 
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtSample(const glsl_type *type)
+{
+   ir_variable *interpolant = new(mem_ctx) ir_variable(type, "interpolant", ir_var_shader_in);
+   ir_variable *sample_num = in_var(glsl_type::int_type, "sample_num");
+   MAKE_SIG(type, gpu_shader5, 2, interpolant, sample_num);
+
+   ir_constant_data offset;
+   offset.f[0] = -0.5f;
+   offset.f[1] = -0.5f;
+
+   ir_rvalue *sample_pos = sub(
+         new(mem_ctx) ir_dereference_array(
+            new(mem_ctx) ir_variable(glsl_type::get_array_instance(glsl_type::vec2_type, 0),
+                               "gl_SamplePositionsMESA",
+                               ir_var_uniform),
+         new(mem_ctx) ir_dereference_variable(sample_num)),
+         imm(glsl_type::vec2_type, offset));
+
+   body.emit(ret(interpolate_at_offset(interpolant, sample_pos)));
    return sig;
 }
 
