@@ -70,6 +70,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->assigned = this->assigned;
    var->how_declared = this->how_declared;
    var->used = this->used;
+   var->must_be_shader_input = this->must_be_shader_input;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
