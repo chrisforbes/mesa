@@ -34,6 +34,10 @@ static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
    {NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
 };
 
+static struct gl_builtin_uniform_element gl_SamplePositionsMESA_elements[] = {
+   {NULL, {STATE_SAMPLE_POSITIONS, 0, 0}, SWIZZLE_XYZW},
+};
+
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
    {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
@@ -240,6 +244,7 @@ static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
 
 static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_NumSamples),
+   STATEVAR(gl_SamplePositionsMESA),
    STATEVAR(gl_DepthRange),
    STATEVAR(gl_ClipPlane),
    STATEVAR(gl_Point),
@@ -668,6 +673,7 @@ void
 builtin_variable_generator::generate_uniforms()
 {
    add_uniform(int_t, "gl_NumSamples");
+   add_uniform(array(vec2_t, state->ctx->Const.MaxSamples), "gl_SamplePositionsMESA");
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange");
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA");
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA");
