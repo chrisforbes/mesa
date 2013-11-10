@@ -551,6 +551,13 @@ ir_validate::visit_leave(ir_expression *ir)
              && ir->operands[1]->type->is_integer());
       break;
 
+   case ir_binop_interpolate_at_offset:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[0]->type->is_float());
+      assert(ir->operands[1]->type->components() == 2);
+      assert(ir->operands[1]->type->is_float());
+      break;
+
    case ir_triop_fma:
       assert(ir->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->type == ir->operands[0]->type);

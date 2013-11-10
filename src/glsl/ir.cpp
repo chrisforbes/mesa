@@ -406,6 +406,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_rshift:
    case ir_binop_bfm:
    case ir_binop_ldexp:
+   case ir_binop_interpolate_at_offset:
       this->type = op0->type;
       break;
 
@@ -562,6 +563,7 @@ static const char *const operator_strs[] = {
    "ubo_load",
    "ldexp",
    "vector_extract",
+   "interpolate_at_offset",
    "fma",
    "lrp",
    "csel",

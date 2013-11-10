@@ -185,6 +185,7 @@ ir_expression *f2b(operand a);
 ir_expression *b2f(operand a);
 
 ir_expression *interpolate_at_centroid(operand a);
+ir_expression *interpolate_at_offset(operand a, operand b);
 
 ir_expression *fma(operand a, operand b, operand c);
 ir_expression *lrp(operand x, operand y, operand a);

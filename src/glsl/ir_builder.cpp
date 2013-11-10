@@ -502,6 +502,12 @@ interpolate_at_centroid(operand a)
 }
 
 ir_expression *
+interpolate_at_offset(operand a, operand b)
+{
+   return expr(ir_binop_interpolate_at_offset, a, b);
+}
+
+ir_expression *
 fma(operand a, operand b, operand c)
 {
    return expr(ir_triop_fma, a, b, c);

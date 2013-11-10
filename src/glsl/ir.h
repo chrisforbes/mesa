@@ -1321,9 +1321,17 @@ enum ir_expression_operation {
    ir_binop_vector_extract,
 
    /**
+    * Interpolate fs input at offset
+    *
+    * operand0 is the fs input
+    * operand1 is the offset from the pixel center
+    */
+   ir_binop_interpolate_at_offset,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_vector_extract,
+   ir_last_binop = ir_binop_interpolate_at_offset,
 
    /**
     * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.
