@@ -1583,6 +1583,7 @@ vbo_validated_drawarraysindirect(struct gl_context *ctx,
    prim[0].begin = 1;
    prim[0].end = 1;
    prim[0].mode = mode;
+   prim[0].is_indirect = 1;
    prim[0].indirect_offset = (GLsizeiptr)indirect;
 
    /* NOTE: We do NOT want to handle primitive restart here, nor perform any
@@ -1628,6 +1629,7 @@ vbo_validated_multidrawarraysindirect(struct gl_context *ctx,
    for (i = 0; i < primcount; ++i, offset += stride) {
       prim[i].mode = mode;
       prim[i].indirect_offset = offset;
+      prim[i].is_indirect = 1;
    }
 
    check_buffers_are_unmapped(exec->array.inputs);
@@ -1665,6 +1667,7 @@ vbo_validated_drawelementsindirect(struct gl_context *ctx,
    prim[0].mode = mode;
    prim[0].indexed = 1;
    prim[0].indirect_offset = (GLsizeiptr)indirect;
+   prim[0].is_indirect = 1;
 
    check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims(ctx, prim, 1,
@@ -1713,6 +1716,7 @@ vbo_validated_multidrawelementsindirect(struct gl_context *ctx,
       prim[i].mode = mode;
       prim[i].indexed = 1;
       prim[i].indirect_offset = offset;
+      prim[i].is_indirect = 1;
    }
 
    check_buffers_are_unmapped(exec->array.inputs);
