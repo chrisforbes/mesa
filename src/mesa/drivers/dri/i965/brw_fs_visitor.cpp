@@ -327,10 +327,123 @@ fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
    return true;
 }
 
+static int
+pack_pixel_offset(float x)
+{
+   /* slightly fudged: -0.5f => -8, +0.5f => +7. */
+   int n = ((int)(x + 0.5f) * 15) - 8;
+   return n & 0xf;
+}
+
 void
 fs_visitor::emit_interpolate_expression(ir_expression *ir)
 {
-   this->result = fs_reg(this, ir->type);
+   if (dispatch_width == 16) {
+      fail("interpolate_at_* not yet supported in SIMD16 mode.");
+      /* in SIMD16 mode, the pixel interpolator returns coords interleaved
+       * 8 channels at a time, same as the barycentric coords presented in
+       * the FS payload. this requires a bit of extra work to support.
+       */
+      return;
+   }
+
+   ir_dereference * deref = ir->operands[0]->as_dereference();
+   ir_swizzle * swiz = NULL;
+   if (!deref) {
+      /* the api does not allow a swizzle here, but the varying packing code
+       * may have pushed one into here.
+       */
+      swiz = ir->operands[0]->as_swizzle();
+      assert(swiz);
+      deref = swiz->val->as_dereference();
+   }
+   assert(deref);
+   ir_variable * var = deref->variable_referenced();
+   assert(var);
+
+   /* 1. collect interpolation factors */
+
+   fs_reg dst_x = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 2, 1));
+   fs_reg dst_y = dst_x;
+   dst_y.reg_offset++;
+
+   /* for most messages, we need one reg of ignored data; the hardware requires mlen==1
+    * even when there is no payload. in the per-slot offset case, we'll replace this with
+    * the proper source data. */
+   fs_reg src = fs_reg(this, glsl_type::float_type);
+   int mlen = 1;     /* one reg unless overriden */
+   int msg_type = 0; /* message type to be packed into the descriptor */
+   int imm_data = 0; /* data to be packed into the message descriptor */
+
+   switch (ir->operation) {
+   case ir_unop_interpolate_at_centroid:
+      {
+         msg_type = 2; /* centroid */
+      } break;
+
+   case ir_binop_interpolate_at_sample:
+      {
+         ir_constant *sample_num = ir->operands[1]->as_constant();
+         assert(sample_num || !"nonconstant sample number should have been lowered.");
+
+         msg_type = 1;  /* interpolate at sample */
+         imm_data = sample_num->value.i[0] << 4;
+      } break;
+
+   case ir_binop_interpolate_at_offset:
+      {
+         ir_constant *const_offset = ir->operands[1]->as_constant();
+         if (const_offset) {
+            msg_type = 0;  /* per-message offset */
+            printf("offset: %f %f\n",
+                   const_offset->value.f[0],
+                   const_offset->value.f[1]);
+            imm_data = pack_pixel_offset(const_offset->value.f[0]) |
+                       (pack_pixel_offset(const_offset->value.f[1]) << 4);
+         } else {
+            /* pack the operands: hw wants offsets as 4 bit signed ints */
+            ir->operands[1]->accept(this);
+            src = fs_reg(this, glsl_type::ivec2_type);
+            fs_reg src2 = src;
+            for (int i = 0; i < 2; i++) {
+               fs_reg temp = fs_reg(this, glsl_type::float_type);
+               /* slightly fudge this: we want -0.5 => -8, +0.5 => +7. */
+               emit(ADD(temp, this->result, fs_reg(0.5f)));
+               emit(MUL(temp, temp, fs_reg(15.0f)));
+               emit(MOV(src2, temp));  /* float to int */
+               emit(ADD(src2, src2, fs_reg(-8)));
+               src2.reg_offset++;
+               this->result.reg_offset++;
+            }
+
+            mlen = 2 * dispatch_width / 8;
+            msg_type = 3;  /* per-slot offset */
+         }
+      } break;
+
+   default:
+      assert(!"Unreached");
+   }
+
+   fs_inst *inst = emit(FS_OPCODE_PIXEL_INTERPOLATOR_QUERY, dst_x, src);
+   inst->mlen = mlen;
+   inst->regs_written = 2 * dispatch_width / 8; /* 2 floats per slot returned */
+   inst->pi_noperspective = var->determine_interpolation_mode(c->key.flat_shade) == INTERP_QUALIFIER_NOPERSPECTIVE;
+   inst->pi_msg_type = msg_type;
+   inst->pi_msg_data = imm_data;
+
+   /* 2. emit linterp */
+
+   fs_reg res(this, ir->type);
+   this->result = res;
+
+   for (int i = 0; i < ir->type->vector_elements; i++) {
+      int ch = swiz ? ((*(int *)&swiz->mask) >> 2*i) & 3 : i;
+      emit(FS_OPCODE_LINTERP, res,
+           dst_x, dst_y,
+           fs_reg(interp_reg(var->data.location, ch)));
+      res.reg_offset++;
+   }
 }
 
 void
