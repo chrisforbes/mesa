@@ -326,6 +326,12 @@ fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
 }
 
 void
+fs_visitor::emit_interpolate_expression(ir_expression *ir)
+{
+   this->result = fs_reg(this, ir->type);
+}
+
+void
 fs_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
@@ -336,9 +342,22 @@ fs_visitor::visit(ir_expression *ir)
 
    if (try_emit_saturate(ir))
       return;
-   if (ir->operation == ir_binop_add) {
+
+   /* Deal with the real oddball stuff first */
+   switch (ir->operation) {
+   case ir_binop_add:
       if (try_emit_mad(ir, 0) || try_emit_mad(ir, 1))
-	 return;
+         return;
+      break;
+
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
+      emit_interpolate_expression(ir);
+      return;
+
+   default:
+      break;
    }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
@@ -780,6 +799,12 @@ fs_visitor::visit(ir_expression *ir)
       emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
       inst = emit(BRW_OPCODE_SEL, this->result, op[1], op[2]);
       inst->predicate = BRW_PREDICATE_NORMAL;
+      break;
+
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
+      assert(!"not reached; already handled above");
       break;
    }
 }
