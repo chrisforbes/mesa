@@ -369,6 +369,7 @@ public:
                     fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);
    bool try_emit_mad(ir_expression *ir, int mul_arg);
+   void emit_interpolate_expression(ir_expression *ir);
    void try_replace_with_sel();
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
