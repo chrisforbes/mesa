@@ -2663,6 +2663,56 @@ brw_untyped_surface_read(struct brw_compile *p,
       insn->header.access_mode == BRW_ALIGN_1);
 }
 
+static void
+brw_set_pixel_interpolator_query_message(struct brw_compile *p,
+                                         struct brw_instruction *insn,
+                                         bool noperspective,
+                                         GLuint mode,
+                                         GLuint data,
+                                         GLuint msg_length,
+                                         GLuint response_length)
+{
+   const unsigned dispatch_width =
+      (insn->header.execution_size == BRW_EXECUTE_16 ? 16 : 8);
+
+   brw_set_message_descriptor(p, insn, GEN7_SFID_PIXEL_INTERPOLATOR,
+                              msg_length, response_length,
+                              false /* header is never present for PI */, false);
+
+   if (dispatch_width == 16)
+      insn->bits3.gen7_pi.simd_mode = 1;  /* SIMD16 mode */
+   else
+      insn->bits3.gen7_pi.simd_mode = 0;  /* SIMD8 mode */
+
+   insn->bits3.gen7_pi.slot_group = 0;    /* always zero unless we add 32/64px dispatch */
+
+   if (noperspective)
+      insn->bits3.gen7_pi.interpolation_mode = 1;  /* linear interpolation */
+   else
+      insn->bits3.gen7_pi.interpolation_mode = 0;  /* perspective-correct interpolation */
+
+   insn->bits3.gen7_pi.msg_type = mode;
+   insn->bits3.gen7_pi.msg_data = data;
+}
+
+void
+brw_pixel_interpolator_query(struct brw_compile *p,
+                             struct brw_reg dest,
+                             struct brw_reg mrf,
+                             bool noperspective,
+                             GLuint mode,
+                             GLuint data,
+                             GLuint msg_length,
+                             GLuint response_length)
+{
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   brw_set_dest(p, insn, dest);
+   brw_set_src0(p, insn, mrf);
+   brw_set_pixel_interpolator_query_message(
+      p, insn, noperspective, mode, data, msg_length, response_length);
+}
+
 /**
  * This instruction is generated as a single-channel align1 instruction by
  * both the VS and FS stages when using INTEL_DEBUG=shader_time.
