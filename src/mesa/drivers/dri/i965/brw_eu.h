@@ -376,6 +376,16 @@ brw_untyped_surface_read(struct brw_compile *p,
                          unsigned msg_length,
                          unsigned response_length);
 
+void
+brw_pixel_interpolator_query(struct brw_compile *p,
+                             struct brw_reg dest,
+                             struct brw_reg mrf,
+                             bool noperspective,
+                             GLuint mode,
+                             GLuint data,
+                             GLuint msg_length,
+                             GLuint response_length);
+
 /***********************************************************************
  * brw_eu_util.c:
  */
