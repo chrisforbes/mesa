@@ -355,6 +355,7 @@ fs_inst::is_send_from_grf()
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
            opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
+           opcode == FS_OPCODE_PIXEL_INTERPOLATOR_QUERY ||
            (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
             src[1].file == GRF) ||
            (is_tex() && src[0].file == GRF));
@@ -783,6 +784,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return 2;
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
+      case FS_OPCODE_PIXEL_INTERPOLATOR_QUERY:
       return 0;
    default:
       assert(!"not reached");
