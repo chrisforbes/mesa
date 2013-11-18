@@ -1001,6 +1001,21 @@ fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
    brw_pop_insn_state(p);
 }
 
+void
+fs_generator::generate_pixel_interpolator_query(fs_inst *inst,
+                                                struct brw_reg dst,
+                                                struct brw_reg src)
+{
+   brw_pixel_interpolator_query(p,
+         retype(dst, BRW_REGISTER_TYPE_UW),
+         src,
+         inst->pi_noperspective,
+         inst->pi_msg_type,
+         inst->pi_msg_data,
+         inst->mlen,
+         inst->regs_written);
+}
+
 
 static uint32_t brw_file_from_reg(fs_reg *reg)
 {
@@ -1791,6 +1806,10 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
           * we've emitted any discards.  If not, this will emit no code.
           */
          patch_discard_jumps_to_fb_writes();
+         break;
+
+      case FS_OPCODE_PIXEL_INTERPOLATOR_QUERY:
+         generate_pixel_interpolator_query(inst, dst, src[0]);
          break;
 
       default:
