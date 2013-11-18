@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008 Keith Packard
+* Copyright © 2008 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -395,6 +395,13 @@ static const char * const aop[16] = {
    [BRW_AOP_UMIN] = "umin",
    [BRW_AOP_CMPWR] = "cmpwr",
    [BRW_AOP_PREDEC] = "predec",
+};
+
+static const char * const pixel_interpolator_msg_types[4] = {
+    [0] = "per_message_offset",
+    [1] = "sample_position",
+    [2] = "centroid",
+    [3] = "per_slot_offset",
 };
 
 static const char * const math_function[16] = {
@@ -1410,6 +1417,16 @@ brw_disassemble_inst(FILE *file,
                 }
                 format (file, ")");
                 break;
+            }
+            /* FALLTHROUGH */
+
+        case GEN7_SFID_PIXEL_INTERPOLATOR:
+            if (gen >= 7) {
+               format (file, " (%s, %s, %d)",
+                     inst->bits3.gen7_pi.interpolation_mode ? "linear" : "persp",
+                     pixel_interpolator_msg_types[inst->bits3.gen7_pi.msg_type],
+                     inst->bits3.gen7_pi.msg_data);
+               break;
             }
             /* FALLTHROUGH */
 
