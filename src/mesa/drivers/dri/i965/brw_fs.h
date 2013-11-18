@@ -215,7 +215,15 @@ public:
    fs_reg dst;
    fs_reg *src;
 
-   uint32_t texture_offset; /**< Texture offset bitfield */
+   union {
+      uint32_t texture_offset; /**< Texture offset bitfield */
+      struct {
+         /* Header parameters for pixel interpolator messages */
+         uint32_t pi_noperspective: 1;
+         uint32_t pi_msg_type: 3;
+         uint32_t pi_msg_data: 7;
+      };
+   };
    uint32_t offset; /* spill/unspill offset */
 
    uint8_t sources; /**< Number of fs_reg sources. */
@@ -661,6 +669,10 @@ private:
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
+
+   void generate_pixel_interpolator_query(fs_inst *inst,
+                                          struct brw_reg dst,
+                                          struct brw_reg src);
 
    void generate_set_omask(fs_inst *inst,
                            struct brw_reg dst,
