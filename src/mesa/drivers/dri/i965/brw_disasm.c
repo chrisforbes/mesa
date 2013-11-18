@@ -316,7 +316,8 @@ static const char * const target_function_gen6[16] = {
     [GEN6_SFID_DATAPORT_SAMPLER_CACHE] = "sampler",
     [GEN6_SFID_DATAPORT_RENDER_CACHE] = "render",
     [GEN6_SFID_DATAPORT_CONSTANT_CACHE] = "const",
-    [GEN7_SFID_DATAPORT_DATA_CACHE] = "data"
+    [GEN7_SFID_DATAPORT_DATA_CACHE] = "data",
+    [GEN7_SFID_PIXEL_INTERPOLATOR] = "pi",
 };
 
 static const char * const dp_rc_msg_type_gen6[16] = {
@@ -334,6 +335,13 @@ static const char * const dp_rc_msg_type_gen6[16] = {
     [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE] = "RT write",
     [GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE] = "streamed VB write",
     [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORMc write",
+};
+
+static const char * const pixel_interpolator_msg_types[4] = {
+    [0] = "per_message_offset",
+    [1] = "sample_position",
+    [2] = "centroid",
+    [3] = "per_slot_offset",
 };
 
 static const char * const math_function[16] = {
@@ -1319,6 +1327,12 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 		    inst->bits3.gen7_dp.msg_control,
 		    inst->bits3.gen7_dp.msg_type);
 	    break;
+        case GEN7_SFID_PIXEL_INTERPOLATOR:
+            format (file, " (%s, %s, %d)",
+                    inst->bits3.gen7_pi.interpolation_mode ? "linear" : "persp",
+                    pixel_interpolator_msg_types[inst->bits3.gen7_pi.msg_type],
+                    inst->bits3.gen7_pi.msg_data);
+            break;
 
 
 	default:
