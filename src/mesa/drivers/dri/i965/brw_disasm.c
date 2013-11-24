@@ -1422,7 +1422,7 @@ brw_disassemble_inst(FILE *file,
 
         case GEN7_SFID_PIXEL_INTERPOLATOR:
             if (gen >= 7) {
-               format (file, " (%s, %s, %d)",
+               format (file, " (%s, %s, 0x%x)",
                      inst->bits3.gen7_pi.interpolation_mode ? "linear" : "persp",
                      pixel_interpolator_msg_types[inst->bits3.gen7_pi.msg_type],
                      inst->bits3.gen7_pi.msg_data);
