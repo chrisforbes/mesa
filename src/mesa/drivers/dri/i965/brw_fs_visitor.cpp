@@ -358,6 +358,7 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    ir_variable * var = deref->variable_referenced();
    assert(var);
    assert(var->mode == ir_var_mode_shader_in);
+   var->print();
 
    /* 1. collect interpolation factors */
 
