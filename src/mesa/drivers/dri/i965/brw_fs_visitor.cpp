@@ -346,11 +346,12 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    }
 
    ir_dereference * deref = ir->operands[0]->as_dereference();
+   ir_swizzle * swiz = NULL;
    if (!deref) {
       /* the api does not allow a swizzle here, but the varying packing code
        * may have pushed one into here.
        */
-      ir_swizzle * swiz = ir->operands[0]->as_swizzle();
+      swiz = ir->operands[0]->as_swizzle();
       assert(swiz);
       deref = swiz->val->as_dereference();
    }
@@ -435,9 +436,10 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    this->result = res;
 
    for (int i = 0; i < ir->type->vector_elements; i++) {
+      int ch = swiz ? ((*(int *)&swiz->mask) >> 2*i) & 3 : i;
       emit(FS_OPCODE_LINTERP, res,
            dst_x, dst_y,
-           fs_reg(interp_reg(var->location, i /* todo: swiz */)));
+           fs_reg(interp_reg(var->location, ch)));
       res.reg_offset++;
    }
 }
