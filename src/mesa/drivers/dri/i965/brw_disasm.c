@@ -1328,7 +1328,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 		    inst->bits3.gen7_dp.msg_type);
 	    break;
         case GEN7_SFID_PIXEL_INTERPOLATOR:
-            format (file, " (%s, %s, %d)",
+            format (file, " (%s, %s, 0x%x)",
                     inst->bits3.gen7_pi.interpolation_mode ? "linear" : "persp",
                     pixel_interpolator_msg_types[inst->bits3.gen7_pi.msg_type],
                     inst->bits3.gen7_pi.msg_data);
