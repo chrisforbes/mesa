@@ -384,6 +384,9 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
          ir_constant *const_offset = ir->operands[1]->as_constant();
          if (const_offset) {
             msg_type = 0;  /* per-message offset */
+            printf("offset: %f %f\n",
+                   const_offset->value.f[0],
+                   const_offset->value.f[1]);
             imm_data = ((int)(const_offset->value.f[0] * 16)) |
                        ((int)(const_offset->value.f[1] * 16) << 4);
          } else {
