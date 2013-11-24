@@ -328,6 +328,7 @@ fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
 static int
 pack_pixel_offset(float x)
 {
+   /* slightly fudged: -0.5f => -8, +0.5f => +7. */
    int n = ((int)(x + 0.5f) * 15) - 8;
    return n & 0xf;
 }
@@ -403,8 +404,11 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
             fs_reg src2 = src;
             for (int i = 0; i < 2; i++) {
                fs_reg temp = fs_reg(this, glsl_type::float_type);
-               emit(MUL(temp, this->result, fs_reg(16.0f)));
+               /* slightly fudge this: we want -0.5 => -8, +0.5 => +7. */
+               emit(ADD(temp, this->result, fs_reg(0.5f)));
+               emit(MUL(temp, temp, fs_reg(15.0f)));
                emit(MOV(src2, temp));  /* float to int */
+               emit(ADD(src2, src2, fs_reg(-8));
                src2.reg_offset++;
                this->result.reg_offset++;
             }
