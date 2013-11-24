@@ -387,8 +387,8 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
             printf("offset: %f %f\n",
                    const_offset->value.f[0],
                    const_offset->value.f[1]);
-            imm_data = ((int)(const_offset->value.f[0] * 16)) |
-                       ((int)(const_offset->value.f[1] * 16) << 4);
+            imm_data = ((int)(const_offset->value.f[0] * 16) & 0x0f) |
+                       ((int)(const_offset->value.f[1] * 16) & 0x0f << 4);
          } else {
             /* pack the operands: hw wants offsets as 4 bit signed ints */
             ir->operands[1]->accept(this);
