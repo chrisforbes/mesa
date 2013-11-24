@@ -325,6 +325,13 @@ fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
    return true;
 }
 
+static int
+pack_pixel_offset(float x)
+{
+   int n = ((int)(x + 0.5f) * 15) - 8;
+   return n & 0xf;
+}
+
 void
 fs_visitor::emit_interpolate_expression(ir_expression *ir)
 {
@@ -387,8 +394,8 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
             printf("offset: %f %f\n",
                    const_offset->value.f[0],
                    const_offset->value.f[1]);
-            imm_data = ((int)(const_offset->value.f[0] * 16) & 0x0f) |
-                       ((int)(const_offset->value.f[1] * 16) & 0x0f << 4);
+            imm_data = pack_pixel_offset(const_offset->value.f[0]) |
+                       (pack_pixel_offset(const_offset->value.f[1]) << 4);
          } else {
             /* pack the operands: hw wants offsets as 4 bit signed ints */
             ir->operands[1]->accept(this);
