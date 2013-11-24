@@ -408,7 +408,7 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
                emit(ADD(temp, this->result, fs_reg(0.5f)));
                emit(MUL(temp, temp, fs_reg(15.0f)));
                emit(MOV(src2, temp));  /* float to int */
-               emit(ADD(src2, src2, fs_reg(-8));
+               emit(ADD(src2, src2, fs_reg(-8)));
                src2.reg_offset++;
                this->result.reg_offset++;
             }
