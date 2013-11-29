@@ -2174,8 +2174,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
 
    /* Scaled blitting or not. */
    wm_prog_key.blit_scaled =
-      ((dst_x1 - dst_x0) == (src_x1 - src_x0) &&
-       (dst_y1 - dst_y0) == (src_y1 - src_y0)) ? false : true;
+      ((dst_x1 - dst_x0) != (src_x1 - src_x0) ||
+       (dst_y1 - dst_y0) != (src_y1 - src_y0));
 
    /* Scaling factors used for bilinear filtering in multisample scaled
     * blits.
