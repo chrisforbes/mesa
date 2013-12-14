@@ -267,7 +267,7 @@ const struct surface_format_info surface_formats[] = {
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R64G64B64_FLOAT)
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC4_SNORM)
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC5_SNORM)
-   SF(50, 50,  x,  x,  x,  x, 60,  x,  x, BRW_SURFACEFORMAT_R16G16B16_FLOAT)
+   SF( x,  x,  x,  x,  x,  x, 60,  x,  x, BRW_SURFACEFORMAT_R16G16B16_FLOAT)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_UNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_SNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_SSCALED)
