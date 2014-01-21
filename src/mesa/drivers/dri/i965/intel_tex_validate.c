@@ -77,6 +77,14 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
    if (tObj->Target == GL_TEXTURE_BUFFER)
       return true;
 
+   /* Immutable textures require no validation either -- we set up a correct
+    * miptree for them at creation time.
+    */
+   if (tObj->Immutable) {
+      intel_update_max_level(intelObj, sampler);
+      return true;
+   }
+
    /* We know that this is true by now, and if it wasn't, we might have
     * mismatched level sizes and the copies would fail.
     */
