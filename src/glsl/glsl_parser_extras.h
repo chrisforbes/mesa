@@ -356,6 +356,8 @@ struct _mesa_glsl_parse_state {
    bool AMD_shader_trinary_minmax_warn;
    bool ARB_viewport_array_enable;
    bool ARB_viewport_array_warn;
+   bool ARB_fragment_layer_viewport_enable;
+   bool ARB_fragment_layer_viewport_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
