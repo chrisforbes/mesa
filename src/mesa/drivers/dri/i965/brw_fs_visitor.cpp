@@ -63,6 +63,8 @@ fs_visitor::visit(ir_variable *ir)
 	 reg = emit_frontfacing_interpolation(ir);
       } else if (!strcmp(ir->name, "gl_Layer")) {
          reg = emit_layer_setup(ir);
+      } else if (!strcmp(ir->name, "gl_ViewportIndex")) {
+         reg = emit_viewport_index_setup(ir);
       } else {
 	 reg = emit_general_interpolation(ir);
       }

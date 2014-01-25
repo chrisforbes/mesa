@@ -1356,6 +1356,28 @@ fs_visitor::emit_layer_setup(ir_variable *ir)
    return reg;
 }
 
+fs_reg *
+fs_visitor::emit_viewport_index_setup(ir_variable *ir)
+{
+   /* The value for gl_ViewportIndex is provided in bits 30:27 of R0.0. */
+
+   /* These bits are actually present on all Gen4+ h/w, but until GS is enabled
+    * on earlier platforms we don't expect to get here on anything earlier
+    * than Gen7.
+    */
+   assert(brw->gen >= 7);
+
+   this->current_annotation = "gl_ViewportIndex";
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   fs_reg temp = fs_reg(this, glsl_type::int_type);
+   emit(BRW_OPCODE_SHR, temp,
+         fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
+         fs_reg(brw_imm_d(27)));
+   emit(BRW_OPCODE_AND, *reg, temp,
+         fs_reg(brw_imm_d(0x0f)));
+   return reg;
+}
+
 fs_reg
 fs_visitor::fix_math_operand(fs_reg src)
 {
