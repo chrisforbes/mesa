@@ -61,6 +61,8 @@ fs_visitor::visit(ir_variable *ir)
 	 reg = emit_fragcoord_interpolation(ir);
       } else if (!strcmp(ir->name, "gl_FrontFacing")) {
 	 reg = emit_frontfacing_interpolation(ir);
+      } else if (!strcmp(ir->name, "gl_Layer")) {
+         reg = emit_layer_setup(ir);
       } else {
 	 reg = emit_general_interpolation(ir);
       }
