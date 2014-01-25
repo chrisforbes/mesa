@@ -298,8 +298,10 @@ intelInitExtensions(struct gl_context *ctx)
       /* Only enable this in core profile because other parts of Mesa behave
        * slightly differently when the extension is enabled.
        */
-      if (ctx->API == API_OPENGL_CORE)
+      if (ctx->API == API_OPENGL_CORE) {
          ctx->Extensions.ARB_viewport_array = true;
+         ctx->Extensions.ARB_fragment_layer_viewport = true;
+      }
    }
 
    if (brw->gen == 5 || can_write_oacontrol(brw))
