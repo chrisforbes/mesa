@@ -447,7 +447,8 @@ gen7_blorp_emit_streamout_disable(struct brw_context *brw,
 
 static void
 gen7_blorp_emit_sf_config(struct brw_context *brw,
-                          const brw_blorp_params *params)
+                          const brw_blorp_params *params,
+                          int num_samples)
 {
    /* 3DSTATE_SF
     *
@@ -472,7 +473,7 @@ gen7_blorp_emit_sf_config(struct brw_context *brw,
       OUT_BATCH(_3DSTATE_SF << 16 | (7 - 2));
       OUT_BATCH(params->depth_format <<
                 GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);
-      OUT_BATCH(params->dst.num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
+      OUT_BATCH(num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -500,7 +501,8 @@ gen7_blorp_emit_sf_config(struct brw_context *brw,
 static void
 gen7_blorp_emit_wm_config(struct brw_context *brw,
                           const brw_blorp_params *params,
-                          brw_blorp_prog_data *prog_data)
+                          brw_blorp_prog_data *prog_data,
+                          int num_samples)
 {
    uint32_t dw1 = 0, dw2 = 0;
 
@@ -528,7 +530,7 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
       dw1 |= GEN7_WM_DISPATCH_ENABLE; /* We are rendering */
    }
 
-      if (params->dst.num_samples > 1) {
+      if (num_samples > 1) {
          dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
          if (prog_data && prog_data->persample_msaa_dispatch)
             dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
@@ -562,7 +564,8 @@ static void
 gen7_blorp_emit_ps_config(struct brw_context *brw,
                           const brw_blorp_params *params,
                           uint32_t prog_offset,
-                          brw_blorp_prog_data *prog_data)
+                          brw_blorp_prog_data *prog_data,
+                          int num_samples)
 {
    uint32_t dw2, dw4, dw5;
    const int max_threads_shift = brw->is_haswell ?
@@ -579,8 +582,10 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
     */
    dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
 
-   if (brw->is_haswell)
-      dw4 |= SET_FIELD(1, HSW_PS_SAMPLE_MASK); /* 1 sample for now */
+   if (brw->is_haswell) {
+      int sample_mask = (num_samples > 1) ? (1 << num_samples) - 1 : 1;
+      dw4 |= SET_FIELD(sample_mask, HSW_PS_SAMPLE_MASK);
+   }
    if (params->use_wm_prog) {
       dw2 |= 1 << GEN7_PS_SAMPLER_COUNT_SHIFT; /* Up to 4 samplers */
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
@@ -714,7 +719,9 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
    lod = params->depth.level - params->depth.mt->first_level;
 
-   if (params->hiz_op != GEN6_HIZ_OP_NONE && lod == 0) {
+   /* not quite sure about the MSAA interaction here! */
+   if (params->hiz_op != GEN6_HIZ_OP_NONE && lod == 0 &&
+         params->depth.mt->num_samples <= 1) {
       /* HIZ ops for lod 0 may set the width & height a little
        * larger to allow the fast depth clear to fit the hardware
        * alignment requirements. (8x4)
@@ -722,8 +729,8 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
       surfwidth = params->depth.width;
       surfheight = params->depth.height;
    } else {
-      surfwidth = params->depth.mt->logical_width0;
-      surfheight = params->depth.mt->logical_height0;
+      surfwidth = ALIGN(params->depth.mt->logical_width0, 8);
+      surfheight = ALIGN(params->depth.mt->logical_height0, 4);
    }
 
    /* 3DSTATE_DEPTH_BUFFER */
@@ -863,10 +870,12 @@ gen7_blorp_exec(struct brw_context *brw,
    uint32_t sampler_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
-   gen6_emit_3dstate_multisample(brw, params->dst.num_samples);
+   int num_samples = (params->hiz_op == GEN6_HIZ_OP_NONE) ?
+      params->dst.num_samples : params->depth.mt->num_samples;
+   gen6_emit_3dstate_multisample(brw, num_samples);
    gen6_emit_3dstate_sample_mask(brw,
-                                 params->dst.num_samples > 1 ?
-                                 (1 << params->dst.num_samples) - 1 : 1);
+                                 num_samples > 1 ?
+                                 (1 << num_samples) - 1 : 1);
    gen6_blorp_emit_state_base_address(brw, params);
    gen6_blorp_emit_vertices(brw, params);
    gen7_blorp_emit_urb_config(brw, params);
@@ -908,8 +917,8 @@ gen7_blorp_exec(struct brw_context *brw,
    gen7_blorp_emit_gs_disable(brw, params);
    gen7_blorp_emit_streamout_disable(brw, params);
    gen6_blorp_emit_clip_disable(brw, params);
-   gen7_blorp_emit_sf_config(brw, params);
-   gen7_blorp_emit_wm_config(brw, params, prog_data);
+   gen7_blorp_emit_sf_config(brw, params, num_samples);
+   gen7_blorp_emit_wm_config(brw, params, prog_data, num_samples);
    if (params->use_wm_prog) {
       gen7_blorp_emit_binding_table_pointers_ps(brw, params,
                                                 wm_bind_bo_offset);
@@ -918,7 +927,7 @@ gen7_blorp_exec(struct brw_context *brw,
    } else {
       gen7_blorp_emit_constant_ps_disable(brw, params);
    }
-   gen7_blorp_emit_ps_config(brw, params, prog_offset, prog_data);
+   gen7_blorp_emit_ps_config(brw, params, prog_offset, prog_data, num_samples);
    gen7_blorp_emit_cc_viewport(brw, params);
 
    if (params->depth.mt)
