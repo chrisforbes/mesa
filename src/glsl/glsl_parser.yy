@@ -131,8 +131,9 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %token ATTRIBUTE CONST_TOK BOOL_TOK FLOAT_TOK INT_TOK UINT_TOK
 %token BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token BVEC2 BVEC3 BVEC4 IVEC2 IVEC3 IVEC4 UVEC2 UVEC3 UVEC4 VEC2 VEC3 VEC4
-%token CENTROID IN_TOK OUT_TOK INOUT_TOK UNIFORM VARYING SAMPLE
+%token CENTROID IN_TOK OUT_TOK INOUT_TOK UNIFORM VARYING PATCH SAMPLE
 %token NOPERSPECTIVE FLAT SMOOTH
+%token ROW_MAJOR PACKED_TOK
 %token MAT2X2 MAT2X3 MAT2X4
 %token MAT3X2 MAT3X3 MAT3X4
 %token MAT4X2 MAT4X3 MAT4X4
@@ -180,18 +181,18 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 
    /* Reserved words that are not actually used in the grammar.
     */
-%token ASM CLASS UNION ENUM TYPEDEF TEMPLATE THIS PACKED_TOK GOTO
+%token ASM CLASS UNION ENUM TYPEDEF TEMPLATE THIS GOTO
 %token INLINE_TOK NOINLINE PUBLIC_TOK STATIC EXTERN EXTERNAL
 %token LONG_TOK SHORT_TOK DOUBLE_TOK HALF FIXED_TOK UNSIGNED INPUT_TOK
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER3DRECT
 %token SIZEOF CAST NAMESPACE USING
-%token RESOURCE PATCH
+%token RESOURCE
 %token SUBROUTINE
 
 %token ERROR_TOK
 
-%token COMMON PARTITION ACTIVE FILTER ROW_MAJOR
+%token COMMON PARTITION ACTIVE FILTER
 
 %type <identifier> variable_identifier
 %type <node> statement
@@ -1796,7 +1797,11 @@ auxiliary_storage_qualifier:
       memset(& $$, 0, sizeof($$));
       $$.flags.q.sample = 1;
    }
-   /* TODO: "patch" also goes here someday. */
+   | PATCH
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.patch = 1;
+   }
 
 storage_qualifier:
    CONST_TOK
