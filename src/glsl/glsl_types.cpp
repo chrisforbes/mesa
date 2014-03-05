@@ -110,6 +110,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
+      this->fields.structure[i].patch = fields[i].patch;
       this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
@@ -138,6 +139,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].interpolation = fields[i].interpolation;
       this->fields.structure[i].centroid = fields[i].centroid;
       this->fields.structure[i].sample = fields[i].sample;
+      this->fields.structure[i].patch = fields[i].patch;
       this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
@@ -512,6 +514,9 @@ glsl_type::record_compare(const glsl_type *b) const
          return false;
       if (this->fields.structure[i].sample
           != b->fields.structure[i].sample)
+         return false;
+      if (this->fields.structure[i].patch
+          != b->fields.structure[i].patch)
          return false;
    }
 

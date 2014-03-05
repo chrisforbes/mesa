@@ -664,6 +664,12 @@ struct glsl_struct_field {
     * in ir_variable::sample). 0 otherwise.
     */
    unsigned sample:1;
+
+   /**
+    * For interface blocks, 1 if this variable is a per-patch input or output
+    * (as in ir_variable::patch). 0 otherwise.
+    */
+   unsigned patch:1;
 };
 
 static inline unsigned int
