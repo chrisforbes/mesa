@@ -853,10 +853,13 @@ builtin_variable_generator::generate_tcs_special_vars()
    add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");// XXX: or sysval?
    add_system_value(SYSTEM_VALUE_INVOCATION_ID, int_t, "gl_InvocationID");
 
-   add_output(VARYING_SLOT_TESS_LEVEL_OUTER,
+   ir_variable *var;
+   var = add_output(VARYING_SLOT_TESS_LEVEL_OUTER,
                     array(float_t, 4), "gl_TessLevelOuter");
-   add_output(VARYING_SLOT_TESS_LEVEL_INNER,
+   var->data.patch = 1;
+   var = add_output(VARYING_SLOT_TESS_LEVEL_INNER,
                     array(float_t, 2), "gl_TessLevelInner");
+   var->data.patch = 1;
 }
 
 
@@ -870,10 +873,13 @@ builtin_variable_generator::generate_tes_special_vars()
    add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");// XXX: or sysval?
    add_system_value(SYSTEM_VALUE_TESS_COORD, vec3_t, "gl_TessCoord");
 
-   add_input(VARYING_SLOT_TESS_LEVEL_OUTER,
-                    array(float_t, 4), "gl_TessLevelOuter");
-   add_input(VARYING_SLOT_TESS_LEVEL_INNER,
-                    array(float_t, 2), "gl_TessLevelInner");
+   ir_variable *var;
+   var = add_input(VARYING_SLOT_TESS_LEVEL_OUTER,
+                   array(float_t, 4), "gl_TessLevelOuter");
+   var->data.patch = 1;
+   var = add_input(VARYING_SLOT_TESS_LEVEL_INNER,
+                   array(float_t, 2), "gl_TessLevelInner");
+   var->data.patch = 1;
 }
 
 
