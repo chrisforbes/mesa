@@ -564,6 +564,7 @@ _mesa_GetProgramPipelineiv(GLuint pipeline, GLenum pname, GLint *params)
    /* Are geometry shaders available in this context?
     */
    const bool has_gs = _mesa_has_geometry_shaders(ctx);
+   const bool has_tess = ctx->Extensions.ARB_tessellation_shader;
 
    if (!pipe) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -591,11 +592,17 @@ _mesa_GetProgramPipelineiv(GLuint pipeline, GLenum pname, GLint *params)
          ? pipe->CurrentProgram[MESA_SHADER_VERTEX]->Name : 0;
       return;
    case GL_TESS_EVALUATION_SHADER:
-      /* NOT YET SUPPORTED */
-      break;
+      if (!has_tess)
+         break;
+      *params = pipe->CurrentProgram[MESA_SHADER_TESS_EVAL]
+         ? pipe->CurrentProgram[MESA_SHADER_TESS_EVAL]->Name : 0;
+      return;
    case GL_TESS_CONTROL_SHADER:
-      /* NOT YET SUPPORTED */
-      break;
+      if (!has_tess)
+         break;
+      *params = pipe->CurrentProgram[MESA_SHADER_TESS_CTRL]
+         ? pipe->CurrentProgram[MESA_SHADER_TESS_CTRL]->Name : 0;
+      return;
    case GL_GEOMETRY_SHADER:
       if (!has_gs)
          break;
