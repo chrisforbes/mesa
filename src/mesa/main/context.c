@@ -1908,6 +1908,12 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
     */
    (void) from_glsl_shader[MESA_SHADER_GEOMETRY];
 
+   /* FINISHME: If GL_NV_tessellation_program is ever supported, the current
+    * FINISHME: tessellation control and evaluation programs should validated here.
+    */
+   (void) from_glsl_shader[GL_TESS_CONTROL_PROGRAM_NV];
+   (void) from_glsl_shader[GL_TESS_EVALUATION_PROGRAM_NV];
+
    if (!from_glsl_shader[MESA_SHADER_FRAGMENT]) {
       if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
