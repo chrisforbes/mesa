@@ -1256,9 +1256,7 @@ struct brw_context
 
       GLuint min_vs_entries;    /* Minimum number of VS entries */
       GLuint max_vs_entries;	/* Maximum number of VS entries */
-      GLuint min_hs_entries;	/* Minimum number of HS entries */
       GLuint max_hs_entries;	/* Maximum number of HS entries */
-      GLuint min_ds_entries;	/* Minimum number of DS entries */
       GLuint max_ds_entries;	/* Maximum number of DS entries */
       GLuint max_gs_entries;	/* Maximum number of GS entries */
 

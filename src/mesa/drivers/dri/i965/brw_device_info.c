@@ -122,6 +122,9 @@ static const struct brw_device_info brw_device_info_ivb_gt1 = {
       .size = 128,
       .min_vs_entries = 32,
       .max_vs_entries = 512,
+      // XXX: are  the numbers correct / sensible?
+      .max_hs_entries = 32,
+      .max_ds_entries = 256,
       .max_gs_entries = 192,
    },
 };
@@ -135,6 +138,8 @@ static const struct brw_device_info brw_device_info_ivb_gt2 = {
       .size = 256,
       .min_vs_entries = 32,
       .max_vs_entries = 704,
+      .max_hs_entries = 320,
+      .max_ds_entries = 320,
       .max_gs_entries = 320,
    },
 };

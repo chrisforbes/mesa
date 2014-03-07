@@ -162,11 +162,13 @@ gen7_upload_urb(struct brw_context *brw)
       (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 32 : 16;
 
    /* CACHE_NEW_VS_PROG */
+   //size of combined output of vertex shader invocation
    unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
    unsigned vs_entry_size_bytes = vs_size * 64;
 
    /* BRW_NEW_GEOMETRY_PROGRAM, CACHE_NEW_GS_PROG */
    const bool gs_present = brw->geometry_program;
+   //size of combined output of geometry shader invocation
    unsigned gs_size = gs_present ? brw->gs.prog_data->base.urb_entry_size : 1;
    unsigned gs_entry_size_bytes = gs_size * 64;
 
@@ -244,7 +246,7 @@ gen7_upload_urb(struct brw_context *brw)
       // would needed to be changed below, too
 
       hs_chunks =
-         ALIGN(brw->urb.min_hs_entries * hs_entry_size_bytes, chunk_size_bytes) /
+         ALIGN(hs_granularity * hs_entry_size_bytes, chunk_size_bytes) /
                chunk_size_bytes;
       hs_wants =
          ALIGN(brw->urb.max_hs_entries * hs_entry_size_bytes,
@@ -344,8 +346,8 @@ gen7_upload_urb(struct brw_context *brw)
    if (gs_present)
       assert(nr_gs_entries >= 2);
    if (ts_present) {
-      assert(nr_hs_entries >= brw->urb.min_hs_entries);
-      assert(nr_ds_entries >= brw->urb.min_ds_entries);
+      assert(nr_hs_entries >= 1);
+      assert(nr_ds_entries >= 10);
    }
 
    /* Gen7 doesn't actually use brw->urb.nr_{vs,gs}_entries, but it seems
