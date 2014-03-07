@@ -794,6 +794,12 @@ brw_update_texture_surfaces(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
 
+   /* BRW_NEW_TESS_CTRL_PROGRAM */
+   struct gl_program *hs = (struct gl_program *) brw->tess_ctrl_program;
+
+   /* BRW_NEW_TESS_EVAL_PROGRAM */
+   struct gl_program *ds = (struct gl_program *) brw->tess_eval_program;
+
    /* BRW_NEW_GEOMETRY_PROGRAM */
    struct gl_program *gs = (struct gl_program *) brw->geometry_program;
 
@@ -802,6 +808,8 @@ brw_update_texture_surfaces(struct brw_context *brw)
 
    /* _NEW_TEXTURE */
    update_stage_texture_surfaces(brw, vs, &brw->vs.base, false);
+   update_stage_texture_surfaces(brw, hs, &brw->hs.base, false);
+   update_stage_texture_surfaces(brw, ds, &brw->ds.base, false);
    update_stage_texture_surfaces(brw, gs, &brw->gs.base, false);
    update_stage_texture_surfaces(brw, fs, &brw->wm.base, false);
 
@@ -809,12 +817,16 @@ brw_update_texture_surfaces(struct brw_context *brw)
     * allows the surface format to be overriden for only the
     * gather4 messages. */
    if (brw->gen < 8) {
-      if (vs && vs->UsesGather)
-         update_stage_texture_surfaces(brw, vs, &brw->vs.base, true);
-      if (gs && gs->UsesGather)
-         update_stage_texture_surfaces(brw, gs, &brw->gs.base, true);
-      if (fs && fs->UsesGather)
-         update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
+   if (vs && vs->UsesGather)
+      update_stage_texture_surfaces(brw, vs, &brw->vs.base, true);
+   if (hs && hs->UsesGather)
+      update_stage_texture_surfaces(brw, hs, &brw->hs.base, true);
+   if (ds && ds->UsesGather)
+      update_stage_texture_surfaces(brw, ds, &brw->ds.base, true);
+   if (gs && gs->UsesGather)
+      update_stage_texture_surfaces(brw, gs, &brw->gs.base, true);
+   if (fs && fs->UsesGather)
+      update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
    }
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -826,6 +838,8 @@ const struct brw_tracked_state brw_texture_surfaces = {
       .brw = BRW_NEW_BATCH |
              BRW_NEW_UNIFORM_BUFFER |
              BRW_NEW_VERTEX_PROGRAM |
+             BRW_NEW_TESS_CTRL_PROGRAM |
+             BRW_NEW_TESS_EVAL_PROGRAM |
              BRW_NEW_GEOMETRY_PROGRAM |
              BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0
