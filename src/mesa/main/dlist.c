@@ -481,6 +481,10 @@ typedef enum
    /* ARB_uniform_buffer_object */
    OPCODE_UNIFORM_BLOCK_BINDING,
 
+   /* ARB_tessellation_shader */
+   OPCODE_PATCH_PARAMETERI,
+   OPCODE_PATCH_PARAMETERFV,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -7596,6 +7600,45 @@ save_UniformBlockBinding(GLuint prog, GLuint index, GLuint binding)
 }
 
 
+/** GL_ARB_tessellation_shader */
+static void GLAPIENTRY
+save_PatchParameteri(GLenum pname, GLint value)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PATCH_PARAMETERI, 2);
+   if (n) {
+      n[1].e = pname;
+      n[2].i = value;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_PatchParameteri(ctx->Exec, (pname, value));
+   }
+}
+
+static void GLAPIENTRY
+save_PatchParameterfv(GLenum pname, const GLfloat *values)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PATCH_PARAMETERFV, 5);
+   if (n) {
+      n[1].e = pname;
+      n[2].f = values[0];
+      n[3].f = values[1];
+      if (pname == GL_PATCH_DEFAULT_OUTER_LEVEL) {
+         n[4].f = values[2];
+         n[5].f = values[3];
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_PatchParameterfv(ctx->Exec, (pname, values));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -8877,6 +8920,21 @@ execute_list(struct gl_context *ctx, GLuint list)
             CALL_UniformBlockBinding(ctx->Exec, (n[1].ui, n[2].ui, n[3].ui));
             break;
 
+         /* GL_ARB_tessellation_shader */
+         case OPCODE_PATCH_PARAMETERI:
+            CALL_PatchParameteri(ctx->Exec, (n[1].e, n[2].i));
+            break;
+         case OPCODE_PATCH_PARAMETERFV:
+            {
+               GLfloat params[4];
+               params[0] = n[2].f;
+               params[1] = n[3].f;
+               params[2] = n[4].f;
+               params[3] = n[5].f;
+               CALL_PatchParameterfv(ctx->Exec, (n[1].e, params));
+            }
+            break;
+
          case OPCODE_CONTINUE:
             n = (Node *) get_pointer(&n[1]);
             break;
@@ -9676,6 +9734,10 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_ProgramUniformMatrix4x2fv(table, save_ProgramUniformMatrix4x2fv);
    SET_ProgramUniformMatrix3x4fv(table, save_ProgramUniformMatrix3x4fv);
    SET_ProgramUniformMatrix4x3fv(table, save_ProgramUniformMatrix4x3fv);
+
+   /* GL_ARB_tessellation_shader */
+   SET_PatchParameteri(table, save_PatchParameteri);
+   SET_PatchParameterfv(table, save_PatchParameterfv);
 }
 
 
