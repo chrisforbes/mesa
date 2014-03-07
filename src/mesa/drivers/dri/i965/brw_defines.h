@@ -1772,7 +1772,26 @@ enum brw_message_target {
 # define GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT            4
 
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
+/* DW1 */
+# define GEN7_TE_PARTITIONING_SHIFT                     12
+# define GEN7_TE_OUTPUT_TOPOLOGY_SHIFT                  8
+# define GEN7_TE_DOMAIN_SHIFT                           4
+//# define GEN7_TE_MODE_SW                                (1 << 1)
+# define GEN7_TE_ENABLE                                 (1 << 0)
+
 #define _3DSTATE_DS                             0x781D /* GEN7+ */
+/* DW2 */
+# define GEN7_DS_SAMPLER_COUNT_SHIFT                    27
+# define GEN7_DS_BINDING_TABLE_ENTRY_COUNT_SHIFT        18
+/* DW4 */
+# define GEN7_DS_DISPATCH_START_GRF_SHIFT               20
+# define GEN7_DS_URB_READ_LENGTH_SHIFT                  11
+# define GEN7_DS_URB_ENTRY_READ_OFFSET_SHIFT            4
+/* DW5 */
+# define GEN7_DS_MAX_THREADS_SHIFT                      25
+# define GEN7_DS_STATISTICS_ENABLE                      (1 << 10)
+# define GEN7_DS_COMPUTE_W_COORDINATE_ENABLE            (1 << 2)
+# define GEN7_DS_ENABLE                                 (1 << 0)
 
 #define _3DSTATE_CLIP				0x7812 /* GEN6+ */
 /* DW1 */
