@@ -228,6 +228,13 @@ extern GLuint GLAPIENTRY
 _mesa_CreateShaderProgramv(GLenum type, GLsizei count,
                            const GLchar* const *strings);
 
+/* GL_ARB_tessellation_shader */
+extern void GLAPIENTRY
+_mesa_PatchParameteri(GLenum pname, GLint value);
+
+extern void GLAPIENTRY
+_mesa_PatchParameterfv(GLenum pname, const GLfloat *values);
+
 #ifdef __cplusplus
 }
 #endif
