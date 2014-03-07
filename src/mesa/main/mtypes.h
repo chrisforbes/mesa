@@ -2494,7 +2494,8 @@ struct gl_sl_pragmas
  */
 struct gl_shader
 {
-   /** GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB.
+   /** GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB ||
+    *  GL_TESS_CONTROL_SHADER || GL_TESS_EVALUATION_SHADER.
     * Must be the first field.
     */
    GLenum Type;
