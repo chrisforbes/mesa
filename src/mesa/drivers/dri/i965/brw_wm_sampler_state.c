@@ -478,6 +478,62 @@ const struct brw_tracked_state brw_gs_samplers = {
 };
 
 
+static void
+brw_upload_hs_samplers(struct brw_context *brw)
+{
+   struct brw_stage_state *stage_state = &brw->hs.base;
+
+   /* BRW_NEW_TESS_CTRL_PROGRAM */
+   struct gl_program *hs = (struct gl_program *) brw->geometry_program;
+   if (!hs)
+      return;
+
+   brw->vtbl.upload_sampler_state_table(brw, hs,
+                                        stage_state->sampler_count,
+                                        &stage_state->sampler_offset,
+                                        stage_state->sdc_offset);
+}
+
+
+const struct brw_tracked_state brw_hs_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_TESS_CTRL_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_hs_samplers,
+};
+
+
+static void
+brw_upload_ds_samplers(struct brw_context *brw)
+{
+   struct brw_stage_state *stage_state = &brw->ds.base;
+
+   /* BRW_NEW_TESS_EVAL_PROGRAM */
+   struct gl_program *ds = (struct gl_program *) brw->geometry_program;
+   if (!ds)
+      return;
+
+   brw->vtbl.upload_sampler_state_table(brw, ds,
+                                        stage_state->sampler_count,
+                                        &stage_state->sampler_offset,
+                                        stage_state->sdc_offset);
+}
+
+
+const struct brw_tracked_state brw_ds_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_TESS_EVAL_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_ds_samplers,
+};
+
+
 void
 gen4_init_vtable_sampler_functions(struct brw_context *brw)
 {
