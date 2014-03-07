@@ -575,3 +575,49 @@ const struct brw_tracked_state brw_gs_samplers = {
    },
    .emit = brw_upload_gs_samplers,
 };
+
+
+static void
+brw_upload_hs_samplers(struct brw_context *brw)
+{
+   /* BRW_NEW_TESS_CTRL_PROGRAM */
+   struct gl_program *hs = (struct gl_program *) brw->tess_ctrl_program;
+   if (!hs)
+      return;
+
+   brw_upload_sampler_state_table(brw, hs, &brw->hs.base);
+}
+
+
+const struct brw_tracked_state brw_hs_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_TESS_CTRL_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_hs_samplers,
+};
+
+
+static void
+brw_upload_ds_samplers(struct brw_context *brw)
+{
+   /* BRW_NEW_TESS_EVAL_PROGRAM */
+   struct gl_program *ds = (struct gl_program *) brw->tess_eval_program;
+   if (!ds)
+      return;
+
+   brw_upload_sampler_state_table(brw, ds, &brw->ds.base);
+}
+
+
+const struct brw_tracked_state brw_ds_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_TESS_EVAL_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_ds_samplers,
+};

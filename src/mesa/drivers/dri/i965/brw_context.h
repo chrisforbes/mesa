@@ -607,6 +607,25 @@ struct brw_hs_prog_data
 struct brw_ds_prog_data
 {
    struct brw_vec4_prog_data base;
+
+   enum {
+      integer,
+      odd_fractional,
+      even_fractional
+   } partitioning;
+
+   enum {
+      point,
+      line,
+      tri_cw,
+      tri_ccw
+   } output_topology;
+
+   enum {
+      quad,
+      tri,
+      isoline
+   } domain;
 };
 
 

@@ -200,6 +200,8 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &gen6_depth_stencil_state,	/* must do before cc unit */
 
    &gen6_vs_push_constants, /* Before vs_state */
+   &gen7_hs_push_constants, /* Before hs_state */
+   &gen7_ds_push_constants, /* Before ds_state */
    &gen6_gs_push_constants, /* Before gs_state */
    &gen6_wm_push_constants, /* Before wm_surfaces and constant_buffer */
 
@@ -228,6 +230,9 @@ static const struct brw_tracked_state *gen7_atoms[] =
 
    &gen7_disable_stages,
    &gen7_vs_state,
+   &gen7_hs_state,
+   &gen7_te_state,
+   &gen7_ds_state,
    &gen7_gs_state,
    &gen7_sol_state,
    &gen7_clip_state,
