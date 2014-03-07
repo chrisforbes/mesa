@@ -543,6 +543,8 @@ const struct function gl_core_functions_possible[] = {
 
    /* GL 4.0 */
    { "glMinSampleShading", 40, -1 },
+   { "glPatchParameteri", 40, -1 },
+   { "glPatchParameterfv", 40, -1 },
    { "glBlendEquationi", 40, -1 },
    { "glBlendEquationSeparatei", 40, -1 },
    { "glBlendFunci", 40, -1 },
@@ -695,8 +697,6 @@ const struct function gl_core_functions_possible[] = {
 // { "glUniformSubroutinesuiv", 43, -1 },               // XXX: Add to xml
 // { "glGetUniformSubroutineuiv", 43, -1 },             // XXX: Add to xml
 // { "glGetProgramStageiv", 43, -1 },                   // XXX: Add to xml
-// { "glPatchParameteri", 43, -1 },                     // XXX: Add to xml
-// { "glPatchParameterfv", 43, -1 },                    // XXX: Add to xml
    { "glBindTransformFeedback", 43, -1 },
    { "glDeleteTransformFeedbacks", 43, -1 },
    { "glGenTransformFeedbacks", 43, -1 },
