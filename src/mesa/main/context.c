@@ -491,11 +491,14 @@ init_program_limits(struct gl_context *ctx, gl_shader_stage stage,
       prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       prog->MaxOutputComponents = 0; /* value not used */
       break;
+   case MESA_SHADER_TESS_CTRL:
+   case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
       prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
+      /* XXX: ARB_tessellation_shader spec requires 128 input and output components */
       prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
@@ -711,6 +714,14 @@ _mesa_init_constants(struct gl_context *ctx)
    /** GL_ARB_gpu_shader5 */
    ctx->Const.MinFragmentInterpolationOffset = MIN_FRAGMENT_INTERPOLATION_OFFSET;
    ctx->Const.MaxFragmentInterpolationOffset = MAX_FRAGMENT_INTERPOLATION_OFFSET;
+
+   /** GL_ARB_tessellation_shader */
+   ctx->Const.MaxTessGenLevel = MAX_TESS_GEN_LEVEL;
+   ctx->Const.MaxPatchVertices = MAX_PATCH_VERTICES;
+   ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxTessPatchComponents = MAX_TESS_PATCH_COMPONENTS;
+   ctx->Const.MaxTessControlTotalOutputComponents = MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS;
 }
 
 
