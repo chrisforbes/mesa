@@ -239,6 +239,8 @@ typedef enum
    VARYING_SLOT_VIEWPORT, /* Appears as VS or GS output */
    VARYING_SLOT_FACE, /* FS only */
    VARYING_SLOT_PNTC, /* FS only */
+   VARYING_SLOT_TESS_LEVEL_OUTER, /* Appears in both tessellation shaders. */
+   VARYING_SLOT_TESS_LEVEL_INNER, /* Appears in both tessellation shaders. */
    VARYING_SLOT_VAR0, /* First generic varying slot */
    VARYING_SLOT_MAX = VARYING_SLOT_VAR0 + MAX_VARYING
 } gl_varying_slot;
@@ -275,6 +277,8 @@ typedef enum
 #define VARYING_BIT_VIEWPORT BITFIELD64_BIT(VARYING_SLOT_VIEWPORT)
 #define VARYING_BIT_FACE BITFIELD64_BIT(VARYING_SLOT_FACE)
 #define VARYING_BIT_PNTC BITFIELD64_BIT(VARYING_SLOT_PNTC)
+#define VARYING_BIT_TESS_LEVEL_OUTER BITFIELD64_BIT(VARYING_SLOT_TESS_LEVEL_OUTER)
+#define VARYING_BIT_TESS_LEVEL_INNER BITFIELD64_BIT(VARYING_SLOT_TESS_LEVEL_INNER)
 #define VARYING_BIT_VAR(V) BITFIELD64_BIT(VARYING_SLOT_VAR0 + (V))
 /*@}*/
 
@@ -298,6 +302,8 @@ _mesa_varying_slot_in_fs(gl_varying_slot slot)
    case VARYING_SLOT_EDGE:
    case VARYING_SLOT_CLIP_VERTEX:
    case VARYING_SLOT_LAYER:
+   case VARYING_SLOT_TESS_LEVEL_OUTER:
+   case VARYING_SLOT_TESS_LEVEL_INNER:
       return GL_FALSE;
    default:
       return GL_TRUE;
@@ -2065,7 +2071,7 @@ typedef enum
     * \name Geometry shader system values
     */
    /*@{*/
-   SYSTEM_VALUE_INVOCATION_ID,
+   SYSTEM_VALUE_INVOCATION_ID,  /**< (Also in Tessellation Control shader) */
    /*@}*/
 
    /**
@@ -2076,6 +2082,13 @@ typedef enum
    SYSTEM_VALUE_SAMPLE_ID,
    SYSTEM_VALUE_SAMPLE_POS,
    SYSTEM_VALUE_SAMPLE_MASK_IN,
+   /*@}*/
+
+   /**
+    * \name Tessellation Evaluation shader system values
+    */
+   /*@{*/
+   SYSTEM_VALUE_TESS_COORD,
    /*@}*/
 
    SYSTEM_VALUE_MAX             /**< Number of values */
