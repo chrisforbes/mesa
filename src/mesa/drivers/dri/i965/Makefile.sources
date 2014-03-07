@@ -146,9 +146,12 @@ i965_FILES = \
 	gen7_blorp.h \
 	gen7_disable.c \
 	gen7_gs_state.c \
+	gen7_ds_state.c \
+	gen7_hs_state.c \
 	gen7_misc_state.c \
 	gen7_sf_state.c \
 	gen7_sol_state.c \
+	gen7_te_state.c \
 	gen7_urb.c \
 	gen7_viewport_state.c \
 	gen7_vs_state.c \
