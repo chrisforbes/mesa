@@ -64,6 +64,12 @@ static void brwBindProgram( struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
       break;
+   case GL_TESS_CONTROL_PROGRAM_NV:
+      brw->state.dirty.brw |= BRW_NEW_TESS_CTRL_PROGRAM;
+      break;
+   case GL_TESS_EVALUATION_PROGRAM_NV:
+      brw->state.dirty.brw |= BRW_NEW_TESS_EVAL_PROGRAM;
+      break;
    case MESA_GEOMETRY_PROGRAM:
       brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
       break;
@@ -110,6 +116,28 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
          prog->id = get_new_program_id(brw->intelScreen);
 
          return _mesa_init_geometry_program(ctx, &prog->program, target, id);
+      } else {
+         return NULL;
+      }
+   }
+
+   case GL_TESS_CONTROL_PROGRAM_NV: {
+      struct brw_tess_ctrl_program *prog = CALLOC_STRUCT(brw_tess_ctrl_program);
+      if (prog) {
+         prog->id = get_new_program_id(brw->intelScreen);
+
+         return _mesa_init_tess_ctrl_program(ctx, &prog->program, target, id);
+      } else {
+         return NULL;
+      }
+   }
+
+   case GL_TESS_EVALUATION_PROGRAM_NV: {
+      struct brw_tess_eval_program *prog = CALLOC_STRUCT(brw_tess_eval_program);
+      if (prog) {
+         prog->id = get_new_program_id(brw->intelScreen);
+
+         return _mesa_init_tess_eval_program(ctx, &prog->program, target, id);
       } else {
          return NULL;
       }

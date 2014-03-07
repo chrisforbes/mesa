@@ -434,7 +434,7 @@ static void xor_states( struct brw_state_flags *result,
 }
 
 struct dirty_bit_map {
-   uint32_t bit;
+   uint64_t bit;
    char *name;
    uint32_t count;
 };
@@ -479,6 +479,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_URB_FENCE),
    DEFINE_BIT(BRW_NEW_FRAGMENT_PROGRAM),
    DEFINE_BIT(BRW_NEW_GEOMETRY_PROGRAM),
+   DEFINE_BIT(BRW_NEW_TESS_EVAL_PROGRAM),
+   DEFINE_BIT(BRW_NEW_TESS_CTRL_PROGRAM),
    DEFINE_BIT(BRW_NEW_VERTEX_PROGRAM),
    DEFINE_BIT(BRW_NEW_CURBE_OFFSETS),
    DEFINE_BIT(BRW_NEW_REDUCED_PRIMITIVE),
@@ -487,6 +489,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PSP),
    DEFINE_BIT(BRW_NEW_SURFACES),
    DEFINE_BIT(BRW_NEW_VS_BINDING_TABLE),
+   DEFINE_BIT(BRW_NEW_HS_BINDING_TABLE),
+   DEFINE_BIT(BRW_NEW_DS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_GS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_PS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_INDICES),
@@ -526,6 +530,8 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_FF_GS_UNIT),
    DEFINE_BIT(CACHE_NEW_FF_GS_PROG),
    DEFINE_BIT(CACHE_NEW_GS_PROG),
+   DEFINE_BIT(CACHE_NEW_HS_PROG),
+   DEFINE_BIT(CACHE_NEW_DS_PROG),
    DEFINE_BIT(CACHE_NEW_CLIP_VP),
    DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
    DEFINE_BIT(CACHE_NEW_CLIP_PROG),
@@ -556,7 +562,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map)
       if (bit_map[i].bit == 0)
 	 return;
 
-      fprintf(stderr, "0x%08x: %12d (%s)\n",
+      fprintf(stderr, "0x%08lx: %12d (%s)\n",
 	      bit_map[i].bit, bit_map[i].count, bit_map[i].name);
    }
 }

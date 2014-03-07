@@ -113,6 +113,12 @@ extern "C" {
  * enabled, it first passes them to a VS thread which is a good place
  * for the driver to implement any active vertex shader.
  *
+ * HS - Hull Shader (Tessellation Control Shader)
+ *
+ * TE - Tessellation Engine (Tessellation Primitive Generation)
+ *
+ * DS - Domain Shader (Tessellation Evaluation Shader)
+ *
  * GS - Geometry Shader.  This corresponds to a new DX10 concept.  If
  * enabled, incoming strips etc are passed to GS threads in individual
  * line/triangle/point units.  The GS thread may perform arbitary
@@ -153,6 +159,8 @@ enum brw_state_id {
    BRW_STATE_URB_FENCE,
    BRW_STATE_FRAGMENT_PROGRAM,
    BRW_STATE_GEOMETRY_PROGRAM,
+   BRW_STATE_TESS_EVAL_PROGRAM,
+   BRW_STATE_TESS_CTRL_PROGRAM,
    BRW_STATE_VERTEX_PROGRAM,
    BRW_STATE_CURBE_OFFSETS,
    BRW_STATE_REDUCED_PRIMITIVE,
@@ -161,6 +169,8 @@ enum brw_state_id {
    BRW_STATE_PSP,
    BRW_STATE_SURFACES,
    BRW_STATE_VS_BINDING_TABLE,
+   BRW_STATE_HS_BINDING_TABLE,
+   BRW_STATE_DS_BINDING_TABLE,
    BRW_STATE_GS_BINDING_TABLE,
    BRW_STATE_PS_BINDING_TABLE,
    BRW_STATE_INDICES,
@@ -169,6 +179,7 @@ enum brw_state_id {
    BRW_STATE_INDEX_BUFFER,
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_GS_CONSTBUF,
+   // XXX: tessellation constant buffers?
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
    BRW_STATE_VUE_MAP_VS,
@@ -184,42 +195,49 @@ enum brw_state_id {
    BRW_NUM_STATE_BITS
 };
 
-#define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
-#define BRW_NEW_FRAGMENT_PROGRAM        (1 << BRW_STATE_FRAGMENT_PROGRAM)
-#define BRW_NEW_GEOMETRY_PROGRAM        (1 << BRW_STATE_GEOMETRY_PROGRAM)
-#define BRW_NEW_VERTEX_PROGRAM          (1 << BRW_STATE_VERTEX_PROGRAM)
-#define BRW_NEW_CURBE_OFFSETS           (1 << BRW_STATE_CURBE_OFFSETS)
-#define BRW_NEW_REDUCED_PRIMITIVE       (1 << BRW_STATE_REDUCED_PRIMITIVE)
-#define BRW_NEW_PRIMITIVE               (1 << BRW_STATE_PRIMITIVE)
-#define BRW_NEW_CONTEXT                 (1 << BRW_STATE_CONTEXT)
-#define BRW_NEW_PSP                     (1 << BRW_STATE_PSP)
-#define BRW_NEW_SURFACES		(1 << BRW_STATE_SURFACES)
-#define BRW_NEW_VS_BINDING_TABLE	(1 << BRW_STATE_VS_BINDING_TABLE)
-#define BRW_NEW_GS_BINDING_TABLE	(1 << BRW_STATE_GS_BINDING_TABLE)
-#define BRW_NEW_PS_BINDING_TABLE	(1 << BRW_STATE_PS_BINDING_TABLE)
-#define BRW_NEW_INDICES			(1 << BRW_STATE_INDICES)
-#define BRW_NEW_VERTICES		(1 << BRW_STATE_VERTICES)
+// XXX: is this compiled anywhere where long isn't 64 bit?
+// change to 1ULL? but that's not c90 or c++03 conform. is this compiled
+// anywhere where long long isn't supported?
+#define BRW_NEW_URB_FENCE               (1UL << BRW_STATE_URB_FENCE)
+#define BRW_NEW_FRAGMENT_PROGRAM        (1UL << BRW_STATE_FRAGMENT_PROGRAM)
+#define BRW_NEW_GEOMETRY_PROGRAM        (1UL << BRW_STATE_GEOMETRY_PROGRAM)
+#define BRW_NEW_TESS_EVAL_PROGRAM       (1UL << BRW_STATE_TESS_EVAL_PROGRAM)
+#define BRW_NEW_TESS_CTRL_PROGRAM       (1UL << BRW_STATE_TESS_CTRL_PROGRAM)
+#define BRW_NEW_VERTEX_PROGRAM          (1UL << BRW_STATE_VERTEX_PROGRAM)
+#define BRW_NEW_CURBE_OFFSETS           (1UL << BRW_STATE_CURBE_OFFSETS)
+#define BRW_NEW_REDUCED_PRIMITIVE       (1UL << BRW_STATE_REDUCED_PRIMITIVE)
+#define BRW_NEW_PRIMITIVE               (1UL << BRW_STATE_PRIMITIVE)
+#define BRW_NEW_CONTEXT                 (1UL << BRW_STATE_CONTEXT)
+#define BRW_NEW_PSP                     (1UL << BRW_STATE_PSP)
+#define BRW_NEW_SURFACES		(1UL << BRW_STATE_SURFACES)
+#define BRW_NEW_VS_BINDING_TABLE	(1UL << BRW_STATE_VS_BINDING_TABLE)
+#define BRW_NEW_HS_BINDING_TABLE	(1UL << BRW_STATE_HS_BINDING_TABLE)
+#define BRW_NEW_DS_BINDING_TABLE	(1UL << BRW_STATE_DS_BINDING_TABLE)
+#define BRW_NEW_GS_BINDING_TABLE	(1UL << BRW_STATE_GS_BINDING_TABLE)
+#define BRW_NEW_PS_BINDING_TABLE	(1UL << BRW_STATE_PS_BINDING_TABLE)
+#define BRW_NEW_INDICES			(1UL << BRW_STATE_INDICES)
+#define BRW_NEW_VERTICES		(1UL << BRW_STATE_VERTICES)
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.
  */
-#define BRW_NEW_BATCH                  (1 << BRW_STATE_BATCH)
+#define BRW_NEW_BATCH                  (1UL << BRW_STATE_BATCH)
 /** \see brw.state.depth_region */
-#define BRW_NEW_INDEX_BUFFER           (1 << BRW_STATE_INDEX_BUFFER)
-#define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
-#define BRW_NEW_GS_CONSTBUF            (1 << BRW_STATE_GS_CONSTBUF)
-#define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
-#define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
-#define BRW_NEW_VUE_MAP_VS		(1 << BRW_STATE_VUE_MAP_VS)
-#define BRW_NEW_VUE_MAP_GEOM_OUT	(1 << BRW_STATE_VUE_MAP_GEOM_OUT)
-#define BRW_NEW_TRANSFORM_FEEDBACK	(1 << BRW_STATE_TRANSFORM_FEEDBACK)
-#define BRW_NEW_RASTERIZER_DISCARD	(1 << BRW_STATE_RASTERIZER_DISCARD)
-#define BRW_NEW_STATS_WM		(1 << BRW_STATE_STATS_WM)
-#define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
-#define BRW_NEW_ATOMIC_BUFFER           (1 << BRW_STATE_ATOMIC_BUFFER)
-#define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
-#define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
-#define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1 << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
+#define BRW_NEW_INDEX_BUFFER           (1UL << BRW_STATE_INDEX_BUFFER)
+#define BRW_NEW_VS_CONSTBUF            (1UL << BRW_STATE_VS_CONSTBUF)
+#define BRW_NEW_GS_CONSTBUF            (1UL << BRW_STATE_GS_CONSTBUF)
+#define BRW_NEW_PROGRAM_CACHE		(1UL << BRW_STATE_PROGRAM_CACHE)
+#define BRW_NEW_STATE_BASE_ADDRESS	(1UL << BRW_STATE_STATE_BASE_ADDRESS)
+#define BRW_NEW_VUE_MAP_VS		(1UL << BRW_STATE_VUE_MAP_VS)
+#define BRW_NEW_VUE_MAP_GEOM_OUT	(1UL << BRW_STATE_VUE_MAP_GEOM_OUT)
+#define BRW_NEW_TRANSFORM_FEEDBACK	(1UL << BRW_STATE_TRANSFORM_FEEDBACK)
+#define BRW_NEW_RASTERIZER_DISCARD	(1UL << BRW_STATE_RASTERIZER_DISCARD)
+#define BRW_NEW_STATS_WM		(1UL << BRW_STATE_STATS_WM)
+#define BRW_NEW_UNIFORM_BUFFER          (1UL << BRW_STATE_UNIFORM_BUFFER)
+#define BRW_NEW_ATOMIC_BUFFER           (1UL << BRW_STATE_ATOMIC_BUFFER)
+#define BRW_NEW_META_IN_PROGRESS        (1UL << BRW_STATE_META_IN_PROGRESS)
+#define BRW_NEW_INTERPOLATION_MAP       (1UL << BRW_STATE_INTERPOLATION_MAP)
+#define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1UL << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -227,7 +245,7 @@ struct brw_state_flags {
    /**
     * State update flags signalled as the result of brw_tracked_state updates
     */
-   GLuint brw;
+   GLuint64 brw;
    /** State update flags signalled by brw_state_cache.c searches */
    GLuint cache;
 };
@@ -301,6 +319,20 @@ static inline uint32_t AUB_TRACE_SUBTYPE(enum state_struct_type ss_type)
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
+};
+
+
+/** Subclass of Mesa tessellation control program */
+struct brw_tess_ctrl_program {
+   struct gl_tess_ctrl_program program;
+   unsigned id;  /**< serial no. to identify tess ctrl progs, never re-used */
+};
+
+
+/** Subclass of Mesa tessellation evaluation program */
+struct brw_tess_eval_program {
+   struct gl_tess_eval_program program;
+   unsigned id;  /**< serial no. to identify tess eval progs, never re-used */
 };
 
 
@@ -612,6 +644,29 @@ struct brw_vs_prog_data {
 };
 
 
+/* Note: brw_hs_prog_data_compare() must be updated when adding fields to
+ * this struct!
+ */
+struct brw_hs_prog_data
+{
+   struct brw_vec4_prog_data base;
+
+   /** Number vertices in ouput patch */
+   int instances;
+
+   bool uses_barrier_function;
+};
+
+
+/* Note: brw_ds_prog_data_compare() must be updated when adding fields to
+ * this struct!
+ */
+struct brw_ds_prog_data
+{
+   struct brw_vec4_prog_data base;
+};
+
+
 /* Note: brw_gs_prog_data_compare() must be updated when adding fields to
  * this struct!
  */
@@ -721,6 +776,8 @@ enum brw_cache_id {
    BRW_FF_GS_UNIT,
    BRW_FF_GS_PROG,
    BRW_GS_PROG,
+   BRW_DS_PROG,
+   BRW_HS_PROG,
    BRW_CLIP_VP,
    BRW_CLIP_UNIT,
    BRW_CLIP_PROG,
@@ -816,6 +873,8 @@ enum shader_time_shader_type {
 #define CACHE_NEW_FF_GS_UNIT             (1<<BRW_FF_GS_UNIT)
 #define CACHE_NEW_FF_GS_PROG             (1<<BRW_FF_GS_PROG)
 #define CACHE_NEW_GS_PROG                (1<<BRW_GS_PROG)
+#define CACHE_NEW_HS_PROG                (1<<BRW_HS_PROG)
+#define CACHE_NEW_DS_PROG                (1<<BRW_DS_PROG)
 #define CACHE_NEW_CLIP_VP                (1<<BRW_CLIP_VP)
 #define CACHE_NEW_CLIP_UNIT              (1<<BRW_CLIP_UNIT)
 #define CACHE_NEW_CLIP_PROG              (1<<BRW_CLIP_PROG)
@@ -1167,6 +1226,8 @@ struct brw_context
     */
    const struct gl_vertex_program *vertex_program;
    const struct gl_geometry_program *geometry_program;
+   const struct gl_tess_ctrl_program *tess_ctrl_program;
+   const struct gl_tess_eval_program *tess_eval_program;
    const struct gl_fragment_program *fragment_program;
 
    /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
@@ -1179,6 +1240,8 @@ struct brw_context
     * for each pipeline stage.
     */
    int max_vs_threads;
+   int max_hs_threads;
+   int max_ds_threads;
    int max_gs_threads;
    int max_wm_threads;
 
@@ -1193,15 +1256,23 @@ struct brw_context
 
       GLuint min_vs_entries;    /* Minimum number of VS entries */
       GLuint max_vs_entries;	/* Maximum number of VS entries */
+      GLuint min_hs_entries;	/* Minimum number of HS entries */
+      GLuint max_hs_entries;	/* Maximum number of HS entries */
+      GLuint min_ds_entries;	/* Minimum number of DS entries */
+      GLuint max_ds_entries;	/* Maximum number of DS entries */
       GLuint max_gs_entries;	/* Maximum number of GS entries */
 
       GLuint nr_vs_entries;
+      GLuint nr_hs_entries;
+      GLuint nr_ds_entries;
       GLuint nr_gs_entries;
       GLuint nr_clip_entries;
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
 
       GLuint vs_start;
+      GLuint hs_start;
+      GLuint ds_start;
       GLuint gs_start;
       GLuint clip_start;
       GLuint sf_start;
@@ -1267,6 +1338,28 @@ struct brw_context
       struct brw_stage_state base;
       struct brw_vs_prog_data *prog_data;
    } vs;
+
+   struct {
+      struct brw_stage_state base;
+      struct brw_hs_prog_data *prog_data;
+
+      /**
+       * True if the 3DSTATE_HS command most recently emitted to the 3D
+       * pipeline enabled the HS; false otherwise.
+       */
+      bool enabled;
+   } hs;
+
+   struct {
+      struct brw_stage_state base;
+      struct brw_ds_prog_data *prog_data;
+
+      /**
+       * True if the 3DSTATE_DS command most recently emitted to the 3D
+       * pipeline enabled the DS; false otherwise.
+       */
+      bool enabled;
+   } ds;
 
    struct {
       struct brw_stage_state base;
@@ -1697,12 +1790,18 @@ void gen8_emit_3dstate_sample_pattern(struct brw_context *brw);
 /* gen7_urb.c */
 void
 gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
+                              unsigned hs_size, unsigned ds_size,
                               unsigned gs_size, unsigned fs_size);
 
 void
 gen7_emit_urb_state(struct brw_context *brw,
-                    unsigned nr_vs_entries, unsigned vs_size,
-                    unsigned vs_start, unsigned nr_gs_entries,
+                    unsigned nr_vs_entries,
+                    unsigned vs_size, unsigned vs_start,
+                    unsigned nr_hs_entries,
+                    unsigned hs_size, unsigned hs_start,
+                    unsigned nr_ds_entries,
+                    unsigned ds_size, unsigned ds_start,
+                    unsigned nr_gs_entries,
                     unsigned gs_size, unsigned gs_start);
 
 
