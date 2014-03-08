@@ -1828,7 +1828,7 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
 void gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
                    unsigned int level, unsigned int layer, enum gen6_hiz_op op);
 
-extern const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1];
+extern const GLuint prim_to_hw_prim[GL_PATCHES+1];
 
 void
 brw_setup_vec4_key_clip_info(struct brw_context *brw,
