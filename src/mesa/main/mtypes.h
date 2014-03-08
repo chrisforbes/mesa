@@ -2362,7 +2362,7 @@ struct gl_tess_ctrl_program_state
    /** Cache of fixed-function programs */
    struct gl_program_cache *Cache;
 
-   GLint patch_vertices;
+   GLint patch_vertices; // XXX: This isn't realy part of the tess ctrl program state. Put it somewhere else.
    GLfloat patch_default_outer_level[4];
    GLfloat patch_default_inner_level[2];
 };
