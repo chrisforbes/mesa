@@ -704,6 +704,8 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
    exec->vtx.prim[i].base_instance = 0;
    exec->vtx.prim[i].is_indirect = 0;
 
+   assert(mode != GL_PATCHES);
+
    ctx->Driver.CurrentExecPrimitive = mode;
 
    ctx->Exec = ctx->BeginEnd;
