@@ -47,7 +47,8 @@ struct _mesa_prim {
    GLuint weak:1;
    GLuint no_current_update:1;
    GLuint is_indirect:1;
-   GLuint pad:18;
+   GLuint patch_vertices:7; /** Only valid for GL_PATCHES */
+   GLuint pad:11;
 
    GLuint start;
    GLuint count;
