@@ -55,7 +55,7 @@
 
 #define FILE_DEBUG_FLAG DEBUG_PRIMS
 
-static const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
+static const GLuint prim_to_hw_prim[GL_PATCHES+1] = {
    _3DPRIM_POINTLIST,
    _3DPRIM_LINELIST,
    _3DPRIM_LINELOOP,
@@ -70,6 +70,7 @@ static const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
    _3DPRIM_LINESTRIP_ADJ,
    _3DPRIM_TRILIST_ADJ,
    _3DPRIM_TRISTRIP_ADJ,
+   _3DPRIM_PATCHLIST_0,
 };
 
 
@@ -143,6 +144,9 @@ static void gen6_set_prim(struct brw_context *brw,
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
    hw_prim = get_hw_prim_for_gl_prim(prim->mode);
+
+   if (prim->mode == GL_PATCHES)
+      hw_prim += prim->patch_vertices;
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
