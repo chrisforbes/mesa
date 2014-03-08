@@ -596,6 +596,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    prim[0].base_instance = baseInstance;
    prim[0].is_indirect = 0;
 
+   assert(ctx->TessCtrlProgram.patch_vertices >= 1);
+   assert(ctx->TessCtrlProgram.patch_vertices <= 32);
+   prim[0].patch_vertices = ctx->TessCtrlProgram.patch_vertices;
+
    /* Implement the primitive restart index */
    if (ctx->Array.PrimitiveRestart && !ctx->Array.PrimitiveRestartFixedIndex &&
        ctx->Array.RestartIndex < count) {
