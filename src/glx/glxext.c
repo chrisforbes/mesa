@@ -377,6 +377,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
    }
 
    config->sRGBCapable = GL_FALSE;
+   config->visualSelectGroup = 0;
 
    /*
     ** Additional properties may be in a list at the end
@@ -499,7 +500,8 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->optimalPbufferHeight = *bp++;
          break;
       case GLX_VISUAL_SELECT_GROUP_SGIX:
-         config->visualSelectGroup = *bp++;
+        // config->visualSelectGroup = *bp++;
+         bp++;    // skip this, Xorg is feeding me junk.
          break;
       case GLX_SWAP_METHOD_OML:
          config->swapMethod = *bp++;
