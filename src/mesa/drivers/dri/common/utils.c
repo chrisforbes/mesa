@@ -248,7 +248,7 @@ driCreateConfigs(mesa_format format,
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
 	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
 	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		    *c = malloc (sizeof **c);
+		    *c = calloc (1, sizeof **c);
 		    modes = &(*c)->modes;
 		    c++;
 
