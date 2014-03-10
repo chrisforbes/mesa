@@ -256,26 +256,38 @@ lower_tess_level_visitor::handle_rvalue(ir_rvalue **rv)
 void
 lower_tess_level_visitor::fix_lhs(ir_assignment *ir)
 {
-   if (ir->lhs->ir_type == ir_type_expression) {
-      void *mem_ctx = ralloc_parent(ir);
-      ir_expression *const expr = (ir_expression *) ir->lhs;
+   if (ir->lhs->ir_type != ir_type_expression)
+      return;
+   void *mem_ctx = ralloc_parent(ir);
+   ir_expression *const expr = (ir_expression *) ir->lhs;
 
-      /* The expression must be of the form:
-       *
-       *     (vector_extract gl_ClipTessLevel*MESA, j).
-       */
-      assert(expr->operation == ir_binop_vector_extract);
-      assert(expr->operands[0]->ir_type == ir_type_dereference_variable);
-      assert((expr->operands[0]->type == glsl_type::vec4_type) ||
-             (expr->operands[0]->type == glsl_type::vec2_type));
+   /* The expression must be of the form:
+    *
+    *     (vector_extract gl_ClipTessLevel*MESA, j).
+    */
+   assert(expr->operation == ir_binop_vector_extract);
+   assert(expr->operands[0]->ir_type == ir_type_dereference_variable);
+   assert((expr->operands[0]->type == glsl_type::vec4_type) ||
+          (expr->operands[0]->type == glsl_type::vec2_type));
 
-      ir_dereference *const new_lhs = (ir_dereference *) expr->operands[0];
+   ir_dereference *const new_lhs = (ir_dereference *) expr->operands[0];
+
+   ir_constant *old_index_constant = expr->operands[1]->constant_expression_value();
+   if (!old_index_constant) {
       ir->rhs = new(mem_ctx) ir_expression(ir_triop_vector_insert,
-					   glsl_type::vec4_type,
-					   new_lhs->clone(mem_ctx, NULL),
-					   ir->rhs,
-					   expr->operands[1]);
-      ir->set_lhs(new_lhs);
+                                           glsl_type::vec4_type,
+                                           new_lhs->clone(mem_ctx, NULL),
+                                           ir->rhs,
+                                           expr->operands[1]);
+   }
+   ir->set_lhs(new_lhs);
+
+   if (old_index_constant) {
+      /* gl_TessLevel* is being accessed via a constant index.  Don't bother
+       * creating a vector insert op. Just use a write mask.
+       */
+      ir->write_mask = 1 << old_index_constant->get_int_component(0);
+   } else {
       if(expr->operands[0]->type == glsl_type::vec4_type)
          ir->write_mask = WRITEMASK_XYZW;
       else
