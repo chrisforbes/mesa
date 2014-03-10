@@ -3129,6 +3129,7 @@ struct gl_shader_compiler_options
    GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
    GLboolean EmitNoPow;                   /**< Emit POW opcodes? */
    GLboolean LowerClipDistance; /**< Lower gl_ClipDistance from float[8] to vec4[2]? */
+   GLboolean LowerTessLevel;    /**< Lower gl_TessLevel* from float[n] to vecn? */
 
    /**
     * \name Forms of indirect addressing the driver cannot do.
