@@ -527,7 +527,7 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
       /* oops, need to init this image again */
       texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
                                               texImage->InternalFormat, format,
-                                              type);
+                                              type, GL_FALSE);
 
       _mesa_init_teximage_fields(ctx, texImage,
                                  texImage->Width, texImage->Height,

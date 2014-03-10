@@ -2974,7 +2974,8 @@ mesa_format
 _mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
                             GLenum target, GLint level,
-                            GLenum internalFormat, GLenum format, GLenum type)
+                            GLenum internalFormat, GLenum format, GLenum type,
+                            GLboolean prefer_no_swizzle)
 {
    mesa_format f;
 
@@ -3179,7 +3180,8 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
    }
    else {
       texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                              internalFormat, format, type);
+                                              internalFormat, format, type,
+                                              GL_FALSE);
    }
 
    assert(texFormat != MESA_FORMAT_NONE);
@@ -3607,7 +3609,8 @@ copyteximage(struct gl_context *ctx, GLuint dims,
    assert(texObj);
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                           internalFormat, GL_NONE, GL_NONE);
+                                           internalFormat, GL_NONE, GL_NONE,
+                                           GL_FALSE);
    assert(texFormat != MESA_FORMAT_NONE);
 
    if (!ctx->Driver.TestProxyTexImage(ctx, proxy_target(target),
@@ -4435,7 +4438,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    }
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
-         internalformat, GL_NONE, GL_NONE);
+         internalformat, GL_NONE, GL_NONE, GL_FALSE);
    assert(texFormat != MESA_FORMAT_NONE);
 
    dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,

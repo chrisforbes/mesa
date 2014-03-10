@@ -369,7 +369,8 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
    assert(texObj);
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
-                                           internalformat, GL_NONE, GL_NONE);
+                                           internalformat, GL_NONE, GL_NONE,
+                                           GL_TRUE);
    assert(texFormat != MESA_FORMAT_NONE);
 
    /* check that width, height, depth are legal for the mipmap level */
