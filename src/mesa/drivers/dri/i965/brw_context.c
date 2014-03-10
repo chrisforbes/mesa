@@ -492,6 +492,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
       ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
+      ctx->ShaderCompilerOptions[i].LowerTessLevel = true;
    }
 
    ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
