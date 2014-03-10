@@ -64,7 +64,7 @@ st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 extern mesa_format
 st_ChooseTextureFormat(struct gl_context * ctx, GLenum target,
                        GLint internalFormat,
-                       GLenum format, GLenum type);
+                       GLenum format, GLenum type, GLboolean prefer_no_swizzle);
 
 size_t
 st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,

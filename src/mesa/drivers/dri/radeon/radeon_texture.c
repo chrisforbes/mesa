@@ -246,7 +246,8 @@ mesa_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
 					 GLenum target,
 					 GLint internalFormat,
 					 GLenum format,
-					 GLenum type)
+					 GLenum type,
+					 GLboolean prefer_no_swizzle)
 {
 	return radeonChooseTextureFormat(ctx, internalFormat, format,
 					 type, 0);

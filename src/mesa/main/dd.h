@@ -184,7 +184,8 @@ struct dd_function_table {
     */
    mesa_format (*ChooseTextureFormat)(struct gl_context *ctx,
                                       GLenum target, GLint internalFormat,
-                                      GLenum srcFormat, GLenum srcType );
+                                      GLenum srcFormat, GLenum srcType,
+                                      GLboolean prefer_no_swizzle);
 
    /**
     * Determine sample counts support for a particular target and format

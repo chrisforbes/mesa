@@ -163,7 +163,8 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 static mesa_format
 nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
                           GLint internalFormat,
-			  GLenum srcFormat, GLenum srcType)
+                          GLenum srcFormat, GLenum srcType,
+                          GLboolean prefer_no_swizzle)
 {
 	switch (internalFormat) {
 	case 4:

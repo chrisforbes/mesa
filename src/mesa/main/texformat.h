@@ -33,7 +33,8 @@ struct gl_context;
 
 extern mesa_format
 _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
-                        GLint internalFormat, GLenum format, GLenum type);
+                        GLint internalFormat, GLenum format, GLenum type,
+                        GLboolean prefer_no_swizzle);
 
 extern GLboolean
 _mesa_tex_target_is_array(GLenum target);

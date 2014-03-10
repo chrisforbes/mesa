@@ -829,7 +829,8 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
 
       texFormat = ctx->Driver.ChooseTextureFormat(ctx, target,
                                                   GL_RGBA, GL_RGBA,
-                                                  GL_UNSIGNED_BYTE);
+                                                  GL_UNSIGNED_BYTE,
+                                                  GL_FALSE);
 
       /* need a loop here just for cube maps */
       for (face = 0; face < numFaces; face++) {

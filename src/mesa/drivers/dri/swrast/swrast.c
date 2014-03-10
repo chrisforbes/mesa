@@ -629,11 +629,13 @@ static mesa_format swrastChooseTextureFormat(struct gl_context * ctx,
                                            GLenum target,
 					   GLint internalFormat,
 					   GLenum format,
-					   GLenum type)
+					   GLenum type,
+					   GLboolean prefer_no_swizzle)
 {
     if (internalFormat == GL_RGB)
 	return MESA_FORMAT_B8G8R8X8_UNORM;
-    return _mesa_choose_tex_format(ctx, target, internalFormat, format, type);
+    return _mesa_choose_tex_format(ctx, target, internalFormat,
+                                   format, type, prefer_no_swizzle);
 }
 
 static void

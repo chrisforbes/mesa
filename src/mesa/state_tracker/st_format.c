@@ -1774,7 +1774,8 @@ st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 mesa_format
 st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
                        GLint internalFormat,
-                       GLenum format, GLenum type)
+                       GLenum format, GLenum type,
+                       GLboolean prefer_no_swizzle)
 {
    const boolean want_renderable =
       internalFormat == 3 || internalFormat == 4 ||

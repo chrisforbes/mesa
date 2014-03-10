@@ -3028,7 +3028,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
 
    /* choose format from scratch */
    f = ctx->Driver.ChooseTextureFormat(ctx, texObj->Target, internalFormat,
-                                       format, type);
+                                       format, type, prefer_no_swizzle);
    ASSERT(f != MESA_FORMAT_NONE);
    return f;
 }

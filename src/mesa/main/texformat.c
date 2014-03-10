@@ -53,6 +53,8 @@
  * \param internalFormat  user's prefered internal texture format.
  * \param format  incoming image pixel format.
  * \param type  incoming image data type.
+ * \param prefer_no_swizzle  prefer formats with the component order
+ *              matching the provided internalformat
  *
  * \return the closest mesa_format for the given format/type arguments
  *
@@ -61,7 +63,8 @@
  */
 mesa_format
 _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
-                        GLint internalFormat, GLenum format, GLenum type)
+                        GLint internalFormat, GLenum format, GLenum type,
+                        GLboolean prefer_no_swizzle)
 {
    (void) format;
 
