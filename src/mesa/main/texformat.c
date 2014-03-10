@@ -79,11 +79,13 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
          RETURN_IF_SUPPORTED(MESA_FORMAT_B10G10R10A2_UNORM);
       }
-      RETURN_IF_SUPPORTED(MESA_FORMAT_A8B8G8R8_UNORM);
-      RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_UNORM);
-      break;
+      /* fallthrough */
 
    case GL_RGBA8:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_UNORM);
+         break;
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_A8B8G8R8_UNORM);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_UNORM);
       break;
@@ -100,6 +102,9 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 
    /* deep RGBA formats */
    case GL_RGB10_A2:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R10G10B10A2_UNORM);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_B10G10R10A2_UNORM);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_UNORM);
       break;
@@ -119,6 +124,11 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
       /* fallthrough */
    case GL_RGB8:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_UNORM8);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8X8_UNORM);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_UNORM);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_BGR_UNORM8);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8X8_UNORM);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_UNORM);
@@ -454,10 +464,19 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       break;
    case GL_RGB_SNORM:
    case GL_RGB8_SNORM:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8X8_SNORM);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SNORM);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_X8B8G8R8_SNORM);
-      /* FALLTHROUGH */
+      RETURN_IF_SUPPORTED(MESA_FORMAT_A8B8G8R8_SNORM);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SNORM);
+      break;
    case GL_RGBA_SNORM:
    case GL_RGBA8_SNORM:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SNORM);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_A8B8G8R8_SNORM);
       RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SNORM);
       break;
@@ -525,11 +544,19 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 
    case GL_SRGB_EXT:
    case GL_SRGB8_EXT:
+      if (prefer_no_swizzle) {
+         /* there is no MESA_FORMAT_RGB_SRGB8 */
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8X8_SRGB);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SRGB);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_BGR_SRGB8);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_SRGB);
       break;
    case GL_SRGB_ALPHA_EXT:
    case GL_SRGB8_ALPHA8_EXT:
+      if (prefer_no_swizzle) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_R8G8B8A8_SRGB);
+      }
       RETURN_IF_SUPPORTED(MESA_FORMAT_A8B8G8R8_SRGB);
       RETURN_IF_SUPPORTED(MESA_FORMAT_B8G8R8A8_SRGB);
       break;
