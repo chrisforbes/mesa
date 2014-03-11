@@ -65,6 +65,8 @@ struct brw_device_info
     *  @{
     */
    unsigned max_vs_threads;
+   unsigned max_hs_threads;
+   unsigned max_ds_threads;
    unsigned max_gs_threads;
    unsigned max_wm_threads;
 

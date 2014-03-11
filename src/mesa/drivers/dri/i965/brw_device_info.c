@@ -116,6 +116,8 @@ static const struct brw_device_info brw_device_info_snb_gt2 = {
 static const struct brw_device_info brw_device_info_ivb_gt1 = {
    GEN7_FEATURES, .is_ivybridge = true, .gt = 1,
    .max_vs_threads = 36,
+   .max_hs_threads = 36,
+   .max_ds_threads = 36,
    .max_gs_threads = 36,
    .max_wm_threads = 48,
    .urb = {
@@ -132,6 +134,8 @@ static const struct brw_device_info brw_device_info_ivb_gt1 = {
 static const struct brw_device_info brw_device_info_ivb_gt2 = {
    GEN7_FEATURES, .is_ivybridge = true, .gt = 2,
    .max_vs_threads = 128,
+   .max_hs_threads = 128,
+   .max_ds_threads = 128,
    .max_gs_threads = 128,
    .max_wm_threads = 172,
    .urb = {
