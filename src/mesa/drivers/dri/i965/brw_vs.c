@@ -567,6 +567,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
           */
          brw->vue_map_geom_out = brw->vue_map_vs;
          brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
+         // XXX: set vue_map_ds, too?
       }
    }
 }

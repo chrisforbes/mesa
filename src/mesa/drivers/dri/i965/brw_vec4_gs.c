@@ -270,8 +270,8 @@ brw_upload_gs_prog(struct brw_context *brw)
 
    if (gp == NULL) {
       /* No geometry shader.  Vertex data just passes straight through. */
-      if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
-         brw->vue_map_geom_out = brw->vue_map_vs;
+      if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_DS_OUT) {
+         brw->vue_map_geom_out = brw->vue_map_ds_out;
          brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
       }
 
@@ -299,8 +299,8 @@ brw_upload_gs_prog(struct brw_context *brw)
    brw_populate_sampler_prog_key_data(ctx, prog, stage_state->sampler_count,
                                       &key.base.tex);
 
-   /* BRW_NEW_VUE_MAP_VS */
-   key.input_varyings = brw->vue_map_vs.slots_valid;
+   /* BRW_NEW_VUE_MAP_DS_OUT */
+   key.input_varyings = brw->vue_map_ds_out.slots_valid;
 
    if (!brw_search_cache(&brw->cache, BRW_GS_PROG,
                          &key, sizeof(key),
@@ -323,7 +323,7 @@ brw_upload_gs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT | _NEW_BUFFERS | _NEW_TEXTURE),
-      .brw   = BRW_NEW_GEOMETRY_PROGRAM | BRW_NEW_VUE_MAP_VS,
+      .brw   = BRW_NEW_GEOMETRY_PROGRAM | BRW_NEW_VUE_MAP_DS_OUT,
    },
    .emit = brw_upload_gs_prog
 };
