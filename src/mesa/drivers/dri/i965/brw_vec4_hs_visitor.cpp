@@ -170,33 +170,25 @@ vec4_hs_visitor::emit_program_code()
 void
 vec4_hs_visitor::emit_thread_end()
 {
+   emit_urb_write_header(1);
+
+   //emit_urb_slot(2, prog_data->vue_map.slot_to_varying[tf]);
+   current_annotation = "HS URB write";
+   vec4_instruction *inst = emit_urb_write_opcode(true /* complete */);
+   inst->base_mrf = 1;
+   inst->mlen = 2;
+   //inst->offset = 0;
+
    // XXX: not good: emit_vertex thinks we are using interleaved write.
-   emit_vertex();
+   //emit_vertex();
 }
 
 
 void
 vec4_hs_visitor::emit_urb_write_header(int mrf)
 {
-   /* The SEND instruction that writes the vertex data to the VUE will use
-    * per_slot_offset=true, which means that DWORD 3 of the message
-    * header specifies an offset (in multiples of 256 bits) into the URB entry
-    * at which the write should take place.
-    *
-    * So we have to prepare a message header with the appropriate offset
-    * values.
-    */
    (void) mrf;
    return;
-#if 0
-   dst_reg mrf_reg(MRF, mrf);
-   src_reg r0(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
-   this->current_annotation = "URB write header";
-   vec4_instruction *inst = emit(MOV(mrf_reg, r0));
-   inst->force_writemask_all = true;
-   emit(HS_OPCODE_SET_WRITE_OFFSET, mrf_reg, this->vertex_count,
-        (uint32_t) c->prog_data.output_vertex_size_hwords);
-#endif
 }
 
 vec4_instruction *
