@@ -167,12 +167,70 @@ vec4_hs_visitor::emit_program_code()
 }
 
 
+/** patch header format is dependant on domain:
+ * quad:    dw7-4 tess level outer xyzw
+ *          dw3-2 tess level inner xy
+ *          dw1-0 mbz
+ * tri:     dw7-5 tess level outer xyz
+ *          dw4   tess level inner x
+ *          dw3-0 mbz
+ * isoline: dw7-6 tess level outer xy
+ *          dw5-0 mbz
+ *
+ * The hardware doesn't seem to mind some garbage data in the unused registers.
+ */
+void
+vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
+{
+   vec4_instruction *inst;
+
+   const src_reg src_outer = src_reg(output_reg[VARYING_SLOT_TESS_LEVEL_OUTER]);
+   const src_reg src_inner = src_reg(output_reg[VARYING_SLOT_TESS_LEVEL_INNER]);
+
+   struct brw_reg dst_upper = stride(suboffset(reg, 4), 0, 4, 1);
+   struct brw_reg dst_lower = stride(suboffset(reg, 0), 0, 4, 1);
+
+   switch (this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_EVAL]->TessEval.PrimitiveMode) {
+   case GL_QUADS:
+   case GL_ISOLINES:
+      inst = emit(MOV(dst_upper,
+                      swizzle(src_outer, BRW_SWIZZLE4(3, 2, 1, 0))));
+      inst->force_writemask_all = true;
+
+      inst = emit(MOV(dst_lower,
+                      swizzle(src_inner, BRW_SWIZZLE4(3, 2, 1, 0))));
+      inst->force_writemask_all = true;
+      break;
+   case GL_TRIANGLES:
+      inst = emit(MOV(brw_writemask(dst_upper, WRITEMASK_YZW),
+                      swizzle(src_outer, BRW_SWIZZLE4(3, 2, 1, 0))));
+      inst->force_writemask_all = true;
+
+      inst = emit(MOV(brw_writemask(dst_upper, WRITEMASK_X),
+                      swizzle(src_inner, BRW_SWIZZLE_XXXX)));
+      inst->force_writemask_all = true;
+
+      // XXX: pass unused tessellation levels if tessellation evaluation shader reads them back.
+      /*inst = emit(MOV(brw_writemask(dst_lower, WRITEMASK_X),
+                      swizzle(src_outer, BRW_SWIZZLE4(3, 2, 1, 0))));
+      inst->force_writemask_all = true;
+      inst = emit(MOV(brw_writemask(dst_lower, WRITEMASK_ZW),
+                      swizzle(src_inner, BRW_SWIZZLE4(3, 2, 1, 0))));
+      inst->force_writemask_all = true;*/
+   }
+}
+
+
 void
 vec4_hs_visitor::emit_thread_end()
 {
    emit_urb_write_header(1);
 
    //emit_urb_slot(2, prog_data->vue_map.slot_to_varying[tf]);
+   current_annotation = "tessellation factors";
+   struct brw_reg hw_reg = brw_message_reg(2);
+   emit_tessellation_factors(hw_reg);
+
    current_annotation = "HS URB write";
    vec4_instruction *inst = emit_urb_write_opcode(true /* complete */);
    inst->base_mrf = 1;
