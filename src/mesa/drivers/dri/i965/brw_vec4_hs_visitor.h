@@ -93,6 +93,7 @@ protected:
    virtual void emit_urb_write_header(int mrf);
    virtual vec4_instruction *emit_urb_write_opcode(bool complete);
    virtual int compute_array_stride(ir_dereference_array *ir);
+   virtual void emit_tessellation_factors(struct brw_reg reg);
 
 private:
    int setup_varying_inputs(int payload_reg, int *attribute_map);
