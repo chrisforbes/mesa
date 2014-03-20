@@ -182,6 +182,8 @@ enum brw_state_id {
    BRW_STATE_BATCH,
    BRW_STATE_INDEX_BUFFER,
    BRW_STATE_VS_CONSTBUF,
+   BRW_STATE_HS_CONSTBUF,
+   BRW_STATE_DS_CONSTBUF,
    BRW_STATE_GS_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
@@ -223,6 +225,8 @@ enum brw_state_id {
 /** \see brw.state.depth_region */
 #define BRW_NEW_INDEX_BUFFER            (1ull << BRW_STATE_INDEX_BUFFER)
 #define BRW_NEW_VS_CONSTBUF             (1ull << BRW_STATE_VS_CONSTBUF)
+#define BRW_NEW_HS_CONSTBUF             (1ull << BRW_STATE_HS_CONSTBUF)
+#define BRW_NEW_DS_CONSTBUF             (1ull << BRW_STATE_DS_CONSTBUF)
 #define BRW_NEW_GS_CONSTBUF             (1ull << BRW_STATE_GS_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE           (1ull << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS      (1ull << BRW_STATE_STATE_BASE_ADDRESS)
