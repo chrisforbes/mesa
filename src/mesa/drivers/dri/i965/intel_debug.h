@@ -61,6 +61,8 @@ extern int INTEL_DEBUG;
 #define DEBUG_NO16        0x20000000
 #define DEBUG_VUE         0x40000000
 #define DEBUG_NO_DUAL_OBJECT_GS 0x80000000
+//XXX give this a proper value
+#define DEBUG_TS          0x1000
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "INTEL-MESA"
