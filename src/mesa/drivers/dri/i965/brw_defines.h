@@ -1087,6 +1087,8 @@ enum opcode {
 
    HS_OPCODE_GET_INSTANCE_ID,
    HS_OPCODE_URB_WRITE,
+
+   DS_OPCODE_GET_TESS_COORD,
 };
 
 enum brw_derivative_quality {
