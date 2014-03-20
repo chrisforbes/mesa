@@ -83,6 +83,7 @@ public:
                    struct brw_shader *shader,
                    void *mem_ctx,
                    bool no_spills);
+   virtual void lower_mrfs_to_hw_regs(void);
 
 protected:
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir);
@@ -94,6 +95,8 @@ protected:
    virtual vec4_instruction *emit_urb_write_opcode(bool complete);
    virtual int compute_array_stride(ir_dereference_array *ir);
    virtual void emit_tessellation_factors(struct brw_reg reg);
+   virtual void emit_patch(const bool thread_end);
+   virtual void emit_urb_slot(int mrf, int sub_reg, int varying);
 
 private:
    int setup_varying_inputs(int payload_reg, int *attribute_map);
