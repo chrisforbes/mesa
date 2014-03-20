@@ -1280,6 +1280,43 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
 }
 
 
+void
+vec4_visitor::split_3src_inst(vec4_instruction *inst)
+{
+   dst_reg temp;
+
+   switch (inst->opcode) {
+   case BRW_OPCODE_LRP:
+      temp1 = dst_reg(this, glsl_type::vec4_type);
+      temp2 = dst_reg(this, glsl_type::vec4_type);
+      emit_before(inst, ADD(temp1, inst->src[0], brw_imm_f(-1)));
+      emit_before(inst, MUL(temp1, inst->src[2], src_reg(temp1)));
+      emit_before(inst, MUL(temp2, inst->src[1], inst->src[0]));
+      emit_before(inst, ADD(inst->dst, src_reg(temp2), src_reg(temp1)));
+      inst->remove();
+      break;
+   case BRW_OPCODE_MAD:
+      temp = dst_reg(this, glsl_type::vec4_type);
+      emit_before(inst, MUL(temp, inst->src[1], inst->src[2]));
+      emit_before(inst, ADD(inst->dst, src_reg(temp), inst->src[0]));
+      inst->remove();
+      break;
+   case BRW_OPCODE_BFE:
+      temp = dst_reg(this, glsl_type::vec4_type);
+      emit_before(inst, SHR(temp, inst->src[2], inst->src[1]));
+      emit_before(inst, AND(inst->dst, src_reg(temp), inst->src[0]));
+      inst->remove();
+      break;
+   case BRW_OPCODE_BFI2:
+      /* FINISHME */
+      assert(0);
+      break;
+   default:
+      assert(!"not reached");
+   }
+}
+
+
 static inline struct brw_reg
 attribute_to_hw_reg(int attr, bool interleaved)
 {
@@ -1306,7 +1343,9 @@ void
 vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
                                           bool interleaved)
 {
-   foreach_list(node, &this->instructions) {
+   bool src_changed = false;
+
+   foreach_list_safe(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
       /* We have to support ATTR as a destination for GL_FIXED fixup. */
@@ -1330,6 +1369,7 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
 	 if (inst->src[i].file != ATTR)
 	    continue;
 
+         src_changed = true;
 	 int grf = attribute_map[inst->src[i].reg + inst->src[i].reg_offset];
 
          /* All attributes used in the shader need to have been assigned a
@@ -1347,6 +1387,18 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
 
 	 inst->src[i].file = HW_REG;
 	 inst->src[i].fixed_hw_reg = reg;
+      }
+
+      if (interleaved && src_changed) {
+         /* 3-src instructions can't use 0 vstride.
+          * Split it in two 2-src instructions.
+          */
+         bool is_3src_inst = (inst->opcode == BRW_OPCODE_LRP ||
+                              inst->opcode == BRW_OPCODE_MAD ||
+                              inst->opcode == BRW_OPCODE_BFE ||
+                              inst->opcode == BRW_OPCODE_BFI2);
+         if (is_3src_inst)
+            split_3src_inst(inst);
       }
    }
 }

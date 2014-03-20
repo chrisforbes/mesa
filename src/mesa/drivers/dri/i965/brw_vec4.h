@@ -594,6 +594,7 @@ public:
 
 protected:
    void emit_vertex();
+   void split_3src_inst(vec4_instruction *inst);
    void lower_attributes_to_hw_regs(const int *attribute_map,
                                     bool interleaved);
    void setup_payload_interference(struct ra_graph *g, int first_payload_node,
