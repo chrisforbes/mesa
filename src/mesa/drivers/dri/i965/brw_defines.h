@@ -1084,6 +1084,8 @@ enum opcode {
     *   and number of SO primitives needed.
     */
    GS_OPCODE_FF_SYNC_SET_PRIMITIVES,
+
+   HS_OPCODE_URB_WRITE,
 };
 
 enum brw_derivative_quality {
@@ -1646,8 +1648,13 @@ enum brw_message_target {
 
 /* Gen7 "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
  * is 2^9, or 512.  It's counted in multiples of 64 bytes.
+ *
+ * Identical for HS and DS (and VS)
  */
 #define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES                (512*64)
+#define GEN7_MAX_HS_URB_ENTRY_SIZE_BYTES                (512*64)
+#define GEN7_MAX_DS_URB_ENTRY_SIZE_BYTES                (512*64)
+
 /* Gen6 "GS URB Entry Allocation Size" is defined as a number of 1024-bit
  * (128 bytes) URB rows and the maximum allowed value is 5 rows.
  */
@@ -1770,6 +1777,13 @@ enum brw_message_target {
 # define GEN7_HS_DISPATCH_START_GRF_SHIFT               19
 # define GEN7_HS_URB_READ_LENGTH_SHIFT                  11
 # define GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT            4
+
+/* HS Thread Payload
+ */
+/* R0 */
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_MASK           INTEL_MASK(22, 16)
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH          (22 - 16 + 1)
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT          16
 
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
 /* DW1 */

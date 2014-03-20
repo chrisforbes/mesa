@@ -279,6 +279,8 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
       return 0;
    case GS_OPCODE_FF_SYNC:
       return 1;
+   case HS_OPCODE_URB_WRITE:
+      return 0;
    case SHADER_OPCODE_SHADER_TIME_ADD:
       return 0;
    case SHADER_OPCODE_TEX:
