@@ -2831,6 +2831,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       prog->_LinkedShaders[i] = NULL;
    }
 
+   /* Attach pass-through tessellation control shader if needed. */
+   if (num_shaders[MESA_SHADER_TESS_EVAL] > 0 &&
+       num_shaders[MESA_SHADER_TESS_CTRL] == 0) {
+      struct gl_shader *tess_ctrl_shader = create_ff_tess_ctrl_program(ctx);
+      shader_list[MESA_SHADER_TESS_CTRL][0] = tess_ctrl_shader;
+      num_shaders[MESA_SHADER_TESS_CTRL] = 1;
+   }
+
    /* Link all shaders for a particular stage and validate the result.
     */
    for (int stage = 0; stage < MESA_SHADER_STAGES; stage++) {
