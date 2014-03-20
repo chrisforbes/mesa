@@ -1016,6 +1016,7 @@ enum opcode {
     */
    GS_OPCODE_GET_INSTANCE_ID,
 
+   HS_OPCODE_GET_INSTANCE_ID,
    HS_OPCODE_URB_WRITE,
 };
 
