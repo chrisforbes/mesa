@@ -5393,7 +5393,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
        */
       if (options->EmitNoIndirectInput || options->EmitNoIndirectOutput ||
           options->EmitNoIndirectTemp || options->EmitNoIndirectUniform) {
-         lower_variable_index_to_cond_assign(ir,
+         lower_variable_index_to_cond_assign(prog->_LinkedShaders[i]->Stage, ir,
                                              options->EmitNoIndirectInput,
                                              options->EmitNoIndirectOutput,
                                              options->EmitNoIndirectTemp,
