@@ -174,7 +174,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       lower_quadop_vector(shader->base.ir, false);
 
       bool lowered_variable_indexing =
-         lower_variable_index_to_cond_assign(shader->base.ir,
+         lower_variable_index_to_cond_assign((gl_shader_stage) stage,
+                                             shader->base.ir,
                                              options->EmitNoIndirectInput,
                                              options->EmitNoIndirectOutput,
                                              options->EmitNoIndirectTemp,
