@@ -250,15 +250,19 @@ struct _mesa_glsl_parse_state {
    bool fs_redeclares_gl_fragcoord_with_no_layout_qualifiers;
 
    /**
-    * True if a geometry shader input primitive type was specified using a
-    * layout directive.
+    * True if a geometry shader input primitive type or tessellation control
+    * output vertices were specified using a layout directive.
     *
-    * Note: this value is computed at ast_to_hir time rather than at parse
+    * Note: these values are computed at ast_to_hir time rather than at parse
     * time.
     */
    bool gs_input_prim_type_specified;
+   bool tcs_output_vertices_specified;
 
-   /** Input layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   /**
+    * Input layout qualifiers from GLSL 1.50 (geometry shader controls),
+    * and GLSL 4.00 (tessellation evaluation shader)
+    */
    struct ast_type_qualifier *in_qualifier;
 
    /**
@@ -276,7 +280,10 @@ struct _mesa_glsl_parse_state {
     */
    unsigned cs_input_local_size[3];
 
-   /** Output layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   /**
+    * Output layout qualifiers from GLSL 1.50 (geometry shader controls),
+    * and GLSL 4.00 (tessellation control shader).
+    */
    struct ast_type_qualifier *out_qualifier;
 
    /**
@@ -346,6 +353,9 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_viewport_array */
       unsigned MaxViewports;
+
+      /* ARB_tessellation_shader */
+      unsigned MaxPatchVertices;
    } Const;
 
    /**
@@ -434,6 +444,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_shading_language_420pack_warn;
    bool ARB_shading_language_packing_enable;
    bool ARB_shading_language_packing_warn;
+   bool ARB_tessellation_shader_enable;
+   bool ARB_tessellation_shader_warn;
    bool ARB_texture_cube_map_array_enable;
    bool ARB_texture_cube_map_array_warn;
    bool ARB_texture_gather_enable;
@@ -499,6 +511,15 @@ struct _mesa_glsl_parse_state {
     * Unused for other shader types.
     */
    unsigned gs_input_size;
+
+   /**
+    * For tessellation control shaders, size of the most recently seen output
+    * declaration that was a sized array, or 0 if no sized output array
+    * declarations have been seen.
+    *
+    * Unused for other shader types.
+    */
+   unsigned tcs_output_size;
 
    bool early_fragment_tests;
 

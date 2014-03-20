@@ -79,6 +79,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    state->toplevel_ir = instructions;
 
    state->gs_input_prim_type_specified = false;
+   state->tcs_output_vertices_specified = false;
    state->cs_input_local_size_specified = false;
 
    /* Section 4.2 of the GLSL 1.20 specification states:
@@ -2221,6 +2222,8 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
     *                     input            output
     *                     -----            ------
     * vertex              explicit_loc     sso
+    * tess control        sso              sso
+    * tess eval           sso              sso
     * geometry            sso              sso
     * fragment            sso              explicit_loc
     */
@@ -2243,6 +2246,8 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       fail = true;
       break;
 
+   case MESA_SHADER_TESS_CTRL:
+   case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
       if (var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out) {
          if (!state->check_separate_shader_objects_allowed(loc, var))
@@ -2302,6 +2307,8 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
                : (qual->location + VARYING_SLOT_VAR0);
             break;
 
+         case MESA_SHADER_TESS_CTRL:
+         case MESA_SHADER_TESS_EVAL:
          case MESA_SHADER_GEOMETRY:
             var->data.location = qual->location + VARYING_SLOT_VAR0;
             break;
@@ -2571,7 +2578,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       case MESA_SHADER_VERTEX:
          if (var->data.mode == ir_var_shader_out)
             var->data.invariant = true;
-	      break;
+         break;
+      case MESA_SHADER_TESS_CTRL:
+      case MESA_SHADER_TESS_EVAL:
       case MESA_SHADER_GEOMETRY:
          if ((var->data.mode == ir_var_shader_in)
              || (var->data.mode == ir_var_shader_out))
@@ -3095,6 +3104,70 @@ process_initializer(ir_variable *var, ast_declaration *decl,
  * (this covers both interface blocks arrays and bare input variables).
  */
 static void
+handle_tess_ctrl_shader_output_decl(struct _mesa_glsl_parse_state *state,
+				       YYLTYPE loc, ir_variable *var)
+{
+   unsigned num_vertices = 0;
+   if (state->tcs_output_vertices_specified) {
+      num_vertices = state->out_qualifier->vertices;
+   }
+
+   /* This function should only be called for arrays. */
+   if (!var->type->is_array()) {
+      assert(state->error);
+
+      /* To avoid cascading failures, short circuit the checks below. */
+      return;
+   }
+
+   if (var->type->is_unsized_array()) {
+      if (num_vertices != 0)
+	 var->type = glsl_type::get_array_instance(var->type->fields.array,
+	       num_vertices);
+   } else {
+      /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec
+       * includes the following examples of compile-time errors:
+       *
+       *   // code sequence within one shader...
+       *   in vec4 Color1[];    // size unknown
+       *   ...Color1.length()...// illegal, length() unknown
+       *   in vec4 Color2[2];   // size is 2
+       *   ...Color1.length()...// illegal, Color1 still has no size
+       *   in vec4 Color3[3];   // illegal, input sizes are inconsistent
+       *   layout(lines) in;    // legal, input size is 2, matching
+       *   in vec4 Color4[3];   // illegal, contradicts layout
+       *   ...
+       *
+       * To detect the case illustrated by Color3, we verify that the size of
+       * an explicitly-sized array matches the size of any previously declared
+       * explicitly-sized array.  To detect the case illustrated by Color4, we
+       * verify that the size of an explicitly-sized array is consistent with
+       * any previously declared input layout.
+       */
+      if (num_vertices != 0 && var->type->length != num_vertices) {
+	 _mesa_glsl_error(&loc, state,
+	       "tessellation control shader output size contradicts "
+	       "previously declared layout (size is %u, but layout specifies "
+	       "a size of %u)", var->type->length, num_vertices);
+      } else if (state->tcs_output_size != 0 &&
+	    var->type->length != state->tcs_output_size) {
+	 _mesa_glsl_error(&loc, state,
+	       "tessellation control shader output sizes are "
+	       "inconsistent (size is %u, but a previous "
+	       "declaration has size %u)",
+	       var->type->length, state->tcs_output_size);
+      } else {
+	 state->tcs_output_size = var->type->length;
+      }
+   }
+}
+
+
+/**
+ * Do additional processing necessary for geometry shader input declarations
+ * (this covers both interface blocks arrays and bare input variables).
+ */
+static void
 handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
                                   YYLTYPE loc, ir_variable *var)
 {
@@ -3601,6 +3674,13 @@ ast_declarator_list::hir(exec_list *instructions,
 
             handle_geometry_shader_input_decl(state, loc, var);
          }
+      } else if (var->data.mode == ir_var_shader_out) {
+	 if (state->stage == MESA_SHADER_TESS_CTRL) {
+	    // XXX: only allow non-arrays with patch-out attribute
+	    if (var->type->is_array()) {
+	       handle_tess_ctrl_shader_output_decl(state, loc, var);
+	    }
+	 }
       }
 
       /* Integer fragment inputs must be qualified with 'flat'.  In GLSL ES,
@@ -5806,6 +5886,69 @@ ast_interface_block::hir(exec_list *instructions,
                var->remove();
             }
          }
+      }
+   }
+
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_tcs_output_layout::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   YYLTYPE loc = this->get_location();
+
+   /* If any tessellation control output layout declaration preceded this
+    * one, make sure it was consistent with this one.
+    */
+   if (state->tcs_output_vertices_specified &&
+       state->out_qualifier->vertices != this->vertices) {
+      _mesa_glsl_error(&loc, state,
+		       "tessellation control shader output layout does not "
+		       "match previous declaration");
+      return NULL;
+   }
+
+   /* If any shader outputs occurred before this declaration and specified an
+    * array size, make sure the size they specified is consistent with the
+    * primitive type.
+    */
+   unsigned num_vertices = this->vertices;
+   if (state->tcs_output_size != 0 && state->tcs_output_size != num_vertices) {
+      _mesa_glsl_error(&loc, state,
+		       "this tessellation control shader output layout "
+		       "specifies %u vertices, but a previous output "
+		       "is declared with size %u",
+		       num_vertices, state->tcs_output_size);
+      return NULL;
+   }
+
+   state->tcs_output_vertices_specified = true;
+
+   /* If any shader outputs occurred before this declaration and did not
+    * specify an array size, their size is determined now.
+    */
+   foreach_in_list (ir_instruction, node, instructions) {
+      ir_variable *var = node->as_variable();
+      if (var == NULL || var->data.mode != ir_var_shader_out)
+	 continue;
+
+      /* Note: Not all tessellation control shader output are arrays. */
+      if (!var->type->is_unsized_array())
+	 continue;
+
+      // TODO: Skip patch out variables incl. gl_TessLevel*
+
+      if (var->data.max_array_access >= num_vertices) {
+	 _mesa_glsl_error(&loc, state,
+			  "this tessellation control shader output layout "
+			  "specifies %u vertices, but an access to element "
+			  "%u of output `%s' already exists", num_vertices,
+			  var->data.max_array_access, var->name);
+      } else {
+	 var->type = glsl_type::get_array_instance(var->type->fields.array,
+						   num_vertices);
       }
    }
 
