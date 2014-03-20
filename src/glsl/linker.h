@@ -81,6 +81,9 @@ extern void
 link_check_atomic_counter_resources(struct gl_context *ctx,
                                     struct gl_shader_program *prog);
 
+struct gl_shader *
+create_ff_tess_ctrl_program(struct gl_context *ctx);
+
 /**
  * Class for processing all of the leaf fields of a variable that corresponds
  * to a program resource.
