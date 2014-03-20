@@ -30,6 +30,7 @@ i965_FILES = \
 	brw_draw.c \
 	brw_draw.h \
 	brw_draw_upload.c \
+	brw_ds_surface_state.c \
 	brw_eu.c \
 	brw_eu_compact.c \
 	brw_eu_emit.c \
@@ -60,6 +61,7 @@ i965_FILES = \
 	brw_gs_state.c \
 	brw_gs_surface_state.c \
 	brw_inst.h \
+	brw_hs_surface_state.c \
 	brw_interpolation_map.c \
 	brw_lower_texture_gradients.cpp \
 	brw_lower_unnormalized_offset.cpp \
