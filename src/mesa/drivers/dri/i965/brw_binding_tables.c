@@ -160,6 +160,54 @@ const struct brw_tracked_state brw_gs_binding_table = {
    .emit = brw_gs_upload_binding_table,
 };
 
+/** Upload the HS binding table (if HS is active). */
+static void
+brw_hs_upload_binding_table(struct brw_context *brw)
+{
+   /* If there's no HS, skip changing anything. */
+   if (brw->tess_ctrl_program == NULL)
+      return;
+
+   brw_upload_binding_table(brw,
+                            _3DSTATE_BINDING_TABLE_POINTERS_HS,
+                            BRW_NEW_HS_BINDING_TABLE, &brw->hs.base);
+}
+
+const struct brw_tracked_state brw_hs_binding_table = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_HS_CONSTBUF |
+             BRW_NEW_SURFACES,
+      .cache = CACHE_NEW_HS_PROG
+   },
+   .emit = brw_hs_upload_binding_table,
+};
+
+/** Upload the DS binding table (if DS is active). */
+static void
+brw_ds_upload_binding_table(struct brw_context *brw)
+{
+   /* If there's no DS, skip changing anything. */
+   if (brw->tess_eval_program == NULL)
+      return;
+
+   brw_upload_binding_table(brw,
+                            _3DSTATE_BINDING_TABLE_POINTERS_DS,
+                            BRW_NEW_DS_BINDING_TABLE, &brw->ds.base);
+}
+
+const struct brw_tracked_state brw_ds_binding_table = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_DS_CONSTBUF |
+             BRW_NEW_SURFACES,
+      .cache = CACHE_NEW_DS_PROG
+   },
+   .emit = brw_ds_upload_binding_table,
+};
+
 /** @} */
 
 /**
