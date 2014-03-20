@@ -67,6 +67,44 @@ vec4_hs_visitor::make_reg_for_system_value(ir_variable *ir)
 }
 
 
+void
+vec4_hs_visitor::lower_mrfs_to_hw_regs(void)
+{
+   foreach_in_list(vec4_instruction, inst, &instructions) {
+      /* We have to support ATTR as a destination for GL_FIXED fixup. */
+      if (inst->dst.file == MRF) {
+         const int reg = inst->dst.reg + inst->dst.reg_offset - 3;
+         struct brw_reg brw_reg = brw_message_reg(3 + reg / 2);
+         brw_reg = stride(suboffset(brw_reg, (reg % 2) * 4), 0, 4, 1);
+         brw_reg.type = inst->dst.type;
+         brw_reg.dw1.bits.writemask = inst->dst.writemask;
+
+         inst->dst.file = HW_REG;
+         inst->dst.fixed_hw_reg = brw_reg;
+      }
+
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file != MRF)
+            continue;
+
+         const int reg = inst->src[i].reg + inst->src[i].reg_offset - 3;
+         struct brw_reg brw_reg = brw_message_reg(3 + reg / 2);
+         brw_reg = stride(suboffset(brw_reg, (reg % 2) * 4), 0, 4, 1);
+         brw_reg.type = inst->src[i].type;
+         brw_reg.dw1.bits.swizzle = inst->src[i].swizzle;
+
+         if (inst->src[i].abs)
+            brw_reg = brw_abs(brw_reg);
+         if (inst->src[i].negate)
+            brw_reg = negate(brw_reg);
+
+         inst->src[i].file = HW_REG;
+         inst->src[i].fixed_hw_reg = brw_reg;
+      }
+   }
+}
+
+
 int
 vec4_hs_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
 {
@@ -120,7 +158,6 @@ vec4_hs_visitor::setup_payload()
 
    reg = setup_varying_inputs(reg, attribute_map);
 
-   // XXX: hw seems to load first attribute in high half of register
    lower_attributes_to_hw_regs(attribute_map, true);
 
    this->first_non_payload_grf = reg;
@@ -182,6 +219,7 @@ vec4_hs_visitor::emit_program_code()
 void
 vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
 {
+   current_annotation = "tessellation factors";
    vec4_instruction *inst;
 
    const src_reg src_outer = src_reg(output_reg[VARYING_SLOT_TESS_LEVEL_OUTER]);
@@ -222,23 +260,144 @@ vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
 
 
 void
+vec4_hs_visitor::emit_urb_slot(int mrf, int sub_reg, int varying)
+{
+   dst_reg reg = dst_reg(MRF, mrf);
+   reg.type = BRW_REGISTER_TYPE_F;
+   struct brw_reg hw_reg = brw_message_reg(mrf);
+
+   switch (varying) {
+   case VARYING_SLOT_PSIZ:
+      /* PSIZ is always in slot 0, and is coupled with other flags. */
+      //FIXME
+      hw_reg = stride(suboffset(hw_reg, sub_reg * 4), 0, 4, 1);
+      current_annotation = "indices, point width, clip flags";
+      emit_psiz_and_flags(hw_reg);
+      break;
+   case BRW_VARYING_SLOT_NDC:
+      current_annotation = "NDC";
+      emit(MOV(reg, src_reg(output_reg[BRW_VARYING_SLOT_NDC])));
+      break;
+   case VARYING_SLOT_POS:
+      current_annotation = "gl_Position";
+      emit(MOV(reg, src_reg(output_reg[VARYING_SLOT_POS])));
+      break;
+   case VARYING_SLOT_EDGE:
+      /* This is present when doing unfilled polygons.  We're supposed to copy
+       * the edge flag from the user-provided vertex array
+       * (glEdgeFlagPointer), or otherwise we'll copy from the current value
+       * of that attribute (starts as 1.0f).  This is then used in clipping to
+       * determine which edges should be drawn as wireframe.
+       */
+      current_annotation = "edge flag";
+      emit(MOV(reg, src_reg(dst_reg(ATTR, VERT_ATTRIB_EDGEFLAG,
+                                    glsl_type::float_type, WRITEMASK_XYZW))));
+      break;
+   case BRW_VARYING_SLOT_PAD:
+      /* No need to write to this slot */
+      return;
+   case VARYING_SLOT_TESS_LEVEL_OUTER:
+   case VARYING_SLOT_TESS_LEVEL_INNER:
+      assert(0);
+      break;
+
+   default:
+      emit_generic_urb_slot(reg, varying);
+      break;
+   }
+
+   // HACK
+   hw_reg = stride(suboffset(hw_reg, sub_reg * 4), 0, 4, 1);
+   vec4_instruction *inst = (vec4_instruction *)this->instructions.get_tail();
+   inst->dst.file = HW_REG;
+   inst->dst.fixed_hw_reg = hw_reg;
+}
+
+
+/**
+ * Generates the VUE payload plus the necessary URB write instructions to
+ * output it.
+ *
+ * XXX: Only send parts that were actually written by the thread.
+ */
+void
+vec4_hs_visitor::emit_patch(const bool thread_end)
+{
+   /* MRF 0 is reserved for the debugger, so start with message header
+    * in MRF 1.
+    */
+   int base_mrf = 1;
+   int mrf = base_mrf;
+   /* In the process of generating our URB write message contents, we
+    * may need to unspill a register or load from an array.  Those
+    * reads would use MRFs 14-15.
+    * XXX: Is this true for >= gen7?
+    */
+   int max_usable_mrf = 13;
+
+   /* First mrf is the g0-based message header containing URB handles and
+    * such.
+    */
+   emit_urb_write_header(mrf++);
+
+   /* We may need to split this up into several URB writes, so do them in a
+    * loop.
+    */
+   int slot = 0;
+   bool complete = false;
+   do {
+      /* URB offset is in URB row increments, and each of our MRFs is half of
+       * one of those, since we're doing interleaved writes.
+       * XXX
+       */
+      int offset = slot / 2;
+
+      mrf = base_mrf + 1;
+
+      if (slot == 0) {
+         assert(prog_data->vue_map.slot_to_varying[0] ==
+                VARYING_SLOT_TESS_LEVEL_INNER);
+         assert(prog_data->vue_map.slot_to_varying[1] ==
+                VARYING_SLOT_TESS_LEVEL_OUTER);
+         emit_tessellation_factors(brw_message_reg(mrf++));
+         slot += 2;
+      }
+
+      for (; slot < prog_data->vue_map.num_slots; ++slot) {
+         emit_urb_slot(mrf, slot % 2, prog_data->vue_map.slot_to_varying[slot]);
+
+         if (slot % 2)
+            mrf++;
+
+         /* If this was max_usable_mrf, we can't fit anything more into this
+          * URB WRITE.
+          */
+         if (mrf > max_usable_mrf) {
+            slot++;
+            break;
+         }
+      }
+
+      assert(!(slot % 2));
+
+      complete = (slot >= prog_data->vue_map.num_slots) && thread_end;
+      current_annotation = "URB write";
+      vec4_instruction *inst = emit_urb_write_opcode(complete);
+      inst->base_mrf = base_mrf;
+      inst->mlen = mrf - base_mrf;
+      //no need for padding -- we're not writing interleaved.
+      //inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
+      /*if ((inst->mlen % 2) != 1)
+	 inst->mlen++;*/
+      inst->offset += offset;
+   } while(!complete);
+}
+
+
+void
 vec4_hs_visitor::emit_thread_end()
 {
-   emit_urb_write_header(1);
-
-   //emit_urb_slot(2, prog_data->vue_map.slot_to_varying[tf]);
-   current_annotation = "tessellation factors";
-   struct brw_reg hw_reg = brw_message_reg(2);
-   emit_tessellation_factors(hw_reg);
-
-   current_annotation = "HS URB write";
-   vec4_instruction *inst = emit_urb_write_opcode(true /* complete */);
-   inst->base_mrf = 1;
-   inst->mlen = 2;
-   //inst->offset = 0;
-
-   // XXX: not good: emit_vertex thinks we are using interleaved write.
-   //emit_vertex();
+   emit_patch(true /* thread end */);
 }
 
 
@@ -327,6 +486,8 @@ brw_hs_emit(struct brw_context *brw,
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
       return NULL;
    }
+
+   //v.lower_mrfs_to_hw_regs();
 
    return generate_assembly(brw, prog, &c->hp->program.Base, &c->prog_data.base,
                             mem_ctx, &v.instructions, final_assembly_size);
