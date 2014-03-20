@@ -512,6 +512,17 @@ struct ast_type_qualifier {
          unsigned stream:1; /**< Has stream value assigned  */
          unsigned explicit_stream:1; /**< stream value assigned explicitly by shader code */
          /** \} */
+
+	 /** \name Layout qualifiers for GL_ARB_tessellation_shader */
+	 /** \{ */
+	 /* tess eval input layout */
+	 /* gs prim_type reused for primitive mode */
+	 unsigned vertex_spacing:1;
+	 unsigned ordering:1;
+	 unsigned point_mode:1;
+	 /* tess control output layout */
+	 unsigned vertices:1; // XXX: reuse gs max_vertices?
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -575,6 +586,15 @@ struct ast_type_qualifier {
    int local_size[3];
 
    /**
+    * XXX
+    */
+   /* gs prim_type reused for primitive mode */
+   GLenum vertex_spacing;
+   GLenum ordering;
+   bool point_mode;
+   int vertices;
+
+   /**
     * Image format specified with an ARB_shader_image_load_store
     * layout qualifier.
     *
@@ -628,6 +648,11 @@ struct ast_type_qualifier {
    bool merge_qualifier(YYLTYPE *loc,
 			_mesa_glsl_parse_state *state,
 			ast_type_qualifier q);
+
+   bool merge_out_qualifier(YYLTYPE *loc,
+                           _mesa_glsl_parse_state *state,
+                           ast_type_qualifier q,
+                           ast_node* &node);
 
    bool merge_in_qualifier(YYLTYPE *loc,
                            _mesa_glsl_parse_state *state,
@@ -1025,6 +1050,27 @@ public:
     * is unsized, this field will be \c NULL.
     */
    ast_array_specifier *array_specifier;
+};
+
+
+/**
+ * AST node representing a declaration of the output layout for tessellation
+ * control shaders.
+ */
+class ast_tcs_output_layout : public ast_node
+{
+public:
+   ast_tcs_output_layout(const struct YYLTYPE &locp, int vertices)
+      : vertices(vertices)
+   {
+      set_location(locp);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+
+private:
+   const int vertices;
 };
 
 
