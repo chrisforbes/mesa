@@ -26,6 +26,8 @@ extern "C" {
 #include "brw_context.h"
 }
 #include "brw_vs.h"
+#include "brw_vec4_hs.h"
+#include "brw_vec4_ds.h"
 #include "brw_vec4_gs.h"
 #include "brw_fs.h"
 #include "brw_cfg.h"
@@ -74,6 +76,12 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       return false;
 
    if (brw->precompile && !brw_gs_precompile(ctx, prog))
+      return false;
+
+   if (brw->precompile && !brw_ds_precompile(ctx, prog))
+      return false;
+
+   if (brw->precompile && !brw_hs_precompile(ctx, prog))
       return false;
 
    if (brw->precompile && !brw_vs_precompile(ctx, prog))
@@ -523,6 +531,9 @@ brw_instruction_name(enum opcode op)
       return "set_channel_masks";
    case GS_OPCODE_GET_INSTANCE_ID:
       return "get_instance_id";
+
+   case HS_OPCODE_URB_WRITE:
+      return "hs_urb_write";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

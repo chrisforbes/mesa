@@ -188,6 +188,8 @@ enum brw_state_id {
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
    BRW_STATE_VUE_MAP_VS,
+   BRW_STATE_VUE_MAP_HS_OUT,
+   BRW_STATE_VUE_MAP_DS_OUT,
    BRW_STATE_VUE_MAP_GEOM_OUT,
    BRW_STATE_STATS_WM,
    BRW_STATE_META_IN_PROGRESS,
@@ -230,6 +232,8 @@ enum brw_state_id {
 #define BRW_NEW_PROGRAM_CACHE		(1UL << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1UL << BRW_STATE_STATE_BASE_ADDRESS)
 #define BRW_NEW_VUE_MAP_VS		(1UL << BRW_STATE_VUE_MAP_VS)
+#define BRW_NEW_VUE_MAP_HS_OUT		(1UL << BRW_STATE_VUE_MAP_HS_OUT)
+#define BRW_NEW_VUE_MAP_DS_OUT		(1UL << BRW_STATE_VUE_MAP_DS_OUT)
 #define BRW_NEW_VUE_MAP_GEOM_OUT	(1UL << BRW_STATE_VUE_MAP_GEOM_OUT)
 #define BRW_NEW_TRANSFORM_FEEDBACK	(1UL << BRW_STATE_TRANSFORM_FEEDBACK)
 #define BRW_NEW_RASTERIZER_DISCARD	(1UL << BRW_STATE_RASTERIZER_DISCARD)
@@ -457,6 +461,18 @@ struct brw_vue_map {
     * Total number of VUE slots in use
     */
    int num_slots;
+
+   /**
+    * Number of per-patch VUE slots. Only valid for tessellation control
+    * shader outputs and tessellation evaluation shader inputs.
+    */
+   int num_per_patch_slots;
+
+   /**
+    * Number of per-vertex VUE slots. Only valid for tessellation control
+    * shader outputs and tessellation evaluation shader inputs.
+    */
+   int num_per_vertex_slots;
 };
 
 /**
@@ -479,6 +495,10 @@ static inline GLuint brw_varying_to_offset(struct brw_vue_map *vue_map,
 
 void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
                          GLbitfield64 slots_valid);
+
+void brw_compute_tess_vue_map(const struct brw_context *const brw,
+                              struct brw_vue_map *const vue_map,
+                              const GLbitfield64 slots_valid);
 
 
 /**
@@ -600,6 +620,8 @@ struct brw_hs_prog_data
    int instances;
 
    bool uses_barrier_function;
+
+   bool include_primitive_id;
 };
 
 
@@ -628,6 +650,8 @@ struct brw_ds_prog_data
       tri,
       isoline
    } domain;
+
+   bool include_primitive_id;
 };
 
 
@@ -809,6 +833,12 @@ enum shader_time_shader_type {
    ST_VS,
    ST_VS_WRITTEN,
    ST_VS_RESET,
+   ST_HS,
+   ST_HS_WRITTEN,
+   ST_HS_RESET,
+   ST_DS,
+   ST_DS_WRITTEN,
+   ST_DS_RESET,
    ST_GS,
    ST_GS_WRITTEN,
    ST_GS_RESET,
@@ -1284,9 +1314,28 @@ struct brw_context
    struct brw_vue_map vue_map_vs;
 
    /**
+    * Layout of vertex data exiting the tessellation control portion of the pipleine.
+    * This comes from the tessellation control shader if one exists, otherwise from the
+    * vertex shader.
+    *
+    * BRW_NEW_VUE_MAP_HS_OUT is flagged when the VUE map changes.
+    */
+   // XXX: is this necessary?
+   struct brw_vue_map vue_map_hs_out;
+
+   /**
+    * Layout of vertex data exiting the tessellation evaluation portion of the pipleine.
+    * This comes from the tessellation evaluation shader if one exists, otherwise from the
+    * vertex shader.
+    *
+    * BRW_NEW_VUE_MAP_DS_OUT is flagged when the VUE map changes.
+    */
+   struct brw_vue_map vue_map_ds_out;
+
+   /**
     * Layout of vertex data exiting the geometry portion of the pipleine.
     * This comes from the geometry shader if one exists, otherwise from the
-    * vertex shader.
+    * tessellation evaluation shader or vertex shader.
     *
     * BRW_NEW_VUE_MAP_GEOM_OUT is flagged when the VUE map changes.
     */
@@ -1817,6 +1866,18 @@ static inline const struct brw_vertex_program *
 brw_vertex_program_const(const struct gl_vertex_program *p)
 {
    return (const struct brw_vertex_program *) p;
+}
+
+static inline struct brw_tess_ctrl_program *
+brw_tess_ctrl_program(struct gl_tess_ctrl_program *p)
+{
+   return (struct brw_tess_ctrl_program *) p;
+}
+
+static inline struct brw_tess_eval_program *
+brw_tess_eval_program(struct gl_tess_eval_program *p)
+{
+   return (struct brw_tess_eval_program *) p;
 }
 
 static inline struct brw_geometry_program *

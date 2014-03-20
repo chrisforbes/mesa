@@ -1015,6 +1015,8 @@ enum opcode {
     * - dst is the GRF for gl_InvocationID.
     */
    GS_OPCODE_GET_INSTANCE_ID,
+
+   HS_OPCODE_URB_WRITE,
 };
 
 enum brw_derivative_quality {
@@ -1577,8 +1579,12 @@ enum brw_message_target {
 
 /* "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
  * is 2^9, or 512.  It's counted in multiples of 64 bytes.
+ *
+ * Identical for HS and DS (and VS)
  */
 #define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES		(512*64)
+#define GEN7_MAX_HS_URB_ENTRY_SIZE_BYTES		(512*64)
+#define GEN7_MAX_DS_URB_ENTRY_SIZE_BYTES		(512*64)
 
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_HS         0x7913 /* GEN7+ */
@@ -1697,6 +1703,13 @@ enum brw_message_target {
 # define GEN7_HS_DISPATCH_START_GRF_SHIFT               19
 # define GEN7_HS_URB_READ_LENGTH_SHIFT                  11
 # define GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT            4
+
+/* HS Thread Payload
+ */
+/* R0 */
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_MASK           INTEL_MASK(22, 16)
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH          (22 - 16 + 1)
+# define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT          16
 
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
 /* DW1 */

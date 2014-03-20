@@ -659,6 +659,45 @@ vec4_generator::generate_gs_get_instance_id(struct brw_reg dst)
 }
 
 void
+vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
+{
+   // XXX: ivb vol2 part1 4.7.1:
+   /* HS threads will be dispatched with the dispatch mask set to 0xFFFF. It is the responsibility of the kernel to
+      modify the execution mask as required (e.g., if operating in SIMD4x2 mode but only the lower half is
+      active, as would happen in one thread is the threads were computing an odd number of OCPs via
+      SIMD4x2 operation).*/
+   // XXX: dispatch mask 16 bit wide? possibly refering to entire lower half of r0.5?
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
+             brw_imm_ud(0xff00));
+   brw_pop_insn_state(p);
+
+   // XXX: ivb vol4 part2 2.4:
+   /* Execution Mask. The low 8 bits of the execution mask on the send instruction determines which DWords
+      from each write data phase are written or which DWords from each read phase are written to the
+      destination GRF register. The execution mask is ignored on URB_ATOMIC* messages, since this is a
+      scalar operation that is always enabled.*/
+   // XXX: ivb vol4 part2 2.4.3.1:
+   /* M0.5[7:0] bits in message header are used for enabling DWs in cull test, at HDC unit by HS kernel, while
+      writing TF data using URB write messages. Cull test is performed on outside TF and HS kernel set the
+      appropriate DW enable, which carry the TF for different domain types. When DW is enabled and if cull
+      test is positive, HS stage will be informed by HDC unit, to cull the HS handle early at HS stage itself.*/
+   // so what does this mean? always enable bits for outside tess factors? only do that if shader has no side effects (e.g.: atomic counters, image store)? Also: what's the HDC unit?
+
+   brw_urb_WRITE(p,
+                 brw_null_reg(), /* dest */
+                 inst->base_mrf, /* starting mrf reg nr */
+                 brw_vec8_grf(0, 0), /* src */
+                 inst->urb_write_flags,
+                 inst->mlen,
+                 0,             /* response len */
+                 inst->offset,  /* urb destination offset */
+                 BRW_URB_SWIZZLE_NONE);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1313,6 +1352,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
          generate_unpack_flags(inst, dst);
+         break;
+
+      case HS_OPCODE_URB_WRITE:
+         generate_hs_urb_write(inst);
          break;
 
       default:

@@ -63,6 +63,8 @@ extern uint64_t INTEL_DEBUG;
 #define DEBUG_OPTIMIZER   0x100000000
 #define DEBUG_NO_ANNOTATION 0x200000000
 #define DEBUG_NO8        0x40000000
+//XXX give this a proper value
+#define DEBUG_TS          0x1000
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "INTEL-MESA"
