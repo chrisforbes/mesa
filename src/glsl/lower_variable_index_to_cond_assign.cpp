@@ -394,6 +394,12 @@ public:
 	  || !is_array_or_matrix(deref->array))
 	 return false;
 
+      // XXX: only do this if stage == tess_ctrl
+      if (deref->array_index->as_dereference_variable()
+	  && strcmp(deref->array_index->as_dereference_variable()->var->name,
+		    "gl_InvocationID") == 0)
+	 return false;
+
       return this->storage_type_needs_lowering(deref);
    }
 
