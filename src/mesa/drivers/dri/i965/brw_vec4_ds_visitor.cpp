@@ -54,6 +54,10 @@ vec4_ds_visitor::make_reg_for_system_value(ir_variable *ir)
    dst_reg *reg = new(mem_ctx) dst_reg(this, ir->type);
 
    switch (ir->data.location) {
+   case SYSTEM_VALUE_TESS_COORD:
+      this->current_annotation = "initialize gl_TessCoord";
+      emit(DS_OPCODE_GET_TESS_COORD, *reg);
+      break;
    default:
       assert(!"not reached");
       break;

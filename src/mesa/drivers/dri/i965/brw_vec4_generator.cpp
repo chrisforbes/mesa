@@ -722,6 +722,18 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
 }
 
 void
+vec4_generator::generate_ds_get_tess_coord(struct brw_reg dst)
+{
+   /* We want to get R1.0, R1.1, R1.2, R1.4, R1.5, R1.6.
+    * and store into dst.0. So generate the instruction:
+    *
+    *     mov(8) g8<1>.xyzF g1<4,4,1>F { align16 WE_normal 1Q };
+    */
+   struct brw_reg r1(brw_vec8_grf(1, 0));
+   brw_MOV(p, brw_writemask(dst, WRITEMASK_XYZW), r1);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1311,6 +1323,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case HS_OPCODE_URB_WRITE:
       generate_hs_urb_write(inst);
+      break;
+
+   case DS_OPCODE_GET_TESS_COORD:
+      generate_ds_get_tess_coord(dst);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
