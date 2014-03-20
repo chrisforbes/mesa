@@ -2477,6 +2477,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 
               if (extensions->ARB_shader_precision)
                  add_builtin_define(parser, "GL_ARB_shader_precision", 1);
+
+	      if (extensions->ARB_tessellation_shader)
+	         add_builtin_define(parser, "GL_ARB_tessellation_shader", 1);
 	   }
 	}
 
