@@ -335,12 +335,14 @@ struct switch_generator
 
 class variable_index_to_cond_assign_visitor : public ir_rvalue_visitor {
 public:
-   variable_index_to_cond_assign_visitor(bool lower_input,
-					 bool lower_output,
-					 bool lower_temp,
-					 bool lower_uniform)
+   variable_index_to_cond_assign_visitor(gl_shader_stage stage,
+                                         bool lower_input,
+                                         bool lower_output,
+                                         bool lower_temp,
+                                         bool lower_uniform)
    {
       this->progress = false;
+      this->stage = stage;
       this->lower_inputs = lower_input;
       this->lower_outputs = lower_output;
       this->lower_temps = lower_temp;
@@ -348,6 +350,8 @@ public:
    }
 
    bool progress;
+
+   gl_shader_stage stage;
    bool lower_inputs;
    bool lower_outputs;
    bool lower_temps;
@@ -393,6 +397,13 @@ public:
       if (deref == NULL || deref->array_index->as_constant()
 	  || !is_array_or_matrix(deref->array))
 	 return false;
+
+      if (stage == MESA_SHADER_TESS_CTRL &&
+          deref->array_index->as_dereference_variable() &&
+          strcmp(deref->array_index->as_dereference_variable()->var->name,
+                 "gl_InvocationID") == 0) {
+         return false;
+      }
 
       return this->storage_type_needs_lowering(deref);
    }
@@ -522,16 +533,18 @@ public:
 } /* anonymous namespace */
 
 bool
-lower_variable_index_to_cond_assign(exec_list *instructions,
-				    bool lower_input,
-				    bool lower_output,
-				    bool lower_temp,
-				    bool lower_uniform)
+lower_variable_index_to_cond_assign(gl_shader_stage stage,
+                                    exec_list *instructions,
+                                    bool lower_input,
+                                    bool lower_output,
+                                    bool lower_temp,
+                                    bool lower_uniform)
 {
-   variable_index_to_cond_assign_visitor v(lower_input,
-					   lower_output,
-					   lower_temp,
-					   lower_uniform);
+   variable_index_to_cond_assign_visitor v(stage,
+                                           lower_input,
+                                           lower_output,
+                                           lower_temp,
+                                           lower_uniform);
 
    /* Continue lowering until no progress is made.  If there are multiple
     * levels of indirection (e.g., non-constant indexing of array elements and
