@@ -800,6 +800,41 @@ vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
 }
 
 void
+vec4_generator::generate_hs_get_instance_id(struct brw_reg dst)
+{
+   /* We want to mask R0.2 by GEN7_HS_PAYLOAD_INSTANCE_NUMBER_MASK, right shift
+    * by GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT
+    * store the result into dst.0 and the 1-increment in dst.4. So generate
+    * the instructions:
+    *
+    *     shr(1)  g6<1>UD   g0.2<0,1,0>UD 0x00000010UD { align1 WE_normal };
+    *     and(1)  g6<1>UD   g6<0,1,0>UD   0x00000007UD { align1 WE_normal };
+    *     addc(1) g6.4<1>UD g6<0,1,0>UD   0x00000001UD { align1 WE_normal };
+    */
+   dst = retype(dst, BRW_REGISTER_TYPE_UD);
+   struct brw_reg r0(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   /*r0 = stride(r0, 0, 4, 1);
+   brw_SHR(p, brw_writemask(dst, WRITEMASK_X),
+           brw_swizzle(r0, 2, 2, 2, 2),
+           brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT));
+   brw_AND(p, brw_writemask(dst, WRITEMASK_X),
+           brw_swizzle(dst, 0, 0, 0, 0),
+           brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH));*/
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_SHR(p, get_element_ud(dst, 0),
+           get_element_ud(r0, 2),
+           brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT));
+   brw_AND(p, get_element(dst, 0),
+           get_element_ud(dst, 0),
+           brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH));
+   brw_ADDC(p, get_element_ud(dst, 4),
+            get_element_ud(dst, 0),
+            brw_imm_ud(1));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
 {
    /* In gen6, PrimitiveID is delivered in R0.1 of the payload */
@@ -811,6 +846,7 @@ vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
    brw_pop_insn_state(p);
 }
 
+void
 vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
 {
    // XXX: ivb vol2 part1 4.7.1:
@@ -1532,6 +1568,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case HS_OPCODE_URB_WRITE:
          generate_hs_urb_write(inst);
+         break;
+
+      case HS_OPCODE_GET_INSTANCE_ID:
+         generate_hs_get_instance_id(dst);
          break;
 
       default:
