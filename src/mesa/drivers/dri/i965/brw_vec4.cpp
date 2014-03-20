@@ -1284,6 +1284,8 @@ void
 vec4_visitor::split_3src_inst(vec4_instruction *inst)
 {
    dst_reg temp;
+   dst_reg temp1;
+   dst_reg temp2;
 
    switch (inst->opcode) {
    case BRW_OPCODE_LRP:
