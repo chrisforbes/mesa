@@ -546,12 +546,63 @@ _swrast_update_active_attribs(struct gl_context *ctx)
 }
 
 
+static GLboolean
+allocate_lazy_state( SWcontext *swrast )
+{
+   if (swrast->SpanArrays) {
+      /* already done */
+      return GL_TRUE;
+   }
+   else {
+      GLuint i;
+#ifdef _OPENMP
+      const GLuint maxThreads = omp_get_max_threads();
+#else
+      const GLuint maxThreads = 1;
+#endif
+
+      /* SpanArrays is global and shared by all SWspan instances. However, when
+       * using multiple threads, it is necessary to have one SpanArrays instance
+       * per thread.
+       */
+      swrast->SpanArrays = malloc(maxThreads * sizeof(SWspanarrays));
+      if (!swrast->SpanArrays) {
+         return GL_FALSE;
+      }
+      for(i = 0; i < maxThreads; i++) {
+         swrast->SpanArrays[i].ChanType = CHAN_TYPE;
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+         swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba8;
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+         swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba16;
+#else
+         swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].attribs[VARYING_SLOT_COL0];
+#endif
+      }
+
+      /* init point span buffer */
+      swrast->PointSpan.primitive = GL_POINT;
+      swrast->PointSpan.end = 0;
+      swrast->PointSpan.facing = 0;
+      swrast->PointSpan.array = swrast->SpanArrays;
+
+      return GL_TRUE;
+   }
+}
+
+
 void
 _swrast_validate_derived( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (swrast->NewState) {
+      if (!allocate_lazy_state(swrast)) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+               "Failed to allocate deferred swrast state\n");
+         return;
+      }
+
       if (swrast->NewState & _NEW_POLYGON)
 	 _swrast_update_polygon( ctx );
 
@@ -718,11 +769,6 @@ _swrast_CreateContext( struct gl_context *ctx )
 {
    GLuint i;
    SWcontext *swrast = calloc(1, sizeof(SWcontext));
-#ifdef _OPENMP
-   const GLuint maxThreads = omp_get_max_threads();
-#else
-   const GLuint maxThreads = 1;
-#endif
 
    assert(ctx->Const.MaxViewportWidth <= SWRAST_MAX_WIDTH);
    assert(ctx->Const.MaxViewportHeight <= SWRAST_MAX_WIDTH);
@@ -767,32 +813,6 @@ _swrast_CreateContext( struct gl_context *ctx )
 
    for (i = 0; i < ARRAY_SIZE(swrast->TextureSample); i++)
       swrast->TextureSample[i] = NULL;
-
-   /* SpanArrays is global and shared by all SWspan instances. However, when
-    * using multiple threads, it is necessary to have one SpanArrays instance
-    * per thread.
-    */
-   swrast->SpanArrays = malloc(maxThreads * sizeof(SWspanarrays));
-   if (!swrast->SpanArrays) {
-      free(swrast);
-      return GL_FALSE;
-   }
-   for(i = 0; i < maxThreads; i++) {
-      swrast->SpanArrays[i].ChanType = CHAN_TYPE;
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba8;
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba16;
-#else
-      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].attribs[VARYING_SLOT_COL0];
-#endif
-   }
-
-   /* init point span buffer */
-   swrast->PointSpan.primitive = GL_POINT;
-   swrast->PointSpan.end = 0;
-   swrast->PointSpan.facing = 0;
-   swrast->PointSpan.array = swrast->SpanArrays;
 
    init_program_native_limits(&ctx->Const.Program[MESA_SHADER_VERTEX]);
    init_program_native_limits(&ctx->Const.Program[MESA_SHADER_GEOMETRY]);
