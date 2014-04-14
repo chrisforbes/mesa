@@ -33,6 +33,7 @@
 #include "main/enable.h"
 #include "main/enums.h"
 #include "main/fbobject.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/multisample.h"
@@ -590,12 +591,9 @@ blitframebuffer_texture(struct gl_context *ctx,
    return true;
 }
 
-/**
- * Meta implementation of ctx->Driver.BlitFramebuffer() in terms
- * of texture mapping and polygon rendering.
- */
-void
-_mesa_meta_BlitFramebuffer(struct gl_context *ctx,
+
+static void
+_mesa_meta_blit_preclipped(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter)
@@ -802,6 +800,27 @@ fallback:
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
    }
+}
+
+/**
+ * Meta implementation of ctx->Driver.BlitFramebuffer() in terms
+ * of texture mapping and polygon rendering.
+ */
+void
+_mesa_meta_BlitFramebuffer(struct gl_context *ctx,
+                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                           GLbitfield mask, GLenum filter)
+{
+   if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
+                        &dstX0, &dstY0, &dstX1, &dstY1)) {
+      /* nothing left! */
+      return;
+   }
+
+   _mesa_meta_blit_preclipped(ctx, srcX0, srcY0, srcX1, srcY1,
+                              dstX0, dstY0, dstX1, dstY1,
+                              mask, filter);
 }
 
 void
