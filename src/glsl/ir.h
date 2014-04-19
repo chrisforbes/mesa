@@ -1133,6 +1133,16 @@ public:
  * updating this list.
  */
 enum ir_expression_operation {
+   /*
+    * Get barycentric coords for the centroid of covered samples
+    */
+   ir_nullop_bary_centroid,
+
+   /*
+    * Sentinal marking the last of the nullary operations
+    */
+   ir_last_nullop = ir_nullop_bary_centroid,
+
    ir_unop_bit_not,
    ir_unop_logic_not,
    ir_unop_neg,
@@ -1228,17 +1238,19 @@ enum ir_expression_operation {
 
    ir_unop_noise,
 
-   /**
-    * Interpolate fs input at centroid
-    *
-    * operand0 is the fs input.
+   /*
+    * Get barycentric coords for a sample id
     */
-   ir_unop_interpolate_at_centroid,
+   ir_unop_bary_sample,
+   /*
+    * Get barycentric coords for a subpixel offset
+    */
+   ir_unop_bary_offset,
 
    /**
     * A sentinel marking the last of the unary operations.
     */
-   ir_last_unop = ir_unop_interpolate_at_centroid,
+   ir_last_unop = ir_unop_bary_offset,
 
    ir_binop_add,
    ir_binop_sub,
@@ -1357,25 +1369,14 @@ enum ir_expression_operation {
    ir_binop_vector_extract,
 
    /**
-    * Interpolate fs input at offset
-    *
-    * operand0 is the fs input
-    * operand1 is the offset from the pixel center
+    * Interpolate a fragment input at barycentric coords.
     */
-   ir_binop_interpolate_at_offset,
-
-   /**
-    * Interpolate fs input at sample position
-    *
-    * operand0 is the fs input
-    * operand1 is the sample ID
-    */
-   ir_binop_interpolate_at_sample,
+   ir_binop_interpolate,
 
    /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_interpolate_at_sample,
+   ir_last_binop = ir_binop_interpolate,
 
    /**
     * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.

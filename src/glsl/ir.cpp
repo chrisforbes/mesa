@@ -214,6 +214,30 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
 #endif
 }
 
+ir_expression::ir_expression(int op)
+{
+   this->ir_type = ir_type_expression;
+
+   this->operation = ir_expression_operation(op);
+   this->operands[0] = NULL;
+   this->operands[1] = NULL;
+   this->operands[2] = NULL;
+   this->operands[3] = NULL;
+
+   assert(op <= ir_last_nullop);
+
+   switch (this->operation) {
+   case ir_nullop_bary_centroid:
+      this->type = glsl_type::vec2_type;
+      break;
+
+   default:
+      assert(!"not reached: missing automatic type setup for ir_expression");
+      this->type = glsl_type::error_type;
+      break;
+   }
+}
+
 ir_expression::ir_expression(int op, ir_rvalue *op0)
 {
    this->ir_type = ir_type_expression;
@@ -251,8 +275,12 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_dFdx:
    case ir_unop_dFdy:
    case ir_unop_bitfield_reverse:
-   case ir_unop_interpolate_at_centroid:
       this->type = op0->type;
+      break;
+
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+      this->type = glsl_type::vec2_type;
       break;
 
    case ir_unop_f2i:
@@ -406,8 +434,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_rshift:
    case ir_binop_bfm:
    case ir_binop_ldexp:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
+   case ir_binop_interpolate:
       this->type = op0->type;
       break;
 
@@ -457,6 +484,9 @@ unsigned int
 ir_expression::get_num_operands(ir_expression_operation op)
 {
    assert(op <= ir_last_opcode);
+
+   if (op <= ir_last_nullop)
+      return 0;
 
    if (op <= ir_last_unop)
       return 1;
