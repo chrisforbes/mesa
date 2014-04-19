@@ -503,7 +503,9 @@ b2f(operand a)
 ir_expression *
 interpolate_at_centroid(operand a)
 {
-   return expr(ir_binop_interpolate, a, expr(ir_nullop_bary_centroid));
+   void *mem_ctx = ralloc_parent(a.val);
+   return expr(ir_binop_interpolate, a,
+         new (mem_ctx) ir_expression(ir_nullop_bary_centroid));
 }
 
 ir_expression *
