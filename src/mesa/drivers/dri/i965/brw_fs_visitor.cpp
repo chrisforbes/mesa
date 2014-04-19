@@ -436,6 +436,9 @@ fs_visitor::emit_bary_interpolate(ir_expression *ir)
    fs_reg dst_y = dst_x;
    dst_y.reg_offset++;
 
+   fs_reg res(this, ir->type);
+   this->result = res;
+
    for (int i = 0; i < ir->type->vector_elements; i++) {
       int ch = swiz ? ((*(int *)&swiz->mask) >> 2*i) & 3 : i;
       emit(FS_OPCODE_LINTERP, res,
@@ -443,9 +446,6 @@ fs_visitor::emit_bary_interpolate(ir_expression *ir)
            fs_reg(interp_reg(var->data.location, ch)));
       res.reg_offset++;
    }
-
-   fs_reg res(this, ir->type);
-   this->result = res;
 }
 
 void
@@ -947,9 +947,10 @@ fs_visitor::visit(ir_expression *ir)
       inst->predicate = BRW_PREDICATE_NORMAL;
       break;
 
-   case ir_unop_interpolate_at_centroid:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
+   case ir_nullop_bary_centroid:
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+   case ir_binop_interpolate:
       assert(!"not reached; already handled above");
       break;
    }
