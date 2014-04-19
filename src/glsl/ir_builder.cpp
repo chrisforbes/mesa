@@ -503,19 +503,19 @@ b2f(operand a)
 ir_expression *
 interpolate_at_centroid(operand a)
 {
-   return expr(ir_unop_interpolate_at_centroid, a);
+   return expr(ir_binop_interpolate, a, expr(ir_nullop_bary_centroid));
 }
 
 ir_expression *
 interpolate_at_offset(operand a, operand b)
 {
-   return expr(ir_binop_interpolate_at_offset, a, b);
+   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_offset(b));
 }
 
 ir_expression *
 interpolate_at_sample(operand a, operand b)
 {
-   return expr(ir_binop_interpolate_at_sample, a, b);
+   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_sample(b));
 }
 
 ir_expression *
