@@ -1446,6 +1446,12 @@ public:
                  ir_rvalue *op2 = NULL, ir_rvalue *op3 = NULL);
 
    /**
+    * Constructor for nullary operation expressions
+    * (no operands; they just pluck their result from nowhere/hardware)
+    */
+   ir_expression(int op);
+
+   /**
     * Constructor for unary operation expressions
     */
    ir_expression(int op, ir_rvalue *);
