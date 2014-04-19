@@ -76,12 +76,9 @@ channel_expressions_predicate(ir_instruction *ir)
       return false;
 
    switch (expr->operation) {
-      /* these opcodes need to act on the whole vector,
-       * just like texturing.
-       */
-      case ir_unop_interpolate_at_centroid:
-      case ir_binop_interpolate_at_offset:
-      case ir_binop_interpolate_at_sample:
+      /* these need to act on the whole vector, just like texturing. */
+      case ir_binop_interpolate:
+      case ir_unop_bary_offset:
          return false;
       default:
          break;
@@ -165,14 +162,17 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    if (!found_vector)
       return visit_continue;
 
+   /* Don't split some interpolation ops:
+    * - ir_unop_bary_offset needs the whole vec2 input and produces a vec2.
+    * - ir_binop_interpolate needs its first operand to be an actual shader
+    *   input, not a temp.
+    */
    switch (expr->operation) {
-      case ir_unop_interpolate_at_centroid:
-      case ir_binop_interpolate_at_offset:
-      case ir_binop_interpolate_at_sample:
-         return visit_continue;
-
-      default:
-         break;
+   case ir_unop_bary_offset:
+   case ir_binop_interpolate:
+      return visit_continue;
+   default:
+      break;
    }
 
    /* Store the expression operands in temps so we can use them
@@ -443,9 +443,8 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       assert(!"not reached: expression operates on scalars only");
       break;
 
-   case ir_unop_interpolate_at_centroid:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
+   case ir_unop_bary_offset:
+   case ir_binop_interpolate:
       assert(!"not reached: these are not split");
       break;
    }
