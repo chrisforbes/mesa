@@ -506,12 +506,21 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
 	 return NULL;
    }
 
+   switch (this->operation) {
+   case ir_binop_interpolate:
+   case ir_nullop_bary_centroid:
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+      return NULL;
+   default:
+      break;
+   }
+
    if (op[1] != NULL)
       switch (this->operation) {
       case ir_binop_lshift:
       case ir_binop_rshift:
       case ir_binop_ldexp:
-      case ir_binop_interpolate:
       case ir_binop_vector_extract:
       case ir_triop_csel:
       case ir_triop_bitfield_extract:
@@ -522,7 +531,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
          break;
       }
 
-   bool op0_scalar = op[0]->type->is_scalar();
+   bool op0_scalar = op[0] != NULL && op[0]->type->is_scalar();
    bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
 
    /* When iterating over a vector or matrix's components, we want to increase
