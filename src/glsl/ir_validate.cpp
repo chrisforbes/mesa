@@ -222,6 +222,10 @@ ir_visitor_status
 ir_validate::visit_leave(ir_expression *ir)
 {
    switch (ir->operation) {
+   case ir_nullop_bary_centroid:
+      assert(ir->type == glsl_type::vec2_type);
+      break;
+
    case ir_unop_bit_not:
       assert(ir->operands[0]->type == ir->type);
       break;
@@ -373,10 +377,14 @@ ir_validate::visit_leave(ir_expression *ir)
       /* XXX what can we assert here? */
       break;
 
-   case ir_unop_interpolate_at_centroid:
-      assert(ir->operands[0]->type == ir->type);
-      assert(ir->operands[0]->type->is_float());
+   case ir_unop_bary_sample:
+      assert(ir->type == glsl_type::vec2_type);
+      assert(ir->operands[0]->type == glsl_type::int_type);
       break;
+
+   case ir_unop_bary_offset:
+      assert(ir->type == glsl_type::vec2_type);
+      assert(ir->operands[0]->type == glsl_type::vec2_type);
 
    case ir_binop_add:
    case ir_binop_sub:
@@ -517,17 +525,10 @@ ir_validate::visit_leave(ir_expression *ir)
              && ir->operands[1]->type->is_integer());
       break;
 
-   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate:
       assert(ir->operands[0]->type == ir->type);
       assert(ir->operands[0]->type->is_float());
-      assert(ir->operands[1]->type->components() == 2);
-      assert(ir->operands[1]->type->is_float());
-      break;
-
-   case ir_binop_interpolate_at_sample:
-      assert(ir->operands[0]->type == ir->type);
-      assert(ir->operands[0]->type->is_float());
-      assert(ir->operands[1]->type == glsl_type::int_type);
+      assert(ir->operands[1]->type == glsl_type::vec2_type);
       break;
 
    case ir_triop_fma:
