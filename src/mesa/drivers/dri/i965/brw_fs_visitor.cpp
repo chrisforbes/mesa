@@ -336,36 +336,14 @@ pack_pixel_offset(float x)
 }
 
 void
-fs_visitor::emit_interpolate_expression(ir_expression *ir)
+fs_visitor::emit_bary_collect(ir_expression *ir)
 {
-   if (dispatch_width == 16) {
-      fail("interpolate_at_* not yet supported in SIMD16 mode.");
-      /* in SIMD16 mode, the pixel interpolator returns coords interleaved
-       * 8 channels at a time, same as the barycentric coords presented in
-       * the FS payload. this requires a bit of extra work to support.
-       */
-      return;
-   }
+   /* in SIMD16 mods, the pixel interpolator returns coords interleaved
+    * 8 channels at a time. this requires a bit of extra work to support.
+    */
+   no16("SIMD16 pixel interpolator messages not yet supported.");
 
-   ir_dereference * deref = ir->operands[0]->as_dereference();
-   ir_swizzle * swiz = NULL;
-   if (!deref) {
-      /* the api does not allow a swizzle here, but the varying packing code
-       * may have pushed one into here.
-       */
-      swiz = ir->operands[0]->as_swizzle();
-      assert(swiz);
-      deref = swiz->val->as_dereference();
-   }
-   assert(deref);
-   ir_variable * var = deref->variable_referenced();
-   assert(var);
-
-   /* 1. collect interpolation factors */
-
-   fs_reg dst_x = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 2, 1));
-   fs_reg dst_y = dst_x;
-   dst_y.reg_offset++;
+   fs_reg dest = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 2, 1));
 
    /* for most messages, we need one reg of ignored data; the hardware requires mlen==1
     * even when there is no payload. in the per-slot offset case, we'll replace this with
@@ -376,23 +354,23 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    int imm_data = 0; /* data to be packed into the message descriptor */
 
    switch (ir->operation) {
-   case ir_unop_interpolate_at_centroid:
+   case ir_nullop_bary_centroid:
       {
          msg_type = 2; /* centroid */
       } break;
 
-   case ir_binop_interpolate_at_sample:
+   case ir_unop_bary_sample:
       {
-         ir_constant *sample_num = ir->operands[1]->as_constant();
+         ir_constant *sample_num = ir->operands[0]->as_constant();
          assert(sample_num || !"nonconstant sample number should have been lowered.");
 
          msg_type = 1;  /* interpolate at sample */
          imm_data = sample_num->value.i[0] << 4;
       } break;
 
-   case ir_binop_interpolate_at_offset:
+   case ir_unop_bary_offset:
       {
-         ir_constant *const_offset = ir->operands[1]->as_constant();
+         ir_constant *const_offset = ir->operands[0]->as_constant();
          if (const_offset) {
             msg_type = 0;  /* per-message offset */
             printf("offset: %f %f\n",
@@ -425,17 +403,38 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
       assert(!"Unreached");
    }
 
-   fs_inst *inst = emit(FS_OPCODE_PIXEL_INTERPOLATOR_QUERY, dst_x, src);
+   fs_inst *inst = emit(FS_OPCODE_PIXEL_INTERPOLATOR_QUERY, dest, src);
    inst->mlen = mlen;
    inst->regs_written = 2 * dispatch_width / 8; /* 2 floats per slot returned */
    inst->pi_noperspective = var->determine_interpolation_mode(c->key.flat_shade) == INTERP_QUALIFIER_NOPERSPECTIVE;
    inst->pi_msg_type = msg_type;
    inst->pi_msg_data = imm_data;
+   this->result = dest;
+}
 
-   /* 2. emit linterp */
 
-   fs_reg res(this, ir->type);
-   this->result = res;
+void
+fs_visitor::emit_bary_interpolate(ir_expression *ir)
+{
+   ir_dereference * deref = ir->operands[0]->as_dereference();
+   ir_swizzle * swiz = NULL;
+   if (!deref) {
+      /* the api does not allow a swizzle here, but the varying packing code
+       * may have pushed one into here.
+       */
+      swiz = ir->operands[0]->as_swizzle();
+      assert(swiz);
+      deref = swiz->val->as_dereference();
+   }
+   assert(deref);
+   ir_variable * var = deref->variable_referenced();
+   assert(var);
+
+   /* collect the interpolation factors */
+   ir->operands[1]->accept(this);
+   fs_reg dst_x = this->result;
+   fs_reg dst_y = dst_x;
+   dst_y.reg_offset++;
 
    for (int i = 0; i < ir->type->vector_elements; i++) {
       int ch = swiz ? ((*(int *)&swiz->mask) >> 2*i) & 3 : i;
@@ -444,6 +443,9 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
            fs_reg(interp_reg(var->data.location, ch)));
       res.reg_offset++;
    }
+
+   fs_reg res(this, ir->type);
+   this->result = res;
 }
 
 void
@@ -465,10 +467,14 @@ fs_visitor::visit(ir_expression *ir)
          return;
       break;
 
-   case ir_unop_interpolate_at_centroid:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
-      emit_interpolate_expression(ir);
+   case ir_nullop_bary_centroid:
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+      emit_bary_collect(ir);
+      return;
+
+   case ir_binop_interpolate:
+      emit_bary_interpolate(ir);
       return;
 
    default:
