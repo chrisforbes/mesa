@@ -511,13 +511,13 @@ interpolate_at_centroid(operand a)
 ir_expression *
 interpolate_at_offset(operand a, operand b)
 {
-   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_offset(b));
+   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_offset, b));
 }
 
 ir_expression *
 interpolate_at_sample(operand a, operand b)
 {
-   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_sample(b));
+   return expr(ir_binop_interpolate, a, expr(ir_unop_bary_sample, b));
 }
 
 ir_expression *
