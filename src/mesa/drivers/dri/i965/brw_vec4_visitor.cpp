@@ -1720,6 +1720,11 @@ vec4_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_ldexp:
       assert(!"not reached: should be handled by ldexp_to_arith()");
+   case ir_nullop_bary_centroid:
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+   case ir_binop_interpolate:
+      assert(!"not reached: should not occur in vertex shader");
       break;
    }
 }
