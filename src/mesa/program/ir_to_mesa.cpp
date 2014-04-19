@@ -1462,9 +1462,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_carry:
    case ir_binop_borrow:
    case ir_binop_imul_high:
-   case ir_unop_interpolate_at_centroid:
-   case ir_binop_interpolate_at_offset:
-   case ir_binop_interpolate_at_sample:
+   case ir_nullop_bary_centroid:
+   case ir_unop_bary_sample:
+   case ir_unop_bary_offset:
+   case ir_binop_interpolate:
       assert(!"not supported");
       break;
 
