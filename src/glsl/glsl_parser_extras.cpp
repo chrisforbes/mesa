@@ -1085,8 +1085,10 @@ ast_declarator_list::print(void) const
 
    if (type)
       type->print();
-   else
+   else if (invariant)
       printf("invariant ");
+   else
+      printf("precise ");
 
    foreach_list_const (ptr, & this->declarations) {
       if (ptr != this->declarations.get_head())
@@ -1104,6 +1106,7 @@ ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
    this->type = type;
    this->invariant = false;
+   this->precise = false;
 }
 
 void
