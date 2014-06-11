@@ -606,6 +606,14 @@ type_size(const struct glsl_type *type)
 	  */
 	 return 1;
       }
+      break;
+   case GLSL_TYPE_DOUBLE:
+      if (type->is_matrix()) {
+	 return type->matrix_columns * 2;
+      } else {
+         return 2;
+      }
+      break;
    case GLSL_TYPE_ARRAY:
       assert(type->length > 0);
       return type_size(type->fields.array) * type->length;
@@ -2488,6 +2496,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	 enum gl_uniform_driver_format format = uniform_native;
 
 	 unsigned columns = 0;
+	 int dmul = 4 * sizeof(float);
 	 switch (storage->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    assert(ctx->Const.NativeIntegers);
@@ -2499,6 +2508,10 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	       (ctx->Const.NativeIntegers) ? uniform_native : uniform_int_float;
 	    columns = 1;
 	    break;
+
+	 case GLSL_TYPE_DOUBLE:
+	    dmul = 4 * sizeof(GLdouble);
+	    /* fallthrough */
 	 case GLSL_TYPE_FLOAT:
 	    format = uniform_native;
 	    columns = storage->type->matrix_columns;
@@ -2523,8 +2536,8 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	 }
 
 	 _mesa_uniform_attach_driver_storage(storage,
-					     4 * sizeof(float) * columns,
-					     4 * sizeof(float),
+					     dmul * columns,
+					     dmul,
 					     format,
 					     &params->ParameterValues[i]);
 

@@ -111,7 +111,13 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     const gl_state_index state[STATE_LENGTH])
 {
    const GLuint oldNum = paramList->NumParameters;
-   const GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
+   GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
+   int actual_size = size;
+
+   if (mesa_type_is_double(datatype)) {
+      actual_size *= 2;
+      sz4 = ((actual_size + 3) / 4);
+   }
 
    assert(size > 0);
 
@@ -150,15 +156,15 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
          struct gl_program_parameter *p = paramList->Parameters + oldNum + i;
          p->Name = name ? _mesa_strdup(name) : NULL;
          p->Type = type;
-         p->Size = size;
+         p->Size = actual_size;
          p->DataType = datatype;
          if (values) {
-            if (size >= 4) {
+            if (actual_size >= 4) {
                COPY_4V(paramList->ParameterValues[oldNum + i], values);
             }
             else {
                /* copy 1, 2 or 3 values */
-               GLuint remaining = size % 4;
+               GLuint remaining = actual_size % 4;
                assert(remaining < 4);
                for (j = 0; j < remaining; j++) {
                   paramList->ParameterValues[oldNum + i][j].f = values[j].f;
@@ -176,7 +182,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
             for (j = 0; j < 4; j++)
             	paramList->ParameterValues[oldNum + i][j].f = 0;
          }
-         size -= 4;
+         actual_size -= 4;
       }
 
       if (state) {
