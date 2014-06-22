@@ -435,7 +435,7 @@ fs_visitor::emit_interpolate_expression(ir_expression *ir)
    fs_inst *inst = emit(FS_OPCODE_PIXEL_INTERPOLATOR_QUERY, dst_x, src);
    inst->mlen = mlen;
    inst->regs_written = 2 * dispatch_width / 8; /* 2 floats per slot returned */
-   inst->pi_noperspective = var->determine_interpolation_mode(c->key.flat_shade) == INTERP_QUALIFIER_NOPERSPECTIVE;
+   inst->pi_noperspective = var->determine_interpolation_mode(key->flat_shade) == INTERP_QUALIFIER_NOPERSPECTIVE;
    inst->pi_msg_type = msg_type;
    inst->pi_msg_data = imm_data;
 
