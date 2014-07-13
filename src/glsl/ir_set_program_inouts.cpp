@@ -83,7 +83,7 @@ is_shader_inout(ir_variable *var)
 
 static void
 mark(struct gl_program *prog, ir_variable *var, int offset, int len,
-     bool is_fragment_shader)
+     gl_shader_stage stage)
 {
    /* As of GLSL 1.20, varyings can only be floats, floating-point
     * vectors or matrices, or arrays of them.  For Mesa programs using
@@ -98,7 +98,7 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
          BITFIELD64_BIT(var->data.location + var->data.index + offset + i);
       if (var->data.mode == ir_var_shader_in) {
 	 prog->InputsRead |= bitfield;
-         if (is_fragment_shader) {
+         if (stage == MESA_SHADER_FRAGMENT) {
             gl_fragment_program *fprog = (gl_fragment_program *) prog;
             fprog->InterpQualifier[var->data.location +
                                    var->data.index + offset + i] =
@@ -107,12 +107,25 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
                fprog->IsCentroid |= bitfield;
             if (var->data.sample)
                fprog->IsSample |= bitfield;
+         } else if (stage == MESA_SHADER_TESS_CTRL) {
+            gl_tess_ctrl_program *tprog = (gl_tess_ctrl_program *)prog;
+            if (var->data.patch)
+               tprog->IsPatchIn |= bitfield;
+         } else if (stage == MESA_SHADER_TESS_EVAL) {
+            gl_tess_eval_program *tprog = (gl_tess_eval_program *)prog;
+            if (var->data.patch)
+               tprog->IsPatch |= bitfield;
          }
       } else if (var->data.mode == ir_var_system_value) {
          prog->SystemValuesRead |= bitfield;
       } else {
          assert(var->data.mode == ir_var_shader_out);
 	 prog->OutputsWritten |= bitfield;
+         if (stage == MESA_SHADER_TESS_CTRL) {
+            gl_tess_ctrl_program *tprog = (gl_tess_ctrl_program *)prog;
+            if (var->data.patch)
+               tprog->IsPatchOut |= bitfield;
+         }
       }
    }
 }
@@ -149,7 +162,7 @@ ir_set_program_inouts_visitor::mark_whole_variable(ir_variable *var)
    }
 
    mark(this->prog, var, 0, type->count_attribute_slots(),
-        this->shader_stage == MESA_SHADER_FRAGMENT);
+        this->shader_stage);
 }
 
 /* Default handler: Mark all the locations in the variable as used. */
@@ -279,7 +292,7 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
    }
 
    mark(this->prog, var, index_as_constant->value.u[0] * elem_width,
-        elem_width, this->shader_stage == MESA_SHADER_FRAGMENT);
+        elem_width, this->shader_stage);
    return true;
 }
 

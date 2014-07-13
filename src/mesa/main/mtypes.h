@@ -2219,6 +2219,9 @@ struct gl_tess_ctrl_program
 {
    struct gl_program Base;   /**< base class */
 
+   GLbitfield64 IsPatchIn;
+   GLbitfield64 IsPatchOut;
+
    /* output layout */
    GLint VerticesOut;
 
@@ -2231,6 +2234,7 @@ struct gl_tess_eval_program
 {
    struct gl_program Base;   /**< base class */
 
+   GLbitfield64 IsPatch;
    /* input layout */
    GLenum PrimitiveMode; /* GL_TRIANGLES, GL_QUADS or GL_ISOLINES */
    GLenum Spacing;       /* GL_EQUAL, GL_FRACTIONAL_EVEN or
