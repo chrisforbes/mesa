@@ -213,6 +213,9 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        * as using a loop counter as the index to an array of samplers.  If the
        * loop in unrolled, the code should compile correctly.  Instead, emit a
        * warning.
+       *
+       * In GLSL 4.00 / ARB_gpu_shader5, this requirement is relaxed again to allow
+       * indexing with dynamically uniform expressions.
        */
       if (array->type->element_type()->is_sampler()) {
 	 if (!state->is_version(130, 100)) {
@@ -227,7 +230,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 				  "expressions will be forbidden in GLSL 1.30 "
 				  "and later");
 	    }
-	 } else {
+	 } else if (!state->is_version(400, 0) && !state->ARB_gpu_shader5_enable) {
 	    _mesa_glsl_error(&loc, state,
 			     "sampler arrays indexed with non-constant "
 			     "expressions is forbidden in GLSL 1.30 and "
