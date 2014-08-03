@@ -1119,7 +1119,8 @@ fs_visitor::visit(ir_assignment *ir)
 
 fs_inst *
 fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg dPdy)
+                              fs_reg shadow_c, fs_reg lod, fs_reg dPdy,
+                              int sampler)
 {
    int mlen;
    int base_mrf = 1;
@@ -1264,7 +1265,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       unreachable("not reached");
    }
 
-   fs_inst *inst = emit(opcode, dst, reg_undef);
+   fs_inst *inst = emit(opcode, dst, reg_undef, fs_reg(sampler));
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = true;
@@ -1292,7 +1293,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index)
+                              fs_reg sample_index, int sampler)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1407,7 +1408,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       unreachable("not reached");
    }
 
-   fs_inst *inst = emit(opcode, dst, reg_undef);
+   fs_inst *inst = emit(opcode, dst, reg_undef, fs_reg(sampler));
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
@@ -1610,7 +1611,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    default:
       unreachable("not reached");
    }
-   fs_inst *inst = emit(opcode, dst, src_payload);
+   fs_inst *inst = emit(opcode, dst, src_payload, fs_reg(sampler));
    inst->base_mrf = -1;
    if (reg_width == 2)
       inst->mlen = length * reg_width - header_present;
@@ -1761,7 +1762,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
 
    emit(LOAD_PAYLOAD(payload, sources, length));
 
-   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload);
+   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload, fs_reg(sampler));
    inst->base_mrf = -1;
    inst->mlen = length * reg_width;
    inst->header_present = false;
@@ -1878,10 +1879,10 @@ fs_visitor::visit(ir_texture *ir)
                                lod, lod2, sample_index, mcs, sampler);
    } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sample_index);
+                               lod, lod2, sample_index, sampler);
    } else {
       inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2);
+                               lod, lod2, sampler);
    }
 
    if (ir->offset != NULL && ir->op != ir_txf)

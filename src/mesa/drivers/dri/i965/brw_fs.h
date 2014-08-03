@@ -373,10 +373,11 @@ public:
    fs_reg rescale_texcoord(ir_texture *ir, fs_reg coordinate,
                            bool is_rect, int sampler, int texunit);
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2);
+                              fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
+                              int sampler);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index);
+                              fs_reg sample_index, int sampler);
    fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
                               fs_reg sample_index, fs_reg mcs, int sampler);
