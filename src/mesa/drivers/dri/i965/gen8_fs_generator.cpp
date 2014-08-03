@@ -153,7 +153,8 @@ gen8_fs_generator::generate_linterp(fs_inst *inst,
 void
 gen8_fs_generator::generate_tex(fs_inst *ir,
                                 struct brw_reg dst,
-                                struct brw_reg src)
+                                struct brw_reg src,
+                                struct brw_reg sampler_index)
 {
    int msg_type = -1;
    int rlen = 4;
@@ -1137,7 +1138,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_LOD:
       case SHADER_OPCODE_TG4:
       case SHADER_OPCODE_TG4_OFFSET:
-         generate_tex(ir, dst, src[0]);
+         generate_tex(ir, dst, src[0], src[1]);
          break;
 
       case FS_OPCODE_DDX:
