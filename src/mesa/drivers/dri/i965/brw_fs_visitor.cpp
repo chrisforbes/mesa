@@ -1769,7 +1769,6 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
    inst->regs_written = 4; /* we only care about one reg of response,
                             * but the sampler always writes 4/8
                             */
-   inst->sampler = sampler;
 
    return dest;
 }
@@ -1890,8 +1889,6 @@ fs_visitor::visit(ir_texture *ir)
 
    if (ir->op == ir_tg4)
       inst->texture_offset |= gather_channel(ir, sampler) << 16; // M0.2:16-17
-
-   inst->sampler = sampler;
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
