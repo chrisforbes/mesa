@@ -368,7 +368,8 @@ fs_generator::generate_math_g45(fs_inst *inst,
 }
 
 void
-fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                           struct brw_reg sampler_index)
 {
    int msg_type = -1;
    int rlen = 4;
@@ -1745,7 +1746,7 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_LOD:
       case SHADER_OPCODE_TG4:
       case SHADER_OPCODE_TG4_OFFSET:
-	 generate_tex(inst, dst, src[0]);
+	 generate_tex(inst, dst, src[0], src[1]);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
