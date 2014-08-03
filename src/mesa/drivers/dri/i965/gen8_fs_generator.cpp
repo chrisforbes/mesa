@@ -239,6 +239,11 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
       dst = vec16(dst);
    }
 
+   assert(sampler_index.file == BRW_IMMEDIATE_VALUE);
+   assert(sampler_index.type == BRW_REGISTER_TYPE_D);
+
+   int sampler = sampler_index.dw1.d;
+
    if (ir->header_present) {
       /* The send-from-GRF for SIMD16 texturing with a header has an extra
        * hardware register allocated to it, which we need to skip over (since
@@ -259,7 +264,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
                  brw_imm_ud(ir->texture_offset));
       }
 
-      if (ir->sampler >= 16) {
+      if (sampler >= 16) {
          /* The "Sampler Index" field can only store values between 0 and 15.
           * However, we can add an offset to the "Sampler State Pointer"
           * field, effectively selecting a different set of 16 samplers.
@@ -272,7 +277,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
          gen8_instruction *add =
             ADD(get_element_ud(src, 3),
                 get_element_ud(brw_vec8_grf(0, 0), 3),
-                brw_imm_ud(16 * (ir->sampler / 16) * sampler_state_size));
+                brw_imm_ud(16 * (sampler / 16) * sampler_state_size));
          gen8_set_mask_control(add, BRW_MASK_DISABLE);
       }
 
@@ -280,14 +285,14 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
    }
 
    uint32_t surf_index =
-      prog_data->base.binding_table.texture_start + ir->sampler;
+      prog_data->base.binding_table.texture_start + sampler;
 
    gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
    gen8_set_dst(brw, inst, dst);
    gen8_set_src0(brw, inst, src);
    gen8_set_sampler_message(brw, inst,
                             surf_index,
-                            ir->sampler % 16,
+                            sampler % 16,
                             msg_type,
                             rlen,
                             ir->mlen,
