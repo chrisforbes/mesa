@@ -203,6 +203,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
 %type <type_qualifier> interface_block_layout_qualifier
 %type <type_qualifier> subroutine_qualifier
+%type <type_qualifier> subroutine_type_list
 %type <type_qualifier> interface_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_nonarray
@@ -1523,6 +1524,23 @@ subroutine_qualifier:
    {
       memset(& $$, 0, sizeof($$));
       $$.flags.q.subroutine = 1;
+   }
+   | SUBROUTINE '(' subroutine_type_list ')'
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.subroutine = 1;
+      /* TODO: collect the type list from $3 */
+   }
+   ;
+
+subroutine_type_list:
+   any_identifier
+   {
+      /* TODO */
+   }
+   | subroutine_type_list ',' any_identifier
+   {
+      /* TODO */
    }
    ;
 
