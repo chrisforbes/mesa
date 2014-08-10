@@ -2450,6 +2450,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
+   if (qual->flags.q.subroutine && !qual->flags.q.uniform) {
+      _mesa_glsl_error(loc, state,
+                       "`subroutine' may only be applied to uniforms, "
+                       "subroutine type declarations, or function definitions");
+   }
+
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
        || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
