@@ -548,7 +548,7 @@ usamplerBuffer	KEYWORD(140, 300, 140, 0, USAMPLERBUFFER);
 resource	KEYWORD(0, 300, 0, 0, RESOURCE);
 patch		KEYWORD(0, 300, 0, 0, PATCH);
 sample		KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_gpu_shader5_enable, SAMPLE);
-subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
+subroutine	KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_shader_subroutine_enable, SUBROUTINE);
 
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
