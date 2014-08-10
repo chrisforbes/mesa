@@ -512,6 +512,9 @@ struct ast_type_qualifier {
          unsigned stream:1; /**< Has stream value assigned  */
          unsigned explicit_stream:1; /**< stream value assigned explicitly by shader code */
          /** \} */
+
+         /** \name Qualifiers for GL_ARB_shader_subroutine */
+         unsigned subroutine:1;  /**< Is this marked 'subroutine' */
       }
       /** \brief Set of flags, accessed by name. */
       q;

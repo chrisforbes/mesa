@@ -202,6 +202,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
 %type <type_qualifier> interface_block_layout_qualifier
+%type <type_qualifier> subroutine_qualifier
 %type <type_qualifier> interface_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_nonarray
@@ -1517,6 +1518,14 @@ interface_block_layout_qualifier:
    }
    ;
 
+subroutine_qualifier:
+   SUBROUTINE
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.subroutine = 1;
+   }
+   ;
+
 interpolation_qualifier:
    SMOOTH
    {
@@ -1551,6 +1560,7 @@ type_qualifier:
    | storage_qualifier
    | interpolation_qualifier
    | layout_qualifier
+   | subroutine_qualifier
    | precision_qualifier
    {
       memset(&$$, 0, sizeof($$));
@@ -1627,6 +1637,11 @@ type_qualifier:
       if (!state->ARB_shading_language_420pack_enable && $2.has_layout())
          _mesa_glsl_error(&@1, state, "duplicate layout(...) qualifiers");
 
+      $$ = $1;
+      $$.merge_qualifier(&@1, state, $2);
+   }
+   | subroutine_qualifier type_qualifier
+   {
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
    }
