@@ -835,6 +835,18 @@ glsl_type::can_implicitly_convert_to(const glsl_type *desired,
          desired->base_type == GLSL_TYPE_UINT && this->base_type == GLSL_TYPE_INT)
       return true;
 
+   /* No implicit conversions from double. */
+   if ((!state || state->has_double()) && this->is_double())
+      return false;
+
+   /* Conversions from different types to double. */
+   if ((!state || state->has_double()) && desired->is_double()) {
+      if (this->is_float())
+         return true;
+      if (this->is_integer())
+         return true;
+   }
+
    return false;
 }
 

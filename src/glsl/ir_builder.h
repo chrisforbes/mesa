@@ -185,6 +185,8 @@ ir_expression *f2b(operand a);
 ir_expression *b2f(operand a);
 
 ir_expression *f2d(operand a);
+ir_expression *i2d(operand a);
+ir_expression *u2d(operand a);
 
 ir_expression *min2(operand a, operand b);
 ir_expression *max2(operand a, operand b);

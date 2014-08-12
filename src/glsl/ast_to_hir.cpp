@@ -184,6 +184,16 @@ get_conversion_operation(const glsl_type *to, const glsl_type *from,
          default: return (ir_expression_operation)0;
       }
 
+   case GLSL_TYPE_DOUBLE:
+      if (!state->has_double())
+         return (ir_expression_operation)0;
+      switch (from->base_type) {
+      case GLSL_TYPE_INT: return ir_unop_i2d;
+      case GLSL_TYPE_UINT: return ir_unop_u2d;
+      case GLSL_TYPE_FLOAT: return ir_unop_f2d;
+      default: return (ir_expression_operation)0;
+      }
+
    default: return (ir_expression_operation)0;
    }
 }

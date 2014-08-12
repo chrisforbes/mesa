@@ -647,6 +647,7 @@ fs_visitor::type_size(const struct glsl_type *type)
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
+   case GLSL_TYPE_DOUBLE:
       return type->components();
    case GLSL_TYPE_ARRAY:
       return type_size(type->fields.array) * type->length;

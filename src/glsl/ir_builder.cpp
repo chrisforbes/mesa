@@ -526,6 +526,18 @@ f2d(operand a)
 }
 
 ir_expression *
+i2d(operand a)
+{
+   return expr(ir_unop_i2d, a);
+}
+
+ir_expression *
+u2d(operand a)
+{
+   return expr(ir_unop_u2d, a);
+}
+
+ir_expression *
 fma(operand a, operand b, operand c)
 {
    return expr(ir_triop_fma, a, b, c);
