@@ -271,18 +271,6 @@ public:
       if (!var->type->is_array() || var->data.mode != ir_var_shader_in || var->data.patch)
          return visit_continue;
 
-      /* Generate a link error if the shader attempts to access an input
-       * array using an index too large for its actual size assigned at link
-       * time.
-       * XXX: This is not spec conformant.
-       */
-      if (var->data.max_array_access >= this->num_vertices) {
-         linker_error(this->prog, "tessellation evaluation shader accesses "
-                      "element %i of %s, but only %i input vertices\n",
-                      var->data.max_array_access, var->name, this->num_vertices);
-         return visit_continue;
-      }
-
       var->type = glsl_type::get_array_instance(var->type->element_type(),
                                                 this->num_vertices);
       var->data.max_array_access = this->num_vertices - 1;
