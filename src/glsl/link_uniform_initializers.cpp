@@ -75,6 +75,10 @@ copy_constant_to_storage(union gl_constant_value *storage,
       case GLSL_TYPE_FLOAT:
 	 storage[i].f = val->value.f[i];
 	 break;
+      case GLSL_TYPE_DOUBLE:
+	 storage[i * 2].u = *(uint32_t *)&val->value.d[i];
+	 storage[i * 2 + 1].u = *(((uint32_t *)&val->value.d[i]) + 1);
+	 break;
       case GLSL_TYPE_BOOL:
 	 storage[i].b = val->value.b[i] ? boolean_true : 0;
 	 break;

@@ -573,6 +573,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 result = new(ctx) ir_expression(ir_unop_i2u,
 		  new(ctx) ir_expression(ir_unop_b2i, src));
 	 break;
+      case GLSL_TYPE_DOUBLE:
+	 result = new(ctx) ir_expression(ir_unop_d2u, src);
+	 break;
       }
       break;
    case GLSL_TYPE_INT:
@@ -586,6 +589,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       case GLSL_TYPE_BOOL:
 	 result = new(ctx) ir_expression(ir_unop_b2i, src);
 	 break;
+      case GLSL_TYPE_DOUBLE:
+	 result = new(ctx) ir_expression(ir_unop_d2i, src);
+	 break;
       }
       break;
    case GLSL_TYPE_FLOAT:
@@ -598,6 +604,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 break;
       case GLSL_TYPE_BOOL:
 	 result = new(ctx) ir_expression(ir_unop_b2f, desired_type, src, NULL);
+	 break;
+      case GLSL_TYPE_DOUBLE:
+	 result = new(ctx) ir_expression(ir_unop_d2f, desired_type, src, NULL);
 	 break;
       }
       break;
@@ -613,8 +622,28 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       case GLSL_TYPE_FLOAT:
 	 result = new(ctx) ir_expression(ir_unop_f2b, desired_type, src, NULL);
 	 break;
+      case GLSL_TYPE_DOUBLE:
+	 result = new(ctx) ir_expression(ir_unop_f2b,
+                  new(ctx) ir_expression(ir_unop_d2f, src));
+	 break;
       }
       break;
+   case GLSL_TYPE_DOUBLE:
+      switch (b) {
+      case GLSL_TYPE_INT:
+         result = new(ctx) ir_expression(ir_unop_i2d, src);
+	 break;
+      case GLSL_TYPE_UINT:
+         result = new(ctx) ir_expression(ir_unop_u2d, src);
+	 break;
+      case GLSL_TYPE_BOOL:
+         result = new(ctx) ir_expression(ir_unop_f2d,
+                  new(ctx) ir_expression(ir_unop_b2f, src));
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 result = new(ctx) ir_expression(ir_unop_f2d, desired_type, src, NULL);
+	 break;
+      }
    }
 
    assert(result != NULL);
@@ -1011,6 +1040,9 @@ emit_inline_vector_constructor(const glsl_type *type,
 		  break;
 	       case GLSL_TYPE_FLOAT:
 		  data.f[i + base_component] = c->get_float_component(i);
+		  break;
+	       case GLSL_TYPE_DOUBLE:
+		  data.d[i + base_component] = c->get_double_component(i);
 		  break;
 	       case GLSL_TYPE_BOOL:
 		  data.b[i + base_component] = c->get_bool_component(i);

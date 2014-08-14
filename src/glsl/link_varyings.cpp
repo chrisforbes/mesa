@@ -868,8 +868,9 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
          : var->type->matrix_columns;
       this->matches[this->num_matches].num_components = 4 * slots;
    } else {
+      unsigned slot_mul = var->type->is_double() ? 2 : 1;
       this->matches[this->num_matches].num_components
-         = var->type->component_slots();
+         = var->type->component_slots() * slot_mul;
    }
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;

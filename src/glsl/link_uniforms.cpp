@@ -51,6 +51,8 @@ values_for_type(const glsl_type *type)
       return 1;
    } else if (type->is_array() && type->fields.array->is_sampler()) {
       return type->array_size();
+   } else if (type->is_double()) {
+      return 2 * type->component_slots();
    } else {
       return type->component_slots();
    }

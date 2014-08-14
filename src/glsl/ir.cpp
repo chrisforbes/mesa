@@ -257,6 +257,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_f2i:
    case ir_unop_b2i:
    case ir_unop_u2i:
+   case ir_unop_d2i:
    case ir_unop_bitcast_f2i:
    case ir_unop_bit_count:
    case ir_unop_find_msb:
@@ -268,6 +269,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_b2f:
    case ir_unop_i2f:
    case ir_unop_u2f:
+   case ir_unop_d2f:
    case ir_unop_bitcast_i2f:
    case ir_unop_bitcast_u2f:
       this->type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
@@ -280,8 +282,16 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
 					   op0->type->vector_elements, 1);
       break;
 
+   case ir_unop_f2d:
+   case ir_unop_i2d:
+   case ir_unop_u2d:
+      this->type = glsl_type::get_instance(GLSL_TYPE_DOUBLE,
+					   op0->type->vector_elements, 1);
+      break;
+
    case ir_unop_i2u:
    case ir_unop_f2u:
+   case ir_unop_d2u:
    case ir_unop_bitcast_f2u:
       this->type = glsl_type::get_instance(GLSL_TYPE_UINT,
 					   op0->type->vector_elements, 1);
@@ -291,6 +301,10 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
       this->type = glsl_type::float_type;
+      break;
+
+   case ir_unop_unpack_double_2x32:
+      this->type = glsl_type::uvec2_type;
       break;
 
    case ir_unop_any:
@@ -305,6 +319,10 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
       this->type = glsl_type::uint_type;
       break;
 
+   case ir_unop_pack_double_2x32:
+      this->type = glsl_type::double_type;
+      break;
+
    case ir_unop_unpack_snorm_2x16:
    case ir_unop_unpack_unorm_2x16:
    case ir_unop_unpack_half_2x16:
@@ -314,6 +332,14 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_4x8:
       this->type = glsl_type::vec4_type;
+      break;
+
+   case ir_unop_frexp_sig:
+      this->type = op0->type;
+      break;
+   case ir_unop_frexp_exp:
+      this->type = glsl_type::get_instance(GLSL_TYPE_INT,
+					   op0->type->vector_elements, 1);
       break;
 
    default:
@@ -390,7 +416,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
       break;
 
    case ir_binop_dot:
-      this->type = glsl_type::float_type;
+      this->type = op0->type->get_base_type();
       break;
 
    case ir_binop_pack_half_2x16_split:
@@ -499,6 +525,12 @@ static const char *const operator_strs[] = {
    "bitcast_u2f",
    "bitcast_f2u",
    "any",
+   "d2f",
+   "f2d",
+   "d2i",
+   "i2d",
+   "d2u",
+   "u2d",
    "trunc",
    "ceil",
    "floor",
@@ -531,6 +563,10 @@ static const char *const operator_strs[] = {
    "find_msb",
    "find_lsb",
    "sat",
+   "packDouble2x32",
+   "unpackDouble2x32",
+   "frexp_sig",
+   "frexp_exp",
    "noise",
    "interpolate_at_centroid",
    "+",
@@ -643,6 +679,19 @@ ir_constant::ir_constant(float f, unsigned vector_elements)
    }
    for (unsigned i = vector_elements; i < 16; i++)  {
       this->value.f[i] = 0;
+   }
+}
+
+ir_constant::ir_constant(double d, unsigned vector_elements)
+   : ir_rvalue(ir_type_constant)
+{
+   assert(vector_elements <= 4);
+   this->type = glsl_type::get_instance(GLSL_TYPE_DOUBLE, vector_elements, 1);
+   for (unsigned i = 0; i < vector_elements; i++) {
+      this->value.d[i] = d;
+   }
+   for (unsigned i = vector_elements; i < 16; i++)  {
+      this->value.d[i] = 0;
    }
 }
 
@@ -761,6 +810,10 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 	    for (unsigned i = 0; i < type->components(); i++)
 	       this->value.f[i] = value->value.f[0];
 	    break;
+	 case GLSL_TYPE_DOUBLE:
+	    for (unsigned i = 0; i < type->components(); i++)
+	       this->value.d[i] = value->value.d[0];
+	    break;
 	 case GLSL_TYPE_BOOL:
 	    for (unsigned i = 0; i < type->components(); i++)
 	       this->value.b[i] = value->value.b[0];
@@ -818,6 +871,9 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 	    break;
 	 case GLSL_TYPE_BOOL:
 	    this->value.b[i] = value->get_bool_component(j);
+	    break;
+	 case GLSL_TYPE_DOUBLE:
+	    this->value.d[i] = value->get_double_component(j);
 	    break;
 	 default:
 	    /* FINISHME: What to do?  Exceptions are not the answer.
@@ -886,6 +942,24 @@ ir_constant::get_float_component(unsigned i) const
    case GLSL_TYPE_INT:   return (float) this->value.i[i];
    case GLSL_TYPE_FLOAT: return this->value.f[i];
    case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0f : 0.0f;
+   default:              assert(!"Should not get here."); break;
+   }
+
+   /* Must return something to make the compiler happy.  This is clearly an
+    * error case.
+    */
+   return 0.0;
+}
+
+double
+ir_constant::get_double_component(unsigned i) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  return (double) this->value.u[i];
+   case GLSL_TYPE_INT:   return (double) this->value.i[i];
+   case GLSL_TYPE_FLOAT: return (double) this->value.f[i];
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0 : 0.0;
+   case GLSL_TYPE_DOUBLE: return this->value.d[i];
    default:              assert(!"Should not get here."); break;
    }
 
@@ -984,6 +1058,7 @@ ir_constant::copy_offset(ir_constant *src, int offset)
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_DOUBLE:
    case GLSL_TYPE_BOOL: {
       unsigned int size = src->type->components();
       assert (size <= this->type->components() - offset);
@@ -1000,6 +1075,9 @@ ir_constant::copy_offset(ir_constant *src, int offset)
 	    break;
 	 case GLSL_TYPE_BOOL:
 	    value.b[i+offset] = src->get_bool_component(i);
+	    break;
+	 case GLSL_TYPE_DOUBLE:
+	    value.d[i+offset] = src->get_double_component(i);
 	    break;
 	 default: // Shut up the compiler
 	    break;
@@ -1056,6 +1134,9 @@ ir_constant::copy_masked_offset(ir_constant *src, int offset, unsigned int mask)
 	    break;
 	 case GLSL_TYPE_BOOL:
 	    value.b[i+offset] = src->get_bool_component(id++);
+	    break;
+	 case GLSL_TYPE_DOUBLE:
+	    value.d[i+offset] = src->get_double_component(id++);
 	    break;
 	 default:
 	    assert(!"Should not get here.");
@@ -1117,6 +1198,10 @@ ir_constant::has_value(const ir_constant *c) const
 	 if (this->value.b[i] != c->value.b[i])
 	    return false;
 	 break;
+      case GLSL_TYPE_DOUBLE:
+	 if (this->value.d[i] != c->value.d[i])
+	    return false;
+	 break;
       default:
 	 assert(!"Should not get here.");
 	 return false;
@@ -1152,6 +1237,10 @@ ir_constant::is_value(float f, int i) const
 	 break;
       case GLSL_TYPE_BOOL:
 	 if (this->value.b[c] != bool(i))
+	    return false;
+	 break;
+      case GLSL_TYPE_DOUBLE:
+	 if (this->value.d[c] != double(i))
 	    return false;
 	 break;
       default:

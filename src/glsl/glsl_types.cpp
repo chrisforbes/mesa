@@ -194,6 +194,22 @@ glsl_type::contains_integer() const
 }
 
 bool
+glsl_type::contains_double() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_double();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_double())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_double();
+   }
+}
+
+bool
 glsl_type::contains_opaque() const {
    switch (base_type) {
    case GLSL_TYPE_SAMPLER:
@@ -268,6 +284,8 @@ const glsl_type *glsl_type::get_base_type() const
       return int_type;
    case GLSL_TYPE_FLOAT:
       return float_type;
+   case GLSL_TYPE_DOUBLE:
+      return double_type;
    case GLSL_TYPE_BOOL:
       return bool_type;
    default:
@@ -292,6 +310,8 @@ const glsl_type *glsl_type::get_scalar_type() const
       return int_type;
    case GLSL_TYPE_FLOAT:
       return float_type;
+   case GLSL_TYPE_DOUBLE:
+      return double_type;
    case GLSL_TYPE_BOOL:
       return bool_type;
    default:
@@ -377,6 +397,17 @@ glsl_type::vec(unsigned components)
    return ts[components - 1];
 }
 
+const glsl_type *
+glsl_type::dvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      double_type, dvec2_type, dvec3_type, dvec4_type
+   };
+   return ts[components - 1];
+}
 
 const glsl_type *
 glsl_type::ivec(unsigned components)
@@ -436,13 +467,15 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 	 return ivec(rows);
       case GLSL_TYPE_FLOAT:
 	 return vec(rows);
+      case GLSL_TYPE_DOUBLE:
+	 return dvec(rows);
       case GLSL_TYPE_BOOL:
 	 return bvec(rows);
       default:
 	 return error_type;
       }
    } else {
-      if ((base_type != GLSL_TYPE_FLOAT) || (rows == 1))
+      if ((base_type != GLSL_TYPE_FLOAT && base_type != GLSL_TYPE_DOUBLE) || (rows == 1))
 	 return error_type;
 
       /* GLSL matrix types are named mat{COLUMNS}x{ROWS}.  Only the following
@@ -456,17 +489,32 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
        */
 #define IDX(c,r) (((c-1)*3) + (r-1))
 
-      switch (IDX(columns, rows)) {
-      case IDX(2,2): return mat2_type;
-      case IDX(2,3): return mat2x3_type;
-      case IDX(2,4): return mat2x4_type;
-      case IDX(3,2): return mat3x2_type;
-      case IDX(3,3): return mat3_type;
-      case IDX(3,4): return mat3x4_type;
-      case IDX(4,2): return mat4x2_type;
-      case IDX(4,3): return mat4x3_type;
-      case IDX(4,4): return mat4_type;
-      default: return error_type;
+      if (base_type == GLSL_TYPE_DOUBLE) {
+         switch (IDX(columns, rows)) {
+         case IDX(2,2): return dmat2_type;
+         case IDX(2,3): return dmat2x3_type;
+         case IDX(2,4): return dmat2x4_type;
+         case IDX(3,2): return dmat3x2_type;
+         case IDX(3,3): return dmat3_type;
+         case IDX(3,4): return dmat3x4_type;
+         case IDX(4,2): return dmat4x2_type;
+         case IDX(4,3): return dmat4x3_type;
+         case IDX(4,4): return dmat4_type;
+         default: return error_type;
+         }
+      } else {
+         switch (IDX(columns, rows)) {
+         case IDX(2,2): return mat2_type;
+         case IDX(2,3): return mat2x3_type;
+         case IDX(2,4): return mat2x4_type;
+         case IDX(3,2): return mat3x2_type;
+         case IDX(3,3): return mat3_type;
+         case IDX(3,4): return mat3x4_type;
+         case IDX(4,2): return mat4x2_type;
+         case IDX(4,3): return mat4x3_type;
+         case IDX(4,4): return mat4_type;
+         default: return error_type;
+         }
       }
    }
 
@@ -704,6 +752,7 @@ glsl_type::component_slots() const
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_DOUBLE:
    case GLSL_TYPE_BOOL:
       return this->components();
 
@@ -1060,6 +1109,7 @@ glsl_type::count_attribute_slots() const
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
+   case GLSL_TYPE_DOUBLE:
       return this->matrix_columns;
 
    case GLSL_TYPE_STRUCT:
