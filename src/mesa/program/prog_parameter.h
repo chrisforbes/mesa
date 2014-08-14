@@ -151,6 +151,28 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                                 const gl_constant_value v[], GLuint vSize,
                                 GLint *posOut, GLuint *swizzleOut);
 
+static INLINE bool mesa_type_is_double(int dataType)
+{
+   switch (dataType) {
+   case GL_DOUBLE:
+   case GL_DOUBLE_VEC2:
+   case GL_DOUBLE_VEC3:
+   case GL_DOUBLE_VEC4:
+   case GL_DOUBLE_MAT2:
+   case GL_DOUBLE_MAT2x3:
+   case GL_DOUBLE_MAT2x4:
+   case GL_DOUBLE_MAT3:
+   case GL_DOUBLE_MAT3x2:
+   case GL_DOUBLE_MAT3x4:
+   case GL_DOUBLE_MAT4:
+   case GL_DOUBLE_MAT4x2:
+   case GL_DOUBLE_MAT4x3:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif
