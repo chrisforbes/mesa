@@ -102,10 +102,18 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       return -1;
 
    if (!iter->type->is_integer()) {
-      ir_rvalue *cast =
-	 new(mem_ctx) ir_expression(ir_unop_f2i, glsl_type::int_type, iter,
-				    NULL);
-
+      ir_rvalue *cast = NULL;
+      if (iter->type->is_double()) {
+         ir_expression *d2f =
+            new(mem_ctx) ir_expression(ir_unop_d2f, glsl_type::float_type,
+                                       iter, NULL);
+         cast = new(mem_ctx) ir_expression(ir_unop_f2i, glsl_type::int_type,
+                                           (ir_rvalue*) d2f, NULL);
+      } else {
+         cast = new(mem_ctx) ir_expression(ir_unop_f2i, glsl_type::int_type, iter,
+                                           NULL);
+      }
+      assert(cast);
       iter = cast->constant_expression_value();
    }
 
@@ -133,6 +141,9 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
          break;
       case GLSL_TYPE_FLOAT:
          iter = new(mem_ctx) ir_constant(float(iter_value + bias[i]));
+         break;
+      case GLSL_TYPE_DOUBLE:
+         iter = new(mem_ctx) ir_constant(double(iter_value + bias[i]));
          break;
       default:
           unreachable(!"Unsupported type for loop iterator.");
