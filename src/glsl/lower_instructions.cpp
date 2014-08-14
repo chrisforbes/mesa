@@ -296,7 +296,7 @@ lower_instructions_visitor::mod_to_fract(ir_expression *ir)
    /* Don't generate new IR that would need to be lowered in an additional
     * pass.
     */
-   if (lowering(DIV_TO_MUL_RCP))
+   if (lowering(DIV_TO_MUL_RCP) && ir->type->is_float())
       div_to_mul_rcp(div_expr);
 
    ir_rvalue *expr = new(ir) ir_expression(ir_unop_fract,
@@ -535,7 +535,7 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_mod:
-      if (lowering(MOD_TO_FRACT) && ir->type->is_float())
+      if (lowering(MOD_TO_FRACT) && (ir->type->is_float() || ir->type->is_double()))
 	 mod_to_fract(ir);
       break;
 
@@ -550,7 +550,7 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_ldexp:
-      if (lowering(LDEXP_TO_ARITH))
+      if (lowering(LDEXP_TO_ARITH) && ir->type->is_float())
          ldexp_to_arith(ir);
       break;
 
