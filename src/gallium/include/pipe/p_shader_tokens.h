@@ -494,7 +494,31 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_INTERP_SAMPLE       193
 #define TGSI_OPCODE_INTERP_OFFSET       194
 
-#define TGSI_OPCODE_LAST                195
+/* sm5 marked opcodes are supported in D3D11 optionally - also DMOV, DMOVC */
+#define TGSI_OPCODE_F2D                 195 /* SM5 */
+#define TGSI_OPCODE_D2F                 196
+#define TGSI_OPCODE_DABS                197
+#define TGSI_OPCODE_DNEG                198 /* SM5 */
+#define TGSI_OPCODE_DADD                199 /* SM5 */
+#define TGSI_OPCODE_DDIV                200 /* SM5 */
+#define TGSI_OPCODE_DMUL                201 /* SM5 */
+#define TGSI_OPCODE_DMAX                202 /* SM5 */
+#define TGSI_OPCODE_DMIN                203 /* SM5 */
+#define TGSI_OPCODE_DSLT                204 /* SM5 */
+#define TGSI_OPCODE_DSGE                205 /* SM5 */
+#define TGSI_OPCODE_DSEQ                206 /* SM5 */
+#define TGSI_OPCODE_DSNE                207 /* SM5 */
+#define TGSI_OPCODE_DRCP                208 /* eg, cayman */
+#define TGSI_OPCODE_DSQRT               209 /* eg, cayman also has DRSQ */
+#define TGSI_OPCODE_DMAD                210 /* DFMA? */
+#define TGSI_OPCODE_DFRAC               211 /* eg, cayman */
+#define TGSI_OPCODE_DLDEXP              212 /* eg, cayman */
+#define TGSI_OPCODE_DFRACEXP            213 /* eg, cayman */
+#define TGSI_OPCODE_D2I                 214
+#define TGSI_OPCODE_I2D                 215
+#define TGSI_OPCODE_D2U                 216
+#define TGSI_OPCODE_U2D                 217
+#define TGSI_OPCODE_LAST                218
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
