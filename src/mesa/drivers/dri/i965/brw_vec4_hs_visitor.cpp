@@ -171,9 +171,12 @@ vec4_hs_visitor::emit_prolog()
     * to account for the fact that the vertex shader stored it in the w
     * component of VARYING_SLOT_PSIZ.
     */
+   /* XXX: needs to go in key */
+   int num_vertices = 3;
+
    if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
       this->current_annotation = "swizzle gl_PointSize input";
-      for (int vertex = 0; vertex < 3/* XXX */; vertex++) {
+      for (int vertex = 0; vertex < num_vertices; vertex++) {
          dst_reg dst(ATTR,
                      BRW_VARYING_SLOT_COUNT * vertex + VARYING_SLOT_PSIZ);
          dst.type = BRW_REGISTER_TYPE_F;
@@ -494,7 +497,7 @@ brw_hs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   //v.lower_mrfs_to_hw_regs();
+   v.lower_mrfs_to_hw_regs();
 
    return generate_assembly(brw, prog, &c->hp->program.Base, &c->prog_data.base,
                             mem_ctx, &v.instructions, final_assembly_size);
