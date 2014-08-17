@@ -356,6 +356,17 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_tessellation_shader */
       unsigned MaxPatchVertices;
+      unsigned MaxTessGenLevel;
+      unsigned MaxTessControlInputComponents;
+      unsigned MaxTessControlOutputComponents;
+      unsigned MaxTessControlTextureImageUnits;
+      unsigned MaxTessEvaluationInputComponents;
+      unsigned MaxTessEvaluationOutputComponents;
+      unsigned MaxTessEvaluationTextureImageUnits;
+      unsigned MaxTessPatchComponents;
+      unsigned MaxTessControlTotalOutputComponents;
+      unsigned MaxTessControlUniformComponents;
+      unsigned MaxTessEvaluationUniformComponents;
    } Const;
 
    /**

@@ -137,6 +137,17 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    /* tessellation shader constants */
    this->Const.MaxPatchVertices = ctx->Const.MaxPatchVertices;
+   this->Const.MaxTessGenLevel = ctx->Const.MaxTessGenLevel;
+   this->Const.MaxTessControlInputComponents = ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxInputComponents;
+   this->Const.MaxTessControlOutputComponents = ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxOutputComponents;
+   this->Const.MaxTessControlTextureImageUnits = ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxTextureImageUnits;
+   this->Const.MaxTessEvaluationInputComponents = ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxInputComponents;
+   this->Const.MaxTessEvaluationOutputComponents = ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxOutputComponents;
+   this->Const.MaxTessEvaluationTextureImageUnits = ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxTextureImageUnits;
+   this->Const.MaxTessPatchComponents = ctx->Const.MaxTessPatchComponents;
+   this->Const.MaxTessControlTotalOutputComponents = ctx->Const.MaxTessControlTotalOutputComponents;
+   this->Const.MaxTessControlUniformComponents = ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxUniformComponents;
+   this->Const.MaxTessEvaluationUniformComponents = ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxUniformComponents;
 
    this->current_function = NULL;
    this->toplevel_ir = NULL;
