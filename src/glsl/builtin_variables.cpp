@@ -33,6 +33,14 @@ static const struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
    {NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
 };
 
+static const struct gl_builtin_uniform_element gl_DefaultTessLevelOuterMESA_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_DEFAULT_TESS_LEVEL_OUTER, 0, 0}, SWIZZLE_XXXX}
+};
+
+static const struct gl_builtin_uniform_element gl_DefaultTessLevelInnerMESA_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_DEFAULT_TESS_LEVEL_INNER, 0, 0}, SWIZZLE_XXXX}
+};
+
 static const struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
    {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
@@ -279,6 +287,9 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_FogParamsOptimizedMESA),
    STATEVAR(gl_CurrentAttribVertMESA),
    STATEVAR(gl_CurrentAttribFragMESA),
+
+   STATEVAR(gl_DefaultTessLevelOuterMESA),
+   STATEVAR(gl_DefaultTessLevelInnerMESA),
 
    {NULL, NULL, 0}
 };
@@ -742,6 +753,9 @@ builtin_variable_generator::generate_uniforms()
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange");
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA");
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA");
+
+   add_uniform(array(float_t, 4), "gl_DefaultTessLevelOuterMESA");
+   add_uniform(array(float_t, 2), "gl_DefaultTessLevelInnerMESA");
 
    if (compatibility) {
       add_uniform(mat4_t, "gl_ModelViewMatrix");
