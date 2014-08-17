@@ -228,7 +228,14 @@ vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
    struct brw_reg dst_upper = stride(suboffset(reg, 4), 0, 4, 1);
    struct brw_reg dst_lower = stride(suboffset(reg, 0), 0, 4, 1);
 
-   switch (this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_EVAL]->TessEval.PrimitiveMode) {
+   /* XXX: this needs to go via key, if we have to specialize the program on it */
+   GLenum prim_mode;
+   if (shader_prog->_LinkedShaders[MESA_SHADER_TESS_EVAL])
+      prim_mode = shader_prog->_LinkedShaders[MESA_SHADER_TESS_EVAL]->TessEval.PrimitiveMode;
+   else
+      prim_mode = GL_TRIANGLES;
+
+   switch (prim_mode) {
    case GL_QUADS:
    case GL_ISOLINES:
       inst = emit(MOV(dst_upper,
