@@ -2811,6 +2811,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       struct gl_shader *tess_ctrl_shader = create_ff_tess_ctrl_program(ctx);
       shader_list[MESA_SHADER_TESS_CTRL][0] = tess_ctrl_shader;
       num_shaders[MESA_SHADER_TESS_CTRL] = 1;
+
+      prog->TessCtrl.Passthrough = 1;
    }
 
    /* Link all shaders for a particular stage and validate the result.

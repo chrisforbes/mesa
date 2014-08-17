@@ -2920,6 +2920,7 @@ struct gl_shader_program
        * 1 .. GL_MAX_PATCH_VERTICES
        */
       GLint VerticesOut;
+      bool Passthrough;
    } TessCtrl;
 
    /**
