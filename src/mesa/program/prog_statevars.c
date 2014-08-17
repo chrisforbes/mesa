@@ -591,6 +591,20 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          }
          return;
 
+      case STATE_DEFAULT_TESS_LEVEL_OUTER:
+         value[0] = ctx->TessCtrlProgram.patch_default_outer_level[state[2]];
+         value[1] = 0.0F;
+         value[2] = 0.0F;
+         value[3] = 0.0F;
+         return;
+
+      case STATE_DEFAULT_TESS_LEVEL_INNER:
+         value[0] = ctx->TessCtrlProgram.patch_default_inner_level[state[2]];
+         value[1] = 0.0F;
+         value[2] = 0.0F;
+         value[3] = 0.0F;
+         return;
+
       /* XXX: make sure new tokens added here are also handled in the 
        * _mesa_program_state_flags() switch, below.
        */
@@ -700,6 +714,10 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       case STATE_FB_SIZE:
       case STATE_FB_WPOS_Y_TRANSFORM:
          return _NEW_BUFFERS;
+
+      case STATE_DEFAULT_TESS_LEVEL_OUTER:
+      case STATE_DEFAULT_TESS_LEVEL_INNER:
+         return _NEW_PROGRAM;
 
       default:
          /* unknown state indexes are silently ignored and
@@ -906,6 +924,12 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_FB_WPOS_Y_TRANSFORM:
       append(dst, "FbWposYTransform");
+      break;
+   case STATE_DEFAULT_TESS_LEVEL_OUTER:
+      append(dst, "DefaultTessLevelOuter");
+      break;
+   case STATE_DEFAULT_TESS_LEVEL_INNER:
+      append(dst, "DefaultTessLevelInner");
       break;
    default:
       /* probably STATE_INTERNAL_DRIVER+i (driver private state) */
