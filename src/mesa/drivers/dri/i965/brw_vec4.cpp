@@ -1760,7 +1760,14 @@ vec4_visitor::run()
    move_push_constants_to_pull_constants();
    split_virtual_grfs();
 
-   const char *stage_name = stage == MESA_SHADER_GEOMETRY ? "gs" : "vs";
+   const char *stage_name;
+   switch (stage) {
+      case MESA_SHADER_VERTEX: stage_name = "vs"; break;
+      case MESA_SHADER_GEOMETRY: stage_name = "gs"; break;
+      case MESA_SHADER_TESS_CTRL: stage_name = "hs"; break;
+      case MESA_SHADER_TESS_EVAL: stage_name = "ds"; break;
+      default: unreachable("not reached");
+   }
 
 #define OPT(pass, args...) do {                                        \
       pass_num++;                                                      \
