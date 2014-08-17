@@ -533,7 +533,8 @@ static bool
 check_tcs_query(struct gl_context *ctx, const struct gl_shader_program *shProg)
 {
    if (shProg->LinkStatus &&
-       shProg->_LinkedShaders[MESA_SHADER_TESS_CTRL] != NULL) {
+       shProg->_LinkedShaders[MESA_SHADER_TESS_CTRL] != NULL &&
+       !shProg->TessCtrl.Passthrough) {
       return true;
    }
 
