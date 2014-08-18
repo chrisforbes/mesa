@@ -5737,12 +5737,31 @@ ast_interface_block::hir(exec_list *instructions,
           * The upshot of this is that the only circumstance where an
           * interface array size *doesn't* need to be specified is on a
           * geometry shader input.
+          *
+          * XXX: Adjust description: input arrays are allowed in TCS and TES;
+          *       output arrays are allowed in TCS.
           */
-         if (this->array_specifier->is_unsized_array &&
-             (state->stage != MESA_SHADER_GEOMETRY || !this->layout.flags.q.in)) {
-            _mesa_glsl_error(&loc, state,
-                             "only geometry shader inputs may be unsized "
-                             "instance block arrays");
+         if (this->array_specifier->is_unsized_array) {
+            bool allow_inputs = state->stage == MESA_SHADER_GEOMETRY ||
+                                state->stage == MESA_SHADER_TESS_CTRL ||
+                                state->stage == MESA_SHADER_TESS_EVAL;
+            bool allow_outputs = state->stage == MESA_SHADER_TESS_CTRL;
+
+            if (this->layout.flags.q.in) {
+               if (!allow_inputs)
+                  _mesa_glsl_error(&loc, state,
+                                   "unsized input block arrays not allowed in this "
+                                   "shader stage");
+            } else if (this->layout.flags.q.out) {
+               if (!allow_outputs)
+                  _mesa_glsl_error(&loc, state,
+                                   "unsized output block arrays not allowed in this "
+                                   "shader stage");
+            } else {
+               /* by elimination, this is a uniform block array */
+               _mesa_glsl_error(&loc, state,
+                                "unsized uniform block arrays not allowed");
+            }
 
          }
 
