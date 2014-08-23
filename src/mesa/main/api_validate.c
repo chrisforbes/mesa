@@ -240,6 +240,7 @@ _mesa_is_valid_prim_mode(struct gl_context *ctx, GLenum mode)
  * etc?  Also, do additional checking related to transformation feedback.
  * Note: this function cannot be called during glNewList(GL_COMPILE) because
  * this code depends on current transform feedback state.
+ * Also, do additional checking related to tessellation shaders.
  */
 GLboolean
 _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
@@ -353,7 +354,8 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
     *      PATCHES."
     *
     */
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_TESS_EVAL]) {
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_TESS_EVAL] ||
+       ctx->Shader.CurrentProgram[MESA_SHADER_TESS_CTRL]) {
       if (mode != GL_PATCHES) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "only GL_PATCHES valid with tessellation");
