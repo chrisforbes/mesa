@@ -61,9 +61,7 @@ upload_hs_state(struct brw_context *brw)
 {
    const struct brw_stage_state *stage_state = &brw->hs.base;
    /* BRW_NEW_TESS_CTRL_PROGRAM */
-   bool active = brw->tess_ctrl_program;
-   if (active)
-      assert(brw->tess_eval_program);
+   bool active = brw->tess_ctrl_program && brw->tess_eval_program;
    /* CACHE_NEW_HS_PROG */
    const struct brw_vec4_prog_data *prog_data = &brw->hs.prog_data->base;
 
