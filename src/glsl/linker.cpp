@@ -2481,7 +2481,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 	 continue;
 
       if (sh->num_samplers > ctx->Const.Program[i].MaxTextureImageUnits) {
-	 linker_error(prog, "Too many %s shader texture samplers",
+	 linker_error(prog, "Too many %s shader texture samplers\n",
 		      _mesa_shader_stage_to_string(i));
       }
 
@@ -2495,7 +2495,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
                            _mesa_shader_stage_to_string(i));
          } else {
             linker_error(prog, "Too many %s shader default uniform block "
-			 "components",
+			 "components\n",
                          _mesa_shader_stage_to_string(i));
          }
       }
@@ -2508,7 +2508,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
                            "this is non-portable out-of-spec behavior\n",
                            _mesa_shader_stage_to_string(i));
          } else {
-            linker_error(prog, "Too many %s shader uniform components",
+            linker_error(prog, "Too many %s shader uniform components\n",
                          _mesa_shader_stage_to_string(i));
          }
       }
@@ -2526,7 +2526,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
       }
 
       if (total_uniform_blocks > ctx->Const.MaxCombinedUniformBlocks) {
-	 linker_error(prog, "Too many combined uniform blocks (%d/%d)",
+	 linker_error(prog, "Too many combined uniform blocks (%d/%d)\n",
 		      prog->NumUniformBlocks,
 		      ctx->Const.MaxCombinedUniformBlocks);
       } else {
@@ -2534,7 +2534,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
             const unsigned max_uniform_blocks =
                ctx->Const.Program[i].MaxUniformBlocks;
 	    if (blocks[i] > max_uniform_blocks) {
-	       linker_error(prog, "Too many %s uniform blocks (%d/%d)",
+	       linker_error(prog, "Too many %s uniform blocks (%d/%d)\n",
 			    _mesa_shader_stage_to_string(i),
 			    blocks[i],
 			    max_uniform_blocks);
