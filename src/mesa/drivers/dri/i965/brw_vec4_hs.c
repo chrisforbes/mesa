@@ -79,7 +79,8 @@ do_hs_prog(struct brw_context *brw,
 
    GLbitfield64 outputs_written = hp->program.Base.OutputsWritten;
 
-   brw_compute_tess_vue_map(brw, &c.prog_data.base.vue_map, outputs_written);
+   brw_compute_tess_vue_map(brw, &c.prog_data.base.vue_map, outputs_written,
+                            hp->program.IsPatch);
 
    /* Compute URB entry size.  The maximum allowed URB entry size is 32k.
     * That divides up as follows:

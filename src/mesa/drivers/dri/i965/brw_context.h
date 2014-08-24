@@ -500,7 +500,8 @@ void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
 
 void brw_compute_tess_vue_map(const struct brw_context *const brw,
                               struct brw_vue_map *const vue_map,
-                              const GLbitfield64 slots_valid);
+                              const GLbitfield64 slots_valid,
+                              const GLbitfield64 is_patch);
 
 
 /**
