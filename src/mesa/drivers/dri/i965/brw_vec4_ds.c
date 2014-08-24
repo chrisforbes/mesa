@@ -144,7 +144,8 @@ do_ds_prog(struct brw_context *brw,
    /* URB entry sizes are stored as a multiple of 64 bytes. */
    c.prog_data.base.urb_entry_size = ALIGN(output_size_bytes, 64) / 64;
 
-   brw_compute_tess_vue_map(brw, &c.input_vue_map, c.key.input_varyings);
+   brw_compute_tess_vue_map(brw, &c.input_vue_map, c.key.input_varyings,
+                            dp->program.IsPatch);
 
    /* DS inputs are read from the VUE 256 bits (2 vec4's) at a time, so we
     * need to program a URB read length of ceiling(num_slots / 2).
