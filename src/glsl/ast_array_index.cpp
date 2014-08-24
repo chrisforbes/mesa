@@ -109,6 +109,20 @@ update_max_array_access(ir_rvalue *ir, int idx, YYLTYPE *loc,
 }
 
 
+static int
+get_implicit_array_size(struct _mesa_glsl_parse_state *state,
+                        ir_rvalue *array)
+{
+   /* Return the appropriate implicit array size. */
+   if (state->stage == MESA_SHADER_TESS_CTRL &&
+       array->variable_referenced()->data.mode == ir_var_shader_in) {
+      return state->Const.MaxPatchVertices;
+   }
+
+   return 0;
+}
+
+
 ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
@@ -185,7 +199,15 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
          update_max_array_access(array, idx, &loc, state);
    } else if (const_index == NULL && array->type->is_array()) {
       if (array->type->is_unsized_array()) {
-	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+         int implicit_size = get_implicit_array_size(state, array);
+         if (implicit_size) {
+            ir_variable *v = array->whole_variable_referenced();
+            if (v != NULL)
+               v->data.max_array_access = implicit_size - 1;
+         }
+         else {
+            _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+         }
       } else if (array->type->fields.array->is_interface()
                  && array->variable_referenced()->data.mode == ir_var_uniform
                  && !state->is_version(400, 0) && !state->ARB_gpu_shader5_enable) {
