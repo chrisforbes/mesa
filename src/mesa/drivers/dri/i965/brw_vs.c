@@ -181,9 +181,7 @@ brw_compute_tess_vue_map(const struct brw_context *const brw,
       if (!(slots_valid & BITFIELD64_BIT(i)) ||
           vue_map->varying_to_slot[i] != -1)
          continue;
-      // XXX: make per-vertex varyings work!
-      const bool patch_out = true;
-      if (!patch_out)
+      if (!(is_patch & BITFIELD64_BIT(i)))
          continue;
       assign_vue_slot(vue_map, i);
    }
@@ -197,9 +195,7 @@ brw_compute_tess_vue_map(const struct brw_context *const brw,
       if (!(slots_valid & BITFIELD64_BIT(i)) ||
           vue_map->varying_to_slot[i] != -1)
          continue;
-      // XXX: make per-vertex varyings work!
-      const bool patch_out = false;
-      if (patch_out)
+      if (is_patch & BITFIELD64_BIT(i))
          continue;
       assign_vue_slot(vue_map, i);
    }
