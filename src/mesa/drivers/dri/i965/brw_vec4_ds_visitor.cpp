@@ -82,11 +82,7 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
    int num_patch_inputs = 0;
 
    num_patch_inputs = 0;
-   for (int slot = 0; slot < c->input_vue_map.num_slots; slot++) {
-      // XXX: make per-vertex varyings work!
-      const bool patch_out = true;
-      if (!patch_out)
-         continue;
+   for (int slot = 0; slot < c->input_vue_map.num_per_patch_slots; slot++) {
       const int varying = c->input_vue_map.slot_to_varying[slot];
       attribute_map[varying] = 2 * payload_reg + num_patch_inputs;
       num_patch_inputs++;
@@ -99,10 +95,7 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
    assert(num_vertex_inputs <= MAX_DS_INPUT_VERTICES);
    const unsigned input_array_stride = c->prog_data.base.urb_read_length * 2 - num_patch_inputs;
 
-   for (int slot = 0; slot < c->input_vue_map.num_slots; slot++) {
-      const bool patch_out = true;
-      if (patch_out)
-         continue;
+   for (int slot = c->input_vue_map.num_per_patch_slots; slot < c->input_vue_map.num_slots; slot++) {
       const int varying = c->input_vue_map.slot_to_varying[slot];
       for (unsigned vertex = 0; vertex < num_vertex_inputs; vertex++) {
          attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying] =
