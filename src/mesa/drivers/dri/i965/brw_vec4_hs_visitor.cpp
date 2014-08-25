@@ -390,7 +390,7 @@ vec4_hs_visitor::emit_patch(const bool thread_end)
 
       assert(!(slot % 2));
 
-      complete = (slot >= prog_data->vue_map.num_slots) && thread_end;
+      complete = (slot >= prog_data->vue_map.num_per_patch_slots) && thread_end;
       current_annotation = "URB write";
       vec4_instruction *inst = emit_urb_write_opcode(complete);
       inst->base_mrf = base_mrf;
