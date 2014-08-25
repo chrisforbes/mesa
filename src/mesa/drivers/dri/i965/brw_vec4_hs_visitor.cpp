@@ -373,7 +373,7 @@ vec4_hs_visitor::emit_patch(const bool thread_end)
          slot += 2;
       }
 
-      for (; slot < prog_data->vue_map.num_slots; ++slot) {
+      for (; slot < prog_data->vue_map.num_per_patch_slots; ++slot) {
          emit_urb_slot(mrf, slot % 2, prog_data->vue_map.slot_to_varying[slot]);
 
          if (slot % 2)
