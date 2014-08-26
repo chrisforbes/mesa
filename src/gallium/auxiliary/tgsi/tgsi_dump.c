@@ -239,6 +239,7 @@ dump_imm_data(struct tgsi_iterate_context *iter,
    for (i = 0; i < num_tokens; i++) {
       switch (data_type) {
       case TGSI_IMM_FLOAT32:
+      case TGSI_IMM_FLOAT64:
          FLT( data[i].Float );
          break;
       case TGSI_IMM_UINT32:

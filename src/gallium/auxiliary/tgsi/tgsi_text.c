@@ -1105,6 +1105,7 @@ static boolean parse_immediate_data(struct translate_ctx *ctx, unsigned type,
 
       switch (type) {
       case TGSI_IMM_FLOAT32:
+      case TGSI_IMM_FLOAT64:
          ret = parse_float(&ctx->cur, &values[i].Float);
          break;
       case TGSI_IMM_UINT32:
