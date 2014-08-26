@@ -262,16 +262,16 @@ public:
 
 class immediate_storage : public exec_node {
 public:
-   immediate_storage(gl_constant_value *values, int size, int type)
+   immediate_storage(gl_constant_value *values, int size32, int type)
    {
-      memcpy(this->values, values, size * sizeof(gl_constant_value) * (type == GL_DOUBLE ? 2 : 1));
-      this->size = size;
+      memcpy(this->values, values, size32 * sizeof(gl_constant_value));
+      this->size32 = size32;
       this->type = type;
    }
    
    /* doubles are stored across 2 gl_constant_values */
-   gl_constant_value values[8];
-   int size; /**< Number of components (1-4) */
+   gl_constant_value values[4];
+   int size32; /**< Number of 32-bit components (1-4) */
    int type; /**< GL_DOUBLE, GL_FLOAT, GL_INT, GL_BOOL, or GL_UNSIGNED_INT */
 };
 
@@ -720,7 +720,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
             int swz = GET_SWZ(init_swz[j], field);
             if (dinst->src[j].type == GLSL_TYPE_DOUBLE) {
                if (use_d_field) {
-                  if (swz > 1 && inst->src[j].file != PROGRAM_FILE_MAX)
+                  if (swz > 1)
                      dinst->src[j].index = init_idx[j] + 1;
                   else
                      dinst->src[j].index = init_idx[j];
@@ -1141,29 +1141,52 @@ glsl_to_tgsi_visitor::add_constant(gl_register_file file,
    if (file == PROGRAM_CONSTANT) {
       return _mesa_add_typed_unnamed_constant(this->prog->Parameters, values,
                                               size, datatype, swizzle_out);
-   } else {
-      int index = 0;
-      immediate_storage *entry;
-      assert(file == PROGRAM_IMMEDIATE);
+   }
 
-      /* Search immediate storage to see if we already have an identical
-       * immediate that we can use instead of adding a duplicate entry.
-       */
-      foreach_in_list(immediate_storage, entry, &this->immediates) {
-         if (entry->size == size &&
-             entry->type == datatype &&
-             !memcmp(entry->values, values, size * sizeof(gl_constant_value) * (datatype == GL_DOUBLE ? 2 : 1))) {
-             return index;
+   assert(file == PROGRAM_IMMEDIATE);
+
+   int index = 0;
+   int base_index = 0;
+   immediate_storage *entry, *e2;
+   int size32 = size * (datatype == GL_DOUBLE ? 2 : 1), tmp;
+   int i;
+   int num_immed_slots = (size32 + 3) / 4;
+
+   /* Search immediate storage to see if we already have an identical
+    * immediate that we can use instead of adding a duplicate entry.
+    */
+   foreach_in_list(immediate_storage, entry, &this->immediates) {
+      int thissize = MIN2(size32, 4);
+      if (entry->size32 == thissize &&
+          entry->type == datatype &&
+          !memcmp(entry->values, values, thissize * sizeof(gl_constant_value))) {
+         if (num_immed_slots == 1) {
+            base_index = index;
+            goto out;
+         } else {
+            e2 = (immediate_storage *)entry->next;
+            tmp = size32 - 4;
+            if (e2->size32 == tmp &&
+                e2->type == datatype &&
+                !memcmp(e2->values, &values[4], tmp * sizeof(gl_constant_value))) {
+               base_index = index;
+               goto out;
+            }
          }
-         index++;
       }
-      
+      index++;
+   }
+
+   base_index = index;
+   for (i = 0; i < num_immed_slots; i++) {
+      int thissize = MIN2(size32 - (i * 4), 4);
       /* Add this immediate to the list. */
-      entry = new(mem_ctx) immediate_storage(values, size, datatype);
+      entry = new(mem_ctx) immediate_storage(&values[i * 4], thissize, datatype);
       this->immediates.push_tail(entry);
       this->num_immediates++;
-      return index;
    }
+ out:
+   return base_index;
 }
 
 st_src_reg
@@ -1186,7 +1209,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_double(double val)
 
    uval[0].u = *(uint32_t *)&val;
    uval[1].u = *(((uint32_t *)&val) + 1);
-   src.index = add_constant(src.file, uval, 1, GL_DOUBLE, &src.swizzle);
+   src.index = add_constant(src.file, uval, 2, GL_DOUBLE, &src.swizzle);
 
    return src;
 }
@@ -4647,17 +4670,13 @@ emit_immediate(struct st_translate *t,
                int type, int size)
 {
    struct ureg_program *ureg = t->ureg;
-   int i;
+
    switch(type)
    {
-   case GL_FLOAT: {
-      float val[4];
-      for (i = 0; i < 4; i++)
-         val[i] = values[i].f;
-      return ureg_DECL_immediate(ureg, val, size);
-   }
+   case GL_FLOAT:
+      return ureg_DECL_immediate(ureg, &values[0].f, size);
    case GL_DOUBLE:
-      return ureg_DECL_immediate(ureg, &values[0].f, size * 2);
+      return ureg_DECL_immediate_f64(ureg, (double *)&values[0].f, size);
    case GL_INT:
       return ureg_DECL_immediate_int(ureg, &values[0].i, size);
    case GL_UNSIGNED_INT:
@@ -5532,7 +5551,7 @@ st_translate_program(
    i = 0;
    foreach_in_list(immediate_storage, imm, &program->immediates) {
       assert(i < program->num_immediates);
-      t->immediates[i++] = emit_immediate(t, imm->values, imm->type, imm->size);
+      t->immediates[i++] = emit_immediate(t, imm->values, imm->type, imm->size32);
    }
    assert(i == program->num_immediates);
 
