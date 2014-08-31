@@ -54,7 +54,8 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
    /* Check that the types match between stages.
     */
    const glsl_type *type_to_match = input->type;
-   if (consumer_stage == MESA_SHADER_GEOMETRY) {
+   if (consumer_stage == MESA_SHADER_GEOMETRY ||
+       consumer_stage == MESA_SHADER_TESS_CTRL) {
       assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
       type_to_match = type_to_match->element_type();
    }
