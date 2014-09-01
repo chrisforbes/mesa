@@ -876,13 +876,17 @@ process_array_constructor(exec_list *instructions,
    foreach_in_list_safe(ir_rvalue, ir, &actual_parameters) {
       ir_rvalue *result = ir;
 
+      const glsl_base_type element_base_type =
+         constructor_type->element_type()->base_type;
+
       /* Apply implicit conversions (not the scalar constructor rules!). See
        * the spec quote above. */
-      if (constructor_type->element_type()->is_float()) {
-	 const glsl_type *desired_type =
-	    glsl_type::get_instance(GLSL_TYPE_FLOAT,
-				    ir->type->vector_elements,
-				    ir->type->matrix_columns);
+      if (element_base_type != result->type->base_type) {
+	    const glsl_type *desired_type =
+               glsl_type::get_instance(element_base_type,
+                                       ir->type->vector_elements,
+                                       ir->type->matrix_columns);
+
 	 if (result->type->can_implicitly_convert_to(desired_type, state)) {
 	    /* Even though convert_component() implements the constructor
 	     * conversion rules (not the implicit conversion rules), its safe
