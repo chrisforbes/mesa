@@ -1249,7 +1249,8 @@ vec4_generator::generate_code(const cfg_t *cfg)
           * force_writemask_all in order to make sure the instruction is executed
           * regardless of which channels are enabled.
           */
-         assert(inst->force_writemask_all);
+         /* XXX: disabled for tess */
+         //assert(inst->force_writemask_all);
 
          /* Fix up any <8;8,1> or <0;4,1> source registers to <4;4,1> to satisfy
           * the following register region restrictions (from Graphics BSpec:
