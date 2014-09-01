@@ -3150,6 +3150,33 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 
 
 /**
+ * Do additional processing necessary for tessellation control/evaluation shader
+ * input declarations. This covers both interface block arrays and bare input
+ * variables.
+ */
+static void
+handle_tess_shader_input_decl(struct _mesa_glsl_parse_state *state,
+                              YYLTYPE loc, ir_variable *var)
+{
+   if (!var->type->is_array() && !var->data.patch) {
+      _mesa_glsl_error(&loc, state,
+                       "per-vertex tessellation shader inputs must be arrays");
+      /* Avoid cascading failures. */
+      return;
+   }
+
+   if (var->data.patch)
+      return;
+
+   /* Unsized arrays are implicitly sized to gl_MaxPatchVertices. */
+   if (var->type->is_unsized_array()) {
+      var->type = glsl_type::get_array_instance(var->type->fields.array,
+            state->Const.MaxPatchVertices);
+   }
+}
+
+
+/**
  * Do additional processing necessary for geometry shader input declarations
  * (this covers both interface blocks arrays and bare input variables).
  */
@@ -3726,6 +3753,9 @@ ast_declarator_list::hir(exec_list *instructions,
             }
 
             handle_geometry_shader_input_decl(state, loc, var);
+         } else if (state->stage == MESA_SHADER_TESS_CTRL ||
+                    state->stage == MESA_SHADER_TESS_EVAL) {
+            handle_tess_shader_input_decl(state, loc, var);
          }
       } else if (var->data.mode == ir_var_shader_out) {
 	 if (state->stage == MESA_SHADER_TESS_CTRL) {
