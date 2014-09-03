@@ -1203,16 +1203,21 @@ emit_inline_matrix_constructor(const glsl_type *type,
       /* Assign the scalar to the X component of a vec4, and fill the remaining
        * components with zero.
        */
+      glsl_base_type param_base_type = first_param->type->base_type;
+      assert(param_base_type == GLSL_TYPE_FLOAT ||
+             param_base_type == GLSL_TYPE_DOUBLE);
       ir_variable *rhs_var =
-	 new(ctx) ir_variable(glsl_type::vec4_type, "mat_ctor_vec",
-			      ir_var_temporary);
+         new(ctx) ir_variable(glsl_type::get_instance(param_base_type, 4, 1),
+                              "mat_ctor_vec",
+                              ir_var_temporary);
       instructions->push_tail(rhs_var);
 
       ir_constant_data zero;
-      zero.f[0] = 0.0;
-      zero.f[1] = 0.0;
-      zero.f[2] = 0.0;
-      zero.f[3] = 0.0;
+      for (unsigned i = 0; i < 4; i++)
+         if (param_base_type == GLSL_TYPE_FLOAT)
+            zero.f[i] = 0.0;
+         else
+            zero.d[i] = 0.0;
 
       ir_instruction *inst =
 	 new(ctx) ir_assignment(new(ctx) ir_dereference_variable(rhs_var),

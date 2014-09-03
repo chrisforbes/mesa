@@ -795,9 +795,16 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    if (value->type->is_scalar() && value->next->is_tail_sentinel()) {
       if (type->is_matrix()) {
 	 /* Matrix - fill diagonal (rest is already set to 0) */
-	 assert(type->base_type == GLSL_TYPE_FLOAT);
-	 for (unsigned i = 0; i < type->matrix_columns; i++)
-	    this->value.f[i * type->vector_elements + i] = value->value.f[0];
+         assert(type->base_type == GLSL_TYPE_FLOAT ||
+                type->base_type == GLSL_TYPE_DOUBLE);
+         for (unsigned i = 0; i < type->matrix_columns; i++) {
+            if (type->base_type == GLSL_TYPE_FLOAT)
+               this->value.f[i * type->vector_elements + i] =
+                  value->value.f[0];
+            else
+               this->value.d[i * type->vector_elements + i] =
+                  value->value.d[0];
+         }
       } else {
 	 /* Vector or scalar - fill all components */
 	 switch (type->base_type) {
