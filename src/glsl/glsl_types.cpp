@@ -853,6 +853,8 @@ glsl_type::can_implicitly_convert_to(const glsl_type *desired,
 unsigned
 glsl_type::std140_base_alignment(bool row_major) const
 {
+   unsigned vec_size = is_double() ? 8 : 4;
+
    /* (1) If the member is a scalar consuming <N> basic machine units, the
     *     base alignment is <N>.
     *
@@ -866,12 +868,12 @@ glsl_type::std140_base_alignment(bool row_major) const
    if (this->is_scalar() || this->is_vector()) {
       switch (this->vector_elements) {
       case 1:
-	 return 4;
+	 return vec_size;
       case 2:
-	 return 8;
+	 return 2 * vec_size;
       case 3:
       case 4:
-	 return 16;
+	 return 4 * vec_size;
       }
    }
 
@@ -898,7 +900,8 @@ glsl_type::std140_base_alignment(bool row_major) const
       if (this->fields.array->is_scalar() ||
 	  this->fields.array->is_vector() ||
 	  this->fields.array->is_matrix()) {
-	 return MAX2(this->fields.array->std140_base_alignment(row_major), 16);
+	 return MAX2(this->fields.array->std140_base_alignment(row_major),
+                     4 * vec_size);
       } else {
 	 assert(this->fields.array->is_record());
 	 return this->fields.array->std140_base_alignment(row_major);
@@ -919,11 +922,14 @@ glsl_type::std140_base_alignment(bool row_major) const
       int c = this->matrix_columns;
       int r = this->vector_elements;
 
+      glsl_base_type base_type =
+         is_double() ? GLSL_TYPE_DOUBLE : GLSL_TYPE_FLOAT;
+
       if (row_major) {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT, c, 1);
+	 vec_type = get_instance(base_type, c, 1);
 	 array_type = glsl_type::get_array_instance(vec_type, r);
       } else {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT, r, 1);
+	 vec_type = get_instance(base_type, r, 1);
 	 array_type = glsl_type::get_array_instance(vec_type, c);
       }
 
@@ -968,6 +974,8 @@ glsl_type::std140_base_alignment(bool row_major) const
 unsigned
 glsl_type::std140_size(bool row_major) const
 {
+   unsigned vec_size = is_double() ? 8 : 4;
+
    /* (1) If the member is a scalar consuming <N> basic machine units, the
     *     base alignment is <N>.
     *
@@ -979,7 +987,7 @@ glsl_type::std140_size(bool row_major) const
     *     <N> basic machine units, the base alignment is 4<N>.
     */
    if (this->is_scalar() || this->is_vector()) {
-      return this->vector_elements * 4;
+      return this->vector_elements * vec_size;
    }
 
    /* (5) If the member is a column-major matrix with <C> columns and
@@ -1013,12 +1021,16 @@ glsl_type::std140_size(bool row_major) const
 	 array_len = 1;
       }
 
+      glsl_base_type base_type =
+         is_double() ? GLSL_TYPE_DOUBLE : GLSL_TYPE_FLOAT;
+
       if (row_major) {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT,
-				 element_type->matrix_columns, 1);
+         vec_type = get_instance(base_type,
+                                 element_type->matrix_columns, 1);
+
 	 array_len *= element_type->vector_elements;
       } else {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT,
+	 vec_type = get_instance(base_type,
 				 element_type->vector_elements, 1);
 	 array_len *= element_type->matrix_columns;
       }
@@ -1044,7 +1056,7 @@ glsl_type::std140_size(bool row_major) const
       } else {
 	 unsigned element_base_align =
 	    this->fields.array->std140_base_alignment(row_major);
-	 return this->length * MAX2(element_base_align, 16);
+	 return this->length * MAX2(element_base_align, vec_size * 4);
       }
    }
 
@@ -1082,7 +1094,7 @@ glsl_type::std140_size(bool row_major) const
          max_align = MAX2(align, max_align);
 
          if (field_type->is_record() && (i + 1 < this->length))
-            size = glsl_align(size, 16);
+            size = glsl_align(size, vec_size * 4);
       }
       size = glsl_align(size, MAX2(max_align, 16));
       return size;

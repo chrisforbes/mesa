@@ -510,16 +510,23 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
       base_ir->insert_before(assign(deref->clone(mem_ctx, NULL),
 				    ubo_load(deref->type, offset)));
    } else {
+
+      unsigned vec_size = deref->type->is_double() ? 8 : 4;
+
       /* We're dereffing a column out of a row-major matrix, so we
        * gather the vector from each stored row.
       */
-      assert(deref->type->base_type == GLSL_TYPE_FLOAT);
+      assert(deref->type->base_type == GLSL_TYPE_FLOAT ||
+             deref->type->base_type == GLSL_TYPE_DOUBLE);
       /* Matrices, row_major or not, are stored as if they were
        * arrays of vectors of the appropriate size in std140.
        * Arrays have their strides rounded up to a vec4, so the
        * matrix stride is always 16.
        */
-      unsigned matrix_stride = 16;
+      unsigned matrix_stride = 4 * vec_size;
+
+      const glsl_type *ubo_type = deref->type->base_type == GLSL_TYPE_FLOAT ?
+         glsl_type::float_type : glsl_type::double_type;
 
       for (unsigned i = 0; i < deref->type->vector_elements; i++) {
 	 ir_rvalue *chan_offset =
@@ -527,7 +534,7 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 		new(mem_ctx) ir_constant(deref_offset + i * matrix_stride));
 
 	 base_ir->insert_before(assign(deref->clone(mem_ctx, NULL),
-				       ubo_load(glsl_type::float_type,
+				       ubo_load(ubo_type,
 						chan_offset),
 				       (1U << i)));
       }
