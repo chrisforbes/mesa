@@ -1127,6 +1127,18 @@ _mesa_GetActiveUniformBlockiv(GLuint program,
       params[0] = shProg->UniformBlockStageIndex[MESA_SHADER_VERTEX][uniformBlockIndex] != -1;
       return;
 
+   case GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER:
+      if (!ctx->Extensions.ARB_tessellation_shader)
+         break;
+      params[0] = shProg->UniformBlockStageIndex[MESA_SHADER_TESS_CTRL][uniformBlockIndex] != -1;
+      return;
+
+   case GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER:
+      if (!ctx->Extensions.ARB_tessellation_shader)
+         break;
+      params[0] = shProg->UniformBlockStageIndex[MESA_SHADER_TESS_EVAL][uniformBlockIndex] != -1;
+      return;
+
    case GL_UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER:
       params[0] = shProg->UniformBlockStageIndex[MESA_SHADER_GEOMETRY][uniformBlockIndex] != -1;
       return;
@@ -1136,11 +1148,12 @@ _mesa_GetActiveUniformBlockiv(GLuint program,
       return;
 
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM,
-		  "glGetActiveUniformBlockiv(pname 0x%x (%s))",
-		  pname, _mesa_lookup_enum_by_nr(pname));
-      return;
+      break;
    }
+
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glGetActiveUniformBlockiv(pname 0x%x (%s))",
+               pname, _mesa_lookup_enum_by_nr(pname));
 }
 
 void GLAPIENTRY
