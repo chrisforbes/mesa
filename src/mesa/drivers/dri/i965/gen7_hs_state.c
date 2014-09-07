@@ -107,10 +107,10 @@ upload_hs_state(struct brw_context *brw)
                 ((num_instances - 1) <<
                  GEN7_HS_INSTANCE_CONTROL_SHIFT));
       OUT_BATCH(stage_state->prog_offset);
-      if (brw->hs.prog_data->base.total_scratch) {
+      if (brw->hs.prog_data->base.base.total_scratch) {
          OUT_RELOC(stage_state->scratch_bo,
                    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                   ffs(brw->hs.prog_data->base.total_scratch) - 11);
+                   ffs(brw->hs.prog_data->base.base.total_scratch) - 11);
       } else {
          OUT_BATCH(0);
       }
