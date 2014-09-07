@@ -132,11 +132,11 @@ do_hs_prog(struct brw_context *brw,
                  "Try reducing the number of live vec4 values to "
                  "improve performance.\n");
 
-      c.prog_data.base.total_scratch
+      c.prog_data.base.base.total_scratch
          = brw_get_scratch_size(c.base.last_scratch*REG_SIZE);
 
       brw_get_scratch_bo(brw, &stage_state->scratch_bo,
-			 c.prog_data.base.total_scratch * brw->max_hs_threads);
+			 c.prog_data.base.base.total_scratch * brw->max_hs_threads);
    }
 
    brw_upload_cache(&brw->cache, BRW_HS_PROG,
