@@ -1339,10 +1339,10 @@ _mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
       params[0] = ab->StageReferences[MESA_SHADER_FRAGMENT];
       return;
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER:
-      params[0] = GL_FALSE;
+      params[0] = ab->StageReferences[MESA_SHADER_TESS_CTRL];
       return;
    case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER:
-      params[0] = GL_FALSE;
+      params[0] = ab->StageReferences[MESA_SHADER_TESS_EVAL];
       return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
