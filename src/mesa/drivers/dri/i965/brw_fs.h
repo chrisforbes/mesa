@@ -240,6 +240,7 @@ public:
    void visit(ir_function_signature *ir);
    void visit(ir_emit_vertex *);
    void visit(ir_end_primitive *);
+   void visit(ir_barrier *);
 
    uint32_t gather_channel(ir_texture *ir, uint32_t sampler);
    void swizzle_result(ir_texture *ir, fs_reg orig_val, uint32_t sampler);
