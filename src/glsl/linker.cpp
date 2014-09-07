@@ -3023,8 +3023,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
           */
          if (!assign_varying_locations(ctx, mem_ctx, prog,
                                        sh, NULL,
-                                       num_tfeedback_decls, tfeedback_decls,
-                                       0))
+                                       num_tfeedback_decls, tfeedback_decls))
             goto done;
       }
 
@@ -3052,8 +3051,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
                                        NULL /* producer */,
                                        sh /* consumer */,
                                        0 /* num_tfeedback_decls */,
-                                       NULL /* tfeedback_decls */,
-                                       0 /* gs_input_vertices */))
+                                       NULL /* tfeedback_decls */))
             goto done;
       } else
          demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
@@ -3069,13 +3067,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
       gl_shader *const sh_i = prog->_LinkedShaders[i];
       gl_shader *const sh_next = prog->_LinkedShaders[next];
-      // XXX: what's this for? do we need it for tess*, too?
-      unsigned gs_input_vertices =
-         next == MESA_SHADER_GEOMETRY ? prog->Geom.VerticesIn : 0;
 
       if (!assign_varying_locations(ctx, mem_ctx, prog, sh_i, sh_next,
                 next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
-                tfeedback_decls, gs_input_vertices))
+                tfeedback_decls))
          goto done;
 
       do_dead_builtin_varyings(ctx, sh_i, sh_next,
