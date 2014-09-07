@@ -98,6 +98,8 @@ protected:
    virtual void emit_patch(const bool thread_end);
    virtual void emit_urb_slot(int mrf, int sub_reg, int varying);
 
+   virtual void visit(ir_barrier *);
+
 private:
    int setup_varying_inputs(int payload_reg, int *attribute_map);
 
