@@ -162,7 +162,7 @@ class lower_packed_varyings_visitor
 public:
    lower_packed_varyings_visitor(void *mem_ctx, unsigned locations_used,
                                  ir_variable_mode mode,
-                                 unsigned gs_input_vertices,
+                                 unsigned num_vertices,
                                  exec_list *out_instructions);
 
    void run(exec_list *instructions);
@@ -210,10 +210,10 @@ private:
    const ir_variable_mode mode;
 
    /**
-    * If we are currently lowering geometry shader inputs, the number of input
-    * vertices the geometry shader accepts.  Otherwise zero.
+    * If we are currently lowering an interface consisting of multiple vertices,
+    * the number of vertices accepted. Otherwise zero.
     */
-   const unsigned gs_input_vertices;
+   const unsigned num_vertices;
 
    /**
     * Exec list into which the visitor should insert the packing instructions.
@@ -227,14 +227,14 @@ private:
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
       void *mem_ctx, unsigned locations_used, ir_variable_mode mode,
-      unsigned gs_input_vertices, exec_list *out_instructions)
+      unsigned num_vertices, exec_list *out_instructions)
    : mem_ctx(mem_ctx),
      locations_used(locations_used),
      packed_varyings((ir_variable **)
                      rzalloc_array_size(mem_ctx, sizeof(*packed_varyings),
                                         locations_used)),
      mode(mode),
-     gs_input_vertices(gs_input_vertices),
+     num_vertices(num_vertices),
      out_instructions(out_instructions)
 {
 }
@@ -270,7 +270,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
 
       /* Recursively pack or unpack it. */
       this->lower_rvalue(deref, var->data.location * 4 + var->data.location_frac, var,
-                         var->name, this->gs_input_vertices != 0, 0);
+                         var->name, this->num_vertices != 0, 0);
    }
 }
 
@@ -541,18 +541,18 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          packed_type = glsl_type::ivec4_type;
       else
          packed_type = glsl_type::vec4_type;
-      if (this->gs_input_vertices != 0) {
+      if (this->num_vertices != 0) {
          packed_type =
             glsl_type::get_array_instance(packed_type,
-                                          this->gs_input_vertices);
+                                          this->num_vertices);
       }
       ir_variable *packed_var = new(this->mem_ctx)
          ir_variable(packed_type, packed_name, this->mode);
-      if (this->gs_input_vertices != 0) {
+      if (this->num_vertices != 0) {
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
-         packed_var->data.max_array_access = this->gs_input_vertices - 1;
+         packed_var->data.max_array_access = this->num_vertices - 1;
       }
       packed_var->data.centroid = unpacked_var->data.centroid;
       packed_var->data.sample = unpacked_var->data.sample;
@@ -565,7 +565,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
       /* For geometry shader inputs, only update the packed variable name the
        * first time we visit each component.
        */
-      if (this->gs_input_vertices == 0 || vertex_index == 0) {
+      if (this->num_vertices == 0 || vertex_index == 0) {
          ralloc_asprintf_append((char **) &this->packed_varyings[slot]->name,
                                 ",%s", name);
       }
@@ -573,7 +573,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 
    ir_dereference *deref = new(this->mem_ctx)
       ir_dereference_variable(this->packed_varyings[slot]);
-   if (this->gs_input_vertices != 0) {
+   if (this->num_vertices != 0) {
       /* When lowering GS inputs, the packed variable is an array, so we need
        * to dereference it using vertex_index.
        */
@@ -593,7 +593,7 @@ lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
       return false;
 
    const glsl_type *type = var->type;
-   if (this->gs_input_vertices != 0) {
+   if (this->num_vertices != 0) {
       assert(type->is_array());
       type = type->element_type();
    }
@@ -650,7 +650,7 @@ lower_packed_varyings_gs_splicer::visit_leave(ir_emit_vertex *ev)
 
 void
 lower_packed_varyings(void *mem_ctx, unsigned locations_used,
-                      ir_variable_mode mode, unsigned gs_input_vertices,
+                      ir_variable_mode mode, unsigned num_vertices,
                       gl_shader *shader)
 {
    exec_list *instructions = shader->ir;
@@ -660,7 +660,7 @@ lower_packed_varyings(void *mem_ctx, unsigned locations_used,
       = main_func->matching_signature(NULL, &void_parameters, false);
    exec_list new_instructions;
    lower_packed_varyings_visitor visitor(mem_ctx, locations_used, mode,
-                                         gs_input_vertices, &new_instructions);
+                                         num_vertices, &new_instructions);
    visitor.run(instructions);
    if (mode == ir_var_shader_out) {
       if (shader->Stage == MESA_SHADER_GEOMETRY) {
