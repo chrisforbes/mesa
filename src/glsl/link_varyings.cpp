@@ -1345,8 +1345,21 @@ assign_varying_locations(struct gl_context *ctx,
    };
 
    unsigned consumer_vertices = 0;
-   if (consumer && consumer->Stage == MESA_SHADER_GEOMETRY)
-      consumer_vertices = prog->Geom.VerticesIn;
+   unsigned producer_vertices = 0;
+
+   if (consumer) {
+      if (consumer->Stage == MESA_SHADER_GEOMETRY)
+         consumer_vertices = prog->Geom.VerticesIn;
+      if (consumer->Stage == MESA_SHADER_TESS_CTRL)
+         consumer_vertices = ctx->Const.MaxPatchVertices;
+      if (consumer->Stage == MESA_SHADER_TESS_EVAL)
+         consumer_vertices = ctx->Const.MaxPatchVertices;
+   }
+
+   if (producer) {
+      if (producer->Stage == MESA_SHADER_TESS_CTRL)
+         producer_vertices = prog->TessCtrl.VerticesOut;
+   }
 
    /* Operate in a total of four passes.
     *
@@ -1483,7 +1496,7 @@ assign_varying_locations(struct gl_context *ctx,
    } else {
       if (producer) {
          lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_out,
-                               0, producer);
+                               producer_vertices, producer);
       }
       if (consumer) {
          lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_in,
