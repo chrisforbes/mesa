@@ -374,7 +374,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
    /* When gs_input_toplevel is set, we should be looking at a geometry shader
     * input array.
     */
-   assert(!gs_input_toplevel || rvalue->type->is_array());
+   assert(!gs_input_toplevel || rvalue->type->is_array() || unpacked_var->data.patch);
 
    if (rvalue->type->is_record()) {
       for (unsigned i = 0; i < rvalue->type->length; i++) {
@@ -495,7 +495,7 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
       ir_constant *constant = new(this->mem_ctx) ir_constant(i);
       ir_dereference_array *dereference_array = new(this->mem_ctx)
          ir_dereference_array(rvalue, constant);
-      if (gs_input_toplevel) {
+      if (gs_input_toplevel && !unpacked_var->data.patch) {
          /* Geometry shader inputs are a special case.  Instead of storing
           * each element of the array at a different location, all elements
           * are at the same location, but with a different vertex index.
@@ -533,6 +533,9 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 {
    unsigned slot = location - VARYING_SLOT_VAR0;
    assert(slot < locations_used);
+   bool is_vertex_array_input = this->num_vertices != 0 &&
+      !unpacked_var->data.patch;
+
    if (this->packed_varyings[slot] == NULL) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
       const glsl_type *packed_type;
@@ -540,14 +543,14 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          packed_type = glsl_type::ivec4_type;
       else
          packed_type = glsl_type::vec4_type;
-      if (this->num_vertices != 0) {
+      if (is_vertex_array_input) {
          packed_type =
             glsl_type::get_array_instance(packed_type,
                                           this->num_vertices);
       }
       ir_variable *packed_var = new(this->mem_ctx)
          ir_variable(packed_type, packed_name, this->mode);
-      if (this->num_vertices != 0) {
+      if (is_vertex_array_input) {
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
@@ -572,7 +575,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 
    ir_dereference *deref = new(this->mem_ctx)
       ir_dereference_variable(this->packed_varyings[slot]);
-   if (this->num_vertices != 0) {
+   if (is_vertex_array_input) {
       /* When lowering GS inputs, the packed variable is an array, so we need
        * to dereference it using vertex_index.
        */
@@ -592,7 +595,7 @@ lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
       return false;
 
    const glsl_type *type = var->type;
-   if (this->num_vertices != 0) {
+   if (this->num_vertices != 0 && !var->data.patch) {
       assert(type->is_array());
       type = type->element_type();
    }
