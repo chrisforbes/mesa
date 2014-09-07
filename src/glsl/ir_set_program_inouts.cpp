@@ -134,6 +134,14 @@ void
 ir_set_program_inouts_visitor::mark_whole_variable(ir_variable *var)
 {
    const glsl_type *type = var->type;
+
+   /* Remove one level of arrayness where the interface to the shader is
+    * an array of vertices.
+    *
+    * XXX: Does this do the right thing when the var is an array inside
+    * an array of interface blocks?
+    */
+
    if (this->shader_stage == MESA_SHADER_GEOMETRY &&
        var->data.mode == ir_var_shader_in && type->is_array()) {
       type = type->fields.array;
@@ -145,15 +153,13 @@ ir_set_program_inouts_visitor::mark_whole_variable(ir_variable *var)
    }
 
    if (this->shader_stage == MESA_SHADER_TESS_CTRL &&
-       var->data.mode == ir_var_shader_out && !var->data.patch) {
-      assert(type->is_array());
+       var->data.mode == ir_var_shader_out && type->is_array() && !var->data.patch) {
       type = type->fields.array;
    }
 
    if (this->shader_stage == MESA_SHADER_TESS_EVAL &&
        var->data.mode == ir_var_shader_in &&
        type->is_array() && !var->data.patch) {
-      assert(type->is_array());
       type = type->fields.array;
    }
 
