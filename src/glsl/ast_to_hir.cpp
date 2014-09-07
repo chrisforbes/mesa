@@ -5737,7 +5737,17 @@ ast_interface_block::hir(exec_list *instructions,
    if (state->stage == MESA_SHADER_GEOMETRY && this->array_specifier == NULL &&
        var_mode == ir_var_shader_in) {
       _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
+   } else if ((state->stage == MESA_SHADER_TESS_CTRL ||
+               state->stage == MESA_SHADER_TESS_EVAL) &&
+              this->array_specifier == NULL &&
+              var_mode == ir_var_shader_in) {
+      _mesa_glsl_error(&loc, state, "per-vertex tessellation shader inputs must be arrays");
+   } else if (state->stage == MESA_SHADER_TESS_CTRL &&
+              this->array_specifier == NULL &&
+              var_mode == ir_var_shader_out) {
+      _mesa_glsl_error(&loc, state, "tessellation control shader outputs must be arrays");
    }
+
 
    /* Page 39 (page 45 of the PDF) of section 4.3.7 in the GLSL ES 3.00 spec
     * says:
@@ -5832,6 +5842,11 @@ ast_interface_block::hir(exec_list *instructions,
 
       if (state->stage == MESA_SHADER_GEOMETRY && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
+      else if ((state->stage == MESA_SHADER_TESS_CTRL ||
+           state->stage == MESA_SHADER_TESS_EVAL) && var_mode == ir_var_shader_in)
+         handle_tess_shader_input_decl(state, loc, var);
+      else if (state->stage == MESA_SHADER_TESS_CTRL && var_mode == ir_var_shader_out)
+         handle_tess_ctrl_shader_output_decl(state, loc, var);
 
       if (ir_variable *earlier =
           state->symbols->get_variable(this->instance_name)) {
@@ -6007,10 +6022,8 @@ ast_tcs_output_layout::hir(exec_list *instructions,
 	 continue;
 
       /* Note: Not all tessellation control shader output are arrays. */
-      if (!var->type->is_unsized_array())
-	 continue;
-
-      // TODO: Skip patch out variables incl. gl_TessLevel*
+      if (!var->type->is_unsized_array() || var->data.patch)
+         continue;
 
       if (var->data.max_array_access >= num_vertices) {
 	 _mesa_glsl_error(&loc, state,
