@@ -437,6 +437,13 @@ vec4_hs_visitor::emit_urb_write_opcode(bool complete)
 }
 
 
+void
+vec4_hs_visitor::visit(ir_barrier *ir)
+{
+   /* XXX: Emit code to send BarrierMsg to the Message Gateway shared function */
+}
+
+
 int
 vec4_hs_visitor::compute_array_stride(ir_dereference_array *ir)
 {
