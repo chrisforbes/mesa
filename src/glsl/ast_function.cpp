@@ -740,9 +740,9 @@ process_vec_mat_constructor(exec_list *instructions,
 
       /* Apply implicit conversions (not the scalar constructor rules!). See
        * the spec quote above. */
-      if (constructor_type->is_float()) {
+      if (constructor_type->base_type != result->type->base_type) {
          const glsl_type *desired_type =
-            glsl_type::get_instance(GLSL_TYPE_FLOAT,
+            glsl_type::get_instance(constructor_type->base_type,
                                     ir->type->vector_elements,
                                     ir->type->matrix_columns);
          if (result->type->can_implicitly_convert_to(desired_type, state)) {
