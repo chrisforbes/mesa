@@ -479,6 +479,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_URB_FENCE),
    DEFINE_BIT(BRW_NEW_FRAGMENT_PROGRAM),
    DEFINE_BIT(BRW_NEW_GEOMETRY_PROGRAM),
+   DEFINE_BIT(BRW_NEW_TESS_EVAL_PROGRAM),
+   DEFINE_BIT(BRW_NEW_TESS_CTRL_PROGRAM),
    DEFINE_BIT(BRW_NEW_VERTEX_PROGRAM),
    DEFINE_BIT(BRW_NEW_CURBE_OFFSETS),
    DEFINE_BIT(BRW_NEW_REDUCED_PRIMITIVE),
@@ -487,6 +489,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PSP),
    DEFINE_BIT(BRW_NEW_SURFACES),
    DEFINE_BIT(BRW_NEW_VS_BINDING_TABLE),
+   DEFINE_BIT(BRW_NEW_HS_BINDING_TABLE),
+   DEFINE_BIT(BRW_NEW_DS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_GS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_PS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_INDICES),
@@ -527,6 +531,8 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_FF_GS_UNIT),
    DEFINE_BIT(CACHE_NEW_FF_GS_PROG),
    DEFINE_BIT(CACHE_NEW_GS_PROG),
+   DEFINE_BIT(CACHE_NEW_HS_PROG),
+   DEFINE_BIT(CACHE_NEW_DS_PROG),
    DEFINE_BIT(CACHE_NEW_CLIP_VP),
    DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
    DEFINE_BIT(CACHE_NEW_CLIP_PROG),
@@ -597,10 +603,12 @@ void brw_upload_state(struct brw_context *brw)
 
    if (brw->tess_eval_program != ctx->TessEvalProgram._Current) {
       brw->tess_eval_program = ctx->TessEvalProgram._Current;
+      brw->state.dirty.brw |= BRW_NEW_TESS_EVAL_PROGRAM;
    }
 
    if (brw->tess_ctrl_program != ctx->TessCtrlProgram._Current) {
       brw->tess_ctrl_program = ctx->TessCtrlProgram._Current;
+      brw->state.dirty.brw |= BRW_NEW_TESS_CTRL_PROGRAM;
    }
 
    if (brw->vertex_program != ctx->VertexProgram._Current) {
