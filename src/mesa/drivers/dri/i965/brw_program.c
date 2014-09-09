@@ -64,6 +64,12 @@ static void brwBindProgram( struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
       break;
+   case GL_TESS_CONTROL_PROGRAM_NV:
+      brw->state.dirty.brw |= BRW_NEW_TESS_CTRL_PROGRAM;
+      break;
+   case GL_TESS_EVALUATION_PROGRAM_NV:
+      brw->state.dirty.brw |= BRW_NEW_TESS_EVAL_PROGRAM;
+      break;
    case MESA_GEOMETRY_PROGRAM:
       brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
       break;
