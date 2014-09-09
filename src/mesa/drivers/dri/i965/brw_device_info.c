@@ -116,12 +116,16 @@ static const struct brw_device_info brw_device_info_ivb_gt1 = {
    GEN7_FEATURES, .is_ivybridge = true, .gt = 1,
    .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 36,
+   .max_hs_threads = 36,
+   .max_ds_threads = 36,
    .max_gs_threads = 36,
    .max_wm_threads = 48,
    .urb = {
       .size = 128,
       .min_vs_entries = 32,
       .max_vs_entries = 512,
+      .max_hs_entries = 32,
+      .max_ds_entries = 256,
       .max_gs_entries = 192,
    },
 };
@@ -130,12 +134,16 @@ static const struct brw_device_info brw_device_info_ivb_gt2 = {
    GEN7_FEATURES, .is_ivybridge = true, .gt = 2,
    .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 128,
+   .max_hs_threads = 128,
+   .max_ds_threads = 128,
    .max_gs_threads = 128,
    .max_wm_threads = 172,
    .urb = {
       .size = 256,
       .min_vs_entries = 32,
       .max_vs_entries = 704,
+      .max_hs_entries = 320,
+      .max_ds_entries = 320,
       .max_gs_entries = 320,
    },
 };
@@ -190,6 +198,8 @@ static const struct brw_device_info brw_device_info_hsw_gt3 = {
       .size = 512,
       .min_vs_entries = 64,
       .max_vs_entries = 1664,
+      .max_hs_entries = 32,
+      .max_ds_entries = 256,
       .max_gs_entries = 640,
    },
 };
