@@ -115,15 +115,22 @@ upload_hs_state(struct brw_context *brw)
          OUT_BATCH(0);
       }
 
-      uint32_t dw5 =
-      //include vertex handles?
-         (prog_data->base.dispatch_grf_start_reg <<
-          GEN7_HS_DISPATCH_START_GRF_SHIFT) |
-         (prog_data->urb_read_length <<
-          GEN7_HS_URB_READ_LENGTH_SHIFT) |
-         (0 << GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT);
+      /* XXX: If Instance Count > 1, we need to allocate some space in the
+       * URB for semaphores. This is 32 DWORDs. We need to emit an URB_FENCE on
+       * both sides of such an allocation.
+       */
 
-      uint32_t dw6 = 0;
+      /* If Instance Count > 1, then we must pull vertices from the URB
+       * rather than having them pushed in the payload [HSW]. On IVB the
+       * hardware can theoretically push vertex data to us, but we can't
+       * reach API patch size limits that way, as we would run out of regs.
+       */
+      uint32_t dw5 =
+         GEN7_HS_INCLUDE_VERTEX_HANDLES |
+         (prog_data->base.dispatch_grf_start_reg <<
+          GEN7_HS_DISPATCH_START_GRF_SHIFT);
+
+      uint32_t dw6 = 0; /* semaphore URB handle */
 
       OUT_BATCH(dw5);
       OUT_BATCH(dw6);
