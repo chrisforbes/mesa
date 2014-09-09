@@ -105,47 +105,9 @@ vec4_hs_visitor::lower_mrfs_to_hw_regs(void)
 }
 
 
-int
-vec4_hs_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
-{
-   /* For tessellation control shaders there are N copies of the input attributes, where N
-    * is the number of input vertices per patch.  attribute_map[BRW_VARYING_SLOT_COUNT *
-    * i + j] represents attribute j for vertex i.
-    *
-    * Note that HS inputs are read from the VUE 256 bits (2 vec4's) at a time,
-    * so the total number of input slots that will be delivered to the HS (and
-    * thus the stride of the input arrays) is urb_read_length * 2.
-    */
-   const unsigned num_input_vertices = 3;// XXX
-   assert(num_input_vertices <= MAX_HS_INPUT_VERTICES);
-   unsigned input_array_stride = c->prog_data.base.urb_read_length * 2;
-
-   for (int slot = 0; slot < c->input_vue_map.num_slots; slot++) {
-      int varying = c->input_vue_map.slot_to_varying[slot];
-      for (unsigned vertex = 0; vertex < num_input_vertices; vertex++) {
-         attribute_map[BRW_VARYING_SLOT_COUNT * vertex + varying] =
-            2 * payload_reg + input_array_stride * vertex +
-            slot;
-      }
-   }
-
-   int regs_used = (input_array_stride * num_input_vertices + 1) / 2;
-   return payload_reg + regs_used;
-}
-
-
 void
 vec4_hs_visitor::setup_payload()
 {
-   int attribute_map[BRW_VARYING_SLOT_COUNT * MAX_HS_INPUT_VERTICES];
-
-   /* If a tessellation control shader tries to read from an input that wasn't written by
-    * the vertex shader, that produces undefined results, but it shouldn't
-    * crash anything.  So initialize attribute_map to zeros--that ensures that
-    * these undefined results are read from r0.
-    */
-   memset(attribute_map, 0, sizeof(attribute_map));
-
    int reg = 0;
 
    /* The payload always contains important data in r0, which contains
@@ -154,11 +116,15 @@ vec4_hs_visitor::setup_payload()
     */
    reg++;
 
+   /* r1.0 - r4.7 contain the input control point URB handles,
+    * which we use to pull vertex data.
+    */
+
+   reg += 4;
+
+   /* Push constants may start at r5.0 */
+
    reg = setup_uniforms(reg);
-
-   reg = setup_varying_inputs(reg, attribute_map);
-
-   lower_attributes_to_hw_regs(attribute_map, true);
 
    this->first_non_payload_grf = reg;
 }

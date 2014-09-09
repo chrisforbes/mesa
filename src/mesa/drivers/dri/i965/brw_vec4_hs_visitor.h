@@ -42,7 +42,7 @@ struct brw_hs_prog_key
 
 
 /**
- * Scratch data used when compiling a GLSL geometry shader.
+ * Scratch data used when compiling a GLSL tessellation control shader
  */
 struct brw_hs_compile
 {
@@ -52,9 +52,6 @@ struct brw_hs_compile
    struct brw_vue_map input_vue_map;
 
    struct brw_tess_ctrl_program *hp;
-
-   unsigned control_data_bits_per_vertex;
-   unsigned control_data_header_size_bits;
 };
 
 #ifdef __cplusplus
@@ -101,10 +98,7 @@ protected:
    virtual void visit(ir_barrier *);
 
 private:
-   int setup_varying_inputs(int payload_reg, int *attribute_map);
-
    src_reg vertex_count;
-   src_reg control_data_bits;
    const struct brw_hs_compile * const c;
 };
 

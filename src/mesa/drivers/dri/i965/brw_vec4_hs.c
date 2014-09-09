@@ -112,10 +112,10 @@ do_hs_prog(struct brw_context *brw,
 
    brw_compute_vue_map(brw, &c.input_vue_map, c.key.input_varyings);
 
-   /* HS inputs are read from the VUE 256 bits (2 vec4's) at a time, so we
-    * need to program a URB read length of ceiling(num_slots / 2).
-    */
-   c.prog_data.base.urb_read_length = (c.input_vue_map.num_slots + 1) / 2;
+   /* HS does not use the usual payload pushing from URB to GRFs,
+    * because we don't have enough registers for a full-size payload, and
+    * the hardware is broken on Haswell anyway. */
+   c.prog_data.base.urb_read_length = 0;
 
    void *mem_ctx = ralloc_context(NULL);
    unsigned program_size;
