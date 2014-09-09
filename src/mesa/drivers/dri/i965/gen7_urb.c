@@ -34,7 +34,7 @@
  *   __________-__________   _________________-_________________
  *  /                     \ /                                   \
  * +-------------------------------------------------------------+
- * |     VS/FS/GS Push     |              VS/GS URB              |
+ * |  VS/HS/DS/GS/FS Push  |           VS/HS/DS/GS URB           |
  * |       Constants       |               Entries               |
  * +-------------------------------------------------------------+
  *
@@ -64,23 +64,32 @@ gen7_allocate_push_constants(struct brw_context *brw)
    unsigned multiplier =
       (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 2 : 1;
 
-   /* BRW_NEW_GEOMETRY_PROGRAM */
-   bool gs_present = brw->geometry_program;
+   // XXX: is fragment shader optional? if so: don't allocate constant buffer space for it.
 
-   unsigned vs_size, gs_size;
-   if (gs_present) {
-      vs_size = avail_size / 3;
-      avail_size -= vs_size;
-      gs_size = avail_size / 2;
-      avail_size -= gs_size;
-   } else {
-      vs_size = avail_size / 2;
-      avail_size -= vs_size;
-      gs_size = 0;
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   int stages = 2;
+   /* BRW_NEW_TESS_CTRL_PROGRAM, BRW_NEW_TESS_EVAL_PROGRAM */
+   bool gs_present = brw->geometry_program;
+   if (gs_present)
+      stages += 1;
+   bool ts_present = brw->tess_eval_program;
+   if (ts_present) {
+      assert(brw->tess_ctrl_program);
+      stages += 2;
    }
+
+   unsigned vs_size, hs_size = 0, ds_size = 0, gs_size = 0;
+   avail_size -= (vs_size = avail_size / stages--);
+   if (ts_present) {
+      avail_size -= (hs_size = avail_size / stages--);
+      avail_size -= (ds_size = avail_size / stages--);
+   }
+   if (gs_present)
+      avail_size -= (gs_size = avail_size / stages--);
    unsigned fs_size = avail_size;
 
    gen7_emit_push_constant_state(brw, multiplier * vs_size,
+                                 multiplier * hs_size, multiplier * ds_size,
                                  multiplier * gs_size, multiplier * fs_size);
 
    /* From p115 of the Ivy Bridge PRM (3.2.1.4 3DSTATE_PUSH_CONSTANT_ALLOC_VS):
@@ -99,14 +108,23 @@ gen7_allocate_push_constants(struct brw_context *brw)
 
 void
 gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
+                              unsigned hs_size, unsigned ds_size,
                               unsigned gs_size, unsigned fs_size)
 {
    unsigned offset = 0;
 
-   BEGIN_BATCH(6);
+   BEGIN_BATCH(10);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
    OUT_BATCH(vs_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    offset += vs_size;
+
+   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_HS << 16 | (2 - 2));
+   OUT_BATCH(hs_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
+   offset += hs_size;
+
+   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_DS << 16 | (2 - 2));
+   OUT_BATCH(ds_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
+   offset += ds_size;
 
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_GS << 16 | (2 - 2));
    OUT_BATCH(gs_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
@@ -130,7 +148,8 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
 const struct brw_tracked_state gen7_push_constant_space = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT | BRW_NEW_GEOMETRY_PROGRAM,
+      .brw = BRW_NEW_CONTEXT | BRW_NEW_GEOMETRY_PROGRAM |
+             BRW_NEW_TESS_CTRL_PROGRAM | BRW_NEW_TESS_EVAL_PROGRAM,
       .cache = 0,
    },
    .emit = gen7_allocate_push_constants,
@@ -143,12 +162,25 @@ gen7_upload_urb(struct brw_context *brw)
       (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 32 : 16;
 
    /* CACHE_NEW_VS_PROG */
+   //size of combined output of vertex shader invocation
    unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
    unsigned vs_entry_size_bytes = vs_size * 64;
+
    /* BRW_NEW_GEOMETRY_PROGRAM, CACHE_NEW_GS_PROG */
-   bool gs_present = brw->geometry_program;
+   const bool gs_present = brw->geometry_program;
+   //size of combined output of geometry shader invocation
    unsigned gs_size = gs_present ? brw->gs.prog_data->base.urb_entry_size : 1;
    unsigned gs_entry_size_bytes = gs_size * 64;
+
+   /* BRW_NEW_TESS_CTRL_PROGRAM, CACHE_NEW_HS_PROG */
+   /* BRW_NEW_TESS_EVAL_PROGRAM, CACHE_NEW_DS_PROG */
+   const bool ts_present = brw->tess_eval_program;
+   if (ts_present)
+      assert(brw->tess_ctrl_program);
+   unsigned hs_size = ts_present ? brw->hs.prog_data->base.urb_entry_size : 1;
+   unsigned hs_entry_size_bytes = hs_size * 64;
+   unsigned ds_size = ts_present ? brw->ds.prog_data->base.urb_entry_size : 1;
+   unsigned ds_entry_size_bytes = ds_size * 64;
 
    /* If we're just switching between programs with the same URB requirements,
     * skip the rest of the logic.
@@ -156,21 +188,30 @@ gen7_upload_urb(struct brw_context *brw)
    if (!(brw->state.dirty.brw & BRW_NEW_CONTEXT) &&
        brw->urb.vsize == vs_size &&
        brw->urb.gs_present == gs_present &&
-       brw->urb.gsize == gs_size) {
+       brw->urb.gsize == gs_size &&
+       brw->urb.ts_present == ts_present &&
+       brw->urb.hsize == hs_size &&
+       brw->urb.dsize == ds_size) {
       return;
    }
    brw->urb.vsize = vs_size;
    brw->urb.gs_present = gs_present;
    brw->urb.gsize = gs_size;
+   brw->urb.ts_present = ts_present;
+   brw->urb.hsize = hs_size;
+   brw->urb.dsize = ds_size;
+
 
    /* From p35 of the Ivy Bridge PRM (section 1.7.1: 3DSTATE_URB_GS):
     *
     *     VS Number of URB Entries must be divisible by 8 if the VS URB Entry
     *     Allocation Size is less than 9 512-bit URB entries.
     *
-    * Similar text exists for GS.
+    * Similar text exists for HS, DS and GS.
     */
    unsigned vs_granularity = (vs_size < 9) ? 8 : 1;
+   unsigned hs_granularity = (hs_size < 9) ? 8 : 1;
+   unsigned ds_granularity = (ds_size < 9) ? 8 : 1;
    unsigned gs_granularity = (gs_size < 9) ? 8 : 1;
 
    /* URB allocations must be done in 8k chunks. */
@@ -216,14 +257,55 @@ gen7_upload_urb(struct brw_context *brw)
                chunk_size_bytes) / chunk_size_bytes - gs_chunks;
    }
 
+   unsigned hs_chunks = 0;
+   unsigned hs_wants = 0;
+   unsigned ds_chunks = 0;
+   unsigned ds_wants = 0;
+   if (ts_present) {
+      // XXX: what's the minimal hs/ds entry size?
+      // would needed to be changed below, too
+
+      hs_chunks =
+         ALIGN(hs_granularity * hs_entry_size_bytes, chunk_size_bytes) /
+               chunk_size_bytes;
+      hs_wants =
+         ALIGN(brw->urb.max_hs_entries * hs_entry_size_bytes,
+               chunk_size_bytes) / chunk_size_bytes - hs_chunks;
+
+      /* From p38 of the Ivy Bridge PRM (section 1.7.3: 3DSTATE_URB_DS):
+       *
+       *     If Domain Shader Thread Dispatch is Enabled then the minimum number handles that must be
+       *     allocated is 138 [10 ??] URB entries.
+       *     [...]
+       *     DS Number of URB Entries must be divisible by 8 if the DS URB Entry Allocation Size is less than 9
+       *     512-bit URB entries. If Domain Shader Thread Dispatch is Enabled then the minimum number of
+       *     handles that must be allocated is 10 URB entries.
+       *
+       * From p851 of the Haswell PRM (section 3DSTATE_URB_DS):
+       *
+       *     If Domain Shader Thread Dispatch is Enabled then the minimum number of handles
+       *     that must be allocated is 10 URB entries.
+       *     [...]
+       *     DS Number of URB Entries must be divisible by 8 if the DS URB Entry Allocation Size is
+       *     programmed to a value less than 9, which is 10 512-bit URB entries.
+       */
+      ds_chunks =
+         ALIGN(MAX2(ds_granularity, 10) * ds_entry_size_bytes, chunk_size_bytes) /
+               chunk_size_bytes;
+      ds_wants =
+         ALIGN(brw->urb.max_ds_entries * ds_entry_size_bytes,
+               chunk_size_bytes) / chunk_size_bytes - ds_chunks;
+   }
+
    /* There should always be enough URB space to satisfy the minimum
     * requirements of each stage.
     */
-   unsigned total_needs = push_constant_chunks + vs_chunks + gs_chunks;
+   unsigned total_needs = push_constant_chunks +
+                          vs_chunks + hs_chunks + ds_chunks + gs_chunks;
    assert(total_needs <= urb_chunks);
 
    /* Mete out remaining space (if any) in proportion to "wants". */
-   unsigned total_wants = vs_wants + gs_wants;
+   unsigned total_wants = vs_wants + hs_wants + ds_wants + gs_wants;
    unsigned remaining_space = urb_chunks - total_needs;
    if (remaining_space > total_wants)
       remaining_space = total_wants;
@@ -232,26 +314,47 @@ gen7_upload_urb(struct brw_context *brw)
          round(vs_wants * (((double) remaining_space) / total_wants));
       vs_chunks += vs_additional;
       remaining_space -= vs_additional;
+      total_wants -= vs_wants;
+
+      unsigned hs_additional = (unsigned)
+         round(hs_wants * (((double) remaining_space) / total_wants));
+      hs_chunks += hs_additional;
+      remaining_space -= hs_additional;
+      total_wants -= hs_wants;
+
+      unsigned ds_additional = (unsigned)
+         round(ds_wants * (((double) remaining_space) / total_wants));
+      ds_chunks += ds_additional;
+      remaining_space -= ds_additional;
+      total_wants -= ds_wants;
+
       gs_chunks += remaining_space;
    }
 
    /* Sanity check that we haven't over-allocated. */
-   assert(push_constant_chunks + vs_chunks + gs_chunks <= urb_chunks);
+   assert(push_constant_chunks +
+          vs_chunks + hs_chunks + ds_chunks + gs_chunks <= urb_chunks);
 
    /* Finally, compute the number of entries that can fit in the space
     * allocated to each stage.
     */
    unsigned nr_vs_entries = vs_chunks * chunk_size_bytes / vs_entry_size_bytes;
+   unsigned nr_hs_entries = hs_chunks * chunk_size_bytes / hs_entry_size_bytes;
+   unsigned nr_ds_entries = ds_chunks * chunk_size_bytes / ds_entry_size_bytes;
    unsigned nr_gs_entries = gs_chunks * chunk_size_bytes / gs_entry_size_bytes;
 
    /* Since we rounded up when computing *_wants, this may be slightly more
     * than the maximum allowed amount, so correct for that.
     */
    nr_vs_entries = MIN2(nr_vs_entries, brw->urb.max_vs_entries);
+   nr_hs_entries = MIN2(nr_hs_entries, brw->urb.max_hs_entries);
+   nr_ds_entries = MIN2(nr_ds_entries, brw->urb.max_ds_entries);
    nr_gs_entries = MIN2(nr_gs_entries, brw->urb.max_gs_entries);
 
    /* Ensure that we program a multiple of the granularity. */
    nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, vs_granularity);
+   nr_hs_entries = ROUND_DOWN_TO(nr_hs_entries, hs_granularity);
+   nr_ds_entries = ROUND_DOWN_TO(nr_ds_entries, ds_granularity);
    nr_gs_entries = ROUND_DOWN_TO(nr_gs_entries, gs_granularity);
 
    /* Finally, sanity check to make sure we have at least the minimum number
@@ -260,33 +363,50 @@ gen7_upload_urb(struct brw_context *brw)
    assert(nr_vs_entries >= brw->urb.min_vs_entries);
    if (gs_present)
       assert(nr_gs_entries >= 2);
+   if (ts_present) {
+      assert(nr_hs_entries >= 1);
+      assert(nr_ds_entries >= 10);
+   }
 
    /* Gen7 doesn't actually use brw->urb.nr_{vs,gs}_entries, but it seems
     * better to put reasonable data in there rather than leave them
     * uninitialized.
     */
    brw->urb.nr_vs_entries = nr_vs_entries;
+   brw->urb.nr_hs_entries = nr_hs_entries;
+   brw->urb.nr_ds_entries = nr_ds_entries;
    brw->urb.nr_gs_entries = nr_gs_entries;
 
    /* Lay out the URB in the following order:
     * - push constants
     * - VS
+    * - HS
+    * - DS
     * - GS
     */
    brw->urb.vs_start = push_constant_chunks;
-   brw->urb.gs_start = push_constant_chunks + vs_chunks;
+   brw->urb.hs_start = push_constant_chunks + vs_chunks;
+   brw->urb.ds_start = push_constant_chunks + vs_chunks + hs_chunks;
+   brw->urb.gs_start = push_constant_chunks + vs_chunks + hs_chunks + ds_chunks;
 
    if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw,
                        brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start,
+                       brw->urb.nr_hs_entries, hs_size, brw->urb.hs_start,
+                       brw->urb.nr_ds_entries, ds_size, brw->urb.ds_start,
                        brw->urb.nr_gs_entries, gs_size, brw->urb.gs_start);
 }
 
 void
 gen7_emit_urb_state(struct brw_context *brw,
-                    unsigned nr_vs_entries, unsigned vs_size,
-                    unsigned vs_start, unsigned nr_gs_entries,
+                    unsigned nr_vs_entries,
+                    unsigned vs_size, unsigned vs_start,
+                    unsigned nr_hs_entries,
+                    unsigned hs_size, unsigned hs_start,
+                    unsigned nr_ds_entries,
+                    unsigned ds_size, unsigned ds_start,
+                    unsigned nr_gs_entries,
                     unsigned gs_size, unsigned gs_start)
 {
    BEGIN_BATCH(8);
@@ -300,22 +420,25 @@ gen7_emit_urb_state(struct brw_context *brw,
              ((gs_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
              (gs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
 
-   /* Allocate the HS and DS zero space - we don't use them. */
    OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
-   OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
-             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
+   OUT_BATCH(nr_hs_entries |
+             ((hs_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
+             (hs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
 
    OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
-   OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
-             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
+   OUT_BATCH(nr_ds_entries |
+             ((ds_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
+             (ds_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen7_urb = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT | BRW_NEW_GEOMETRY_PROGRAM,
-      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG),
+      .brw = BRW_NEW_CONTEXT | BRW_NEW_GEOMETRY_PROGRAM |
+             BRW_NEW_TESS_CTRL_PROGRAM | BRW_NEW_TESS_EVAL_PROGRAM,
+      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG |
+                CACHE_NEW_HS_PROG | CACHE_NEW_DS_PROG),
    },
    .emit = gen7_upload_urb,
 };
