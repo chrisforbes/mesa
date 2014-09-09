@@ -325,6 +325,14 @@ brw_initialize_context_constants(struct brw_context *brw)
       MIN2(ctx->Const.MaxTextureCoordUnits,
            ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits);
    ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = max_samplers;
+
+   if (_mesa_extension_override_enables.ARB_tessellation_shader) {
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxTextureImageUnits = max_samplers;
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxTextureImageUnits = max_samplers;
+      ctx->Const.MaxCombinedUniformBlocks += ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxUniformBlocks + ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxUniformBlocks;
+      ctx->Const.MaxUniformBufferBindings += ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxUniformBlocks + ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxUniformBlocks;
+   }
+
    if (brw->gen >= 6)
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = max_samplers;
    else
@@ -339,6 +347,8 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits +
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits +
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits +
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxTextureImageUnits +
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxTextureImageUnits +
       ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits;
 
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
@@ -466,10 +476,14 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.MaxCombinedAtomicBuffers = 3 * BRW_MAX_ABO;
    }
@@ -529,6 +543,10 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents = 64;
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents = 128;
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 128;
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxInputComponents = 128;
+      ctx->Const.Program[MESA_SHADER_TESS_CTRL].MaxOutputComponents = 128;
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxInputComponents = 128;
+      ctx->Const.Program[MESA_SHADER_TESS_EVAL].MaxOutputComponents = 128;
    }
 
    /* We want the GLSL compiler to emit code that uses condition codes */
@@ -548,6 +566,8 @@ brw_initialize_context_constants(struct brw_context *brw)
    }
 
    ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
+   ctx->Const.ShaderCompilerOptions[MESA_SHADER_TESS_CTRL].OptimizeForAOS = true;
+   ctx->Const.ShaderCompilerOptions[MESA_SHADER_TESS_EVAL].OptimizeForAOS = true;
    ctx->Const.ShaderCompilerOptions[MESA_SHADER_GEOMETRY].OptimizeForAOS = true;
 
    /* ARB_viewport_array */
