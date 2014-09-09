@@ -599,6 +599,14 @@ void brw_upload_state(struct brw_context *brw)
       brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
    }
 
+   if (brw->tess_eval_program != ctx->TessEvalProgram._Current) {
+      brw->tess_eval_program = ctx->TessEvalProgram._Current;
+   }
+
+   if (brw->tess_ctrl_program != ctx->TessCtrlProgram._Current) {
+      brw->tess_ctrl_program = ctx->TessCtrlProgram._Current;
+   }
+
    if (brw->vertex_program != ctx->VertexProgram._Current) {
       brw->vertex_program = ctx->VertexProgram._Current;
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
