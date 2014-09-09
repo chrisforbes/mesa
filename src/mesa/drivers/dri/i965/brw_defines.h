@@ -1569,6 +1569,8 @@ enum brw_message_target {
 /* DW3: PS */
 
 #define _3DSTATE_SAMPLER_STATE_POINTERS_VS	0x782B /* GEN7+ */
+#define _3DSTATE_SAMPLER_STATE_POINTERS_HS	0x782C /* GEN7+ */
+#define _3DSTATE_SAMPLER_STATE_POINTERS_DS	0x782D /* GEN7+ */
 #define _3DSTATE_SAMPLER_STATE_POINTERS_GS	0x782E /* GEN7+ */
 #define _3DSTATE_SAMPLER_STATE_POINTERS_PS	0x782F /* GEN7+ */
 
@@ -1652,6 +1654,8 @@ enum brw_message_target {
 #define GEN6_MAX_GS_URB_ENTRY_SIZE_BYTES                (5*128)
 
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_HS         0x7913 /* GEN7+ */
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_DS         0x7914 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_GS         0x7915 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_PS         0x7916 /* GEN7+ */
 # define GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT         16
@@ -1751,6 +1755,22 @@ enum brw_message_target {
 #define GEN7_MAX_GS_OUTPUT_VERTEX_SIZE_BYTES		(62*16)
 
 #define _3DSTATE_HS                             0x781B /* GEN7+ */
+/* DW1 */
+# define GEN7_HS_SAMPLER_COUNT_SHIFT                    27
+# define GEN7_HS_BINDING_TABLE_ENTRY_COUNT_SHIFT        18
+# define GEN7_HS_FLOATING_POINT_MODE_IEEE_754           (0 << 16)
+# define GEN7_HS_FLOATING_POINT_MODE_ALT                (1 << 16)
+# define GEN7_HS_MAX_THREADS_SHIFT                      0
+/* DW 2 */
+# define GEN7_HS_ENABLE                                 (1 << 31)
+# define GEN7_HS_STATISTICS_ENABLE                      (1 << 29)
+# define GEN7_HS_INSTANCE_CONTROL_SHIFT                 0
+/* DW5 */
+# define GEN7_HS_INCLUDE_VERTEX_HANDLES                 (1 << 24)
+# define GEN7_HS_DISPATCH_START_GRF_SHIFT               19
+# define GEN7_HS_URB_READ_LENGTH_SHIFT                  11
+# define GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT            4
+
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
 #define _3DSTATE_DS                             0x781D /* GEN7+ */
 
