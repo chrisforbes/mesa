@@ -434,7 +434,7 @@ static void xor_states( struct brw_state_flags *result,
 }
 
 struct dirty_bit_map {
-   uint32_t bit;
+   uint64_t bit;
    char *name;
    uint32_t count;
 };
@@ -557,7 +557,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map)
       if (bit_map[i].bit == 0)
 	 return;
 
-      fprintf(stderr, "0x%08x: %12d (%s)\n",
+      fprintf(stderr, "0x%08lx: %12d (%s)\n",
 	      bit_map[i].bit, bit_map[i].count, bit_map[i].name);
    }
 }
