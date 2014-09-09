@@ -48,6 +48,11 @@
 #define GEN7_MI_LOAD_REGISTER_MEM	(CMD_MI | (0x29 << 23))
 # define MI_LOAD_REGISTER_MEM_USE_GGTT		(1 << 22)
 
+/* Clear part of the URB to zero. Only available on Gen7+. */
+#define GEN7_MI_URB_CLEAR               (CMD_MI | (0x19 << 23))
+#define GEN7_MI_URB_CLEAR_OFFSET_SHIFT  0
+#define GEN7_MI_URB_CLEAR_LENGTH_SHIFT  16
+
 /** @{
  *
  * PIPE_CONTROL operation, a combination MI_FLUSH and register write with
