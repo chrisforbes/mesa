@@ -629,6 +629,17 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
                       &prog->Vert.ClipDistanceArraySize);
 }
 
+void
+validate_tess_eval_shader_executable(struct gl_shader_program *prog,
+                                     struct gl_shader *shader)
+{
+   if (shader == NULL)
+      return;
+
+   analyze_clip_usage(prog, shader, &prog->TessEval.UsesClipDistance,
+                      &prog->TessEval.ClipDistanceArraySize);
+}
+
 
 /**
  * Verify that a fragment shader executable meets all semantic requirements
@@ -2830,7 +2841,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
          case MESA_SHADER_VERTEX:
             validate_vertex_shader_executable(prog, sh);
             break;
-         // XXX: validate tessellation stages
+         case MESA_SHADER_TESS_CTRL:
+            /* nothing to be done */
+            break;
+         case MESA_SHADER_TESS_EVAL:
+            validate_tess_eval_shader_executable(prog, sh);
+            break;
          case MESA_SHADER_GEOMETRY:
             validate_geometry_shader_executable(prog, sh);
             break;
@@ -2847,7 +2863,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (num_shaders[MESA_SHADER_GEOMETRY] > 0)
       prog->LastClipDistanceArraySize = prog->Geom.ClipDistanceArraySize;
-   // XXX: check for clipdistancearraysize in tess eval shader
+   else if (num_shaders[MESA_SHADER_TESS_EVAL] > 0)
+      prog->LastClipDistanceArraySize = prog->TessEval.ClipDistanceArraySize;
    else if (num_shaders[MESA_SHADER_VERTEX] > 0)
       prog->LastClipDistanceArraySize = prog->Vert.ClipDistanceArraySize;
    else
@@ -2937,7 +2954,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
 
       if (ctx->Const.ShaderCompilerOptions[i].LowerClipDistance) {
-	 // XXX: broken for clipdistance output array in tess ctrl shader
          lower_clip_distance(prog->_LinkedShaders[i]);
       }
 
@@ -2955,7 +2971,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    validate_geometry_shader_emissions(ctx, prog);
 
    /* Mark all generic shader inputs and outputs as unpaired. */
-   // XXX: check that this works with new array input and outputs
    for (unsigned i = MESA_SHADER_VERTEX; i <= MESA_SHADER_FRAGMENT; i++) {
       if (prog->_LinkedShaders[i] != NULL) {
          link_invalidate_variable_locations(prog->_LinkedShaders[i]->ir);
