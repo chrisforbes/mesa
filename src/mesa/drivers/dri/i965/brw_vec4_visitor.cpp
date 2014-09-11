@@ -1937,6 +1937,11 @@ vec4_visitor::visit(ir_dereference_array *ir)
 
    constant_index = ir->array_index->constant_expression_value();
 
+   if (c->pull_inputs && ir->variable_referenced()->data.mode == ir_var_shader_in) {
+      /* emit URB read */
+      assert(!"emit urb read here");
+   }
+
    ir->array->accept(this);
    src = this->result;
 
