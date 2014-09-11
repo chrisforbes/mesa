@@ -685,6 +685,7 @@ private:
 
    void generate_hs_get_instance_id(struct brw_reg dst);
    void generate_hs_urb_write(vec4_instruction *inst);
+   void generate_hs_input_read(struct brw_reg dst, struct brw_reg src0, struct brw_reg src1);
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
 
