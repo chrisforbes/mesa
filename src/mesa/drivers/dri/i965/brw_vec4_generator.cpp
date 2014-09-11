@@ -892,6 +892,9 @@ vec4_generator::generate_hs_input_read(struct brw_reg dst,
 {
    /* XXX: emit some code! */
    /* result type from dst */
+
+   /* MUST EMIT SOMETHING.. mov 0 will do */
+   brw_MOV(p, dst, brw_imm_d(0));
 }
 
 void
