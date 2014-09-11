@@ -85,6 +85,10 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
    for (int slot = 0; slot < c->input_vue_map.num_per_patch_slots; slot++) {
       const int varying = c->input_vue_map.slot_to_varying[slot];
       attribute_map[varying] = 2 * payload_reg + num_patch_inputs;
+      printf("patch attrib slot %d: varying %d val %d\n",
+            varying,
+            varying,
+            attribute_map[varying]);
       num_patch_inputs++;
    }
 
@@ -101,6 +105,11 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
          attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying] =
             2 * payload_reg + num_patch_inputs + input_array_stride * vertex +
             slot;
+         printf("vert attrib slot %d: vertex %d varying %d val %d\n",
+               BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying,
+               vertex,
+               varying,
+               attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying]);
       }
    }
 
