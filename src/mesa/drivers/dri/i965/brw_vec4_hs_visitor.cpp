@@ -68,44 +68,6 @@ vec4_hs_visitor::make_reg_for_system_value(ir_variable *ir)
 
 
 void
-vec4_hs_visitor::lower_mrfs_to_hw_regs(void)
-{
-   foreach_in_list(vec4_instruction, inst, &instructions) {
-      /* We have to support ATTR as a destination for GL_FIXED fixup. */
-      if (inst->dst.file == MRF) {
-         const int reg = inst->dst.reg + inst->dst.reg_offset - 3;
-         struct brw_reg brw_reg = brw_message_reg(3 + reg / 2);
-         brw_reg = stride(suboffset(brw_reg, (reg % 2) * 4), 0, 4, 1);
-         brw_reg.type = inst->dst.type;
-         brw_reg.dw1.bits.writemask = inst->dst.writemask;
-
-         inst->dst.file = HW_REG;
-         inst->dst.fixed_hw_reg = brw_reg;
-      }
-
-      for (int i = 0; i < 3; i++) {
-         if (inst->src[i].file != MRF)
-            continue;
-
-         const int reg = inst->src[i].reg + inst->src[i].reg_offset - 3;
-         struct brw_reg brw_reg = brw_message_reg(3 + reg / 2);
-         brw_reg = stride(suboffset(brw_reg, (reg % 2) * 4), 0, 4, 1);
-         brw_reg.type = inst->src[i].type;
-         brw_reg.dw1.bits.swizzle = inst->src[i].swizzle;
-
-         if (inst->src[i].abs)
-            brw_reg = brw_abs(brw_reg);
-         if (inst->src[i].negate)
-            brw_reg = negate(brw_reg);
-
-         inst->src[i].file = HW_REG;
-         inst->src[i].fixed_hw_reg = brw_reg;
-      }
-   }
-}
-
-
-void
 vec4_hs_visitor::setup_payload()
 {
    int reg = 0;
@@ -470,8 +432,6 @@ brw_hs_emit(struct brw_context *brw,
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
       return NULL;
    }
-
-   v.lower_mrfs_to_hw_regs();
 
    return generate_assembly(brw, prog, &c->hp->program.Base, &c->prog_data.base,
                             mem_ctx, v.cfg, final_assembly_size);

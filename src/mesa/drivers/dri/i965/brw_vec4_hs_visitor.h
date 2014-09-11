@@ -80,7 +80,6 @@ public:
                    struct brw_shader *shader,
                    void *mem_ctx,
                    bool no_spills);
-   virtual void lower_mrfs_to_hw_regs(void);
 
 protected:
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir);
