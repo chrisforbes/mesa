@@ -1474,6 +1474,10 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
    foreach_in_list(vec4_instruction, inst, &instructions) {
       /* We have to support ATTR as a destination for GL_FIXED fixup. */
       if (inst->dst.file == ATTR) {
+
+         printf("Lookup dst addr reg=%d reg_offset=%d\n",
+               inst->dst.reg, inst->dst.reg_offset);
+
 	 int grf = attribute_map[inst->dst.reg + inst->dst.reg_offset];
 
          /* All attributes used in the shader need to have been assigned a
@@ -1492,6 +1496,10 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file != ATTR)
 	    continue;
+
+         printf("Lookup src[%d] attr reg=%d reg_offset=%d\n",
+               i, 
+               inst->src[i].reg, inst->src[i].reg_offset);
 
 	 int grf = attribute_map[inst->src[i].reg + inst->src[i].reg_offset];
 
