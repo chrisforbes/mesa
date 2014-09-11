@@ -733,6 +733,15 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
 }
 
 void
+vec4_generator::generate_hs_input_read(struct brw_reg dst,
+                                       struct brw_reg vertex,
+                                       struct brw_reg location)
+{
+   /* XXX: emit some code! */
+   /* result type from dst */
+}
+
+void
 vec4_generator::generate_ds_get_tess_coord(struct brw_reg dst)
 {
    /* We want to get R1.0, R1.1, R1.2, R1.4, R1.5, R1.6.
@@ -1404,6 +1413,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case HS_OPCODE_URB_WRITE:
          generate_hs_urb_write(inst);
+         break;
+
+      case HS_OPCODE_INPUT_READ:
+         generate_hs_input_read(dst, src[0], src[1]);
          break;
 
       case HS_OPCODE_GET_INSTANCE_ID:
