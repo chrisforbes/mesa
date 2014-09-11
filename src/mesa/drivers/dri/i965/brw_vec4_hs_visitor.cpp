@@ -140,18 +140,18 @@ vec4_hs_visitor::emit_prolog()
    /* XXX: needs to go in key */
    int num_vertices = 3;
 
-   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
-      this->current_annotation = "swizzle gl_PointSize input";
-      for (int vertex = 0; vertex < num_vertices; vertex++) {
-         dst_reg dst(ATTR,
-                     BRW_VARYING_SLOT_COUNT * vertex + VARYING_SLOT_PSIZ);
-         dst.type = BRW_REGISTER_TYPE_F;
-         src_reg src(dst);
-         dst.writemask = WRITEMASK_X;
-         src.swizzle = BRW_SWIZZLE_WWWW;
-         /*inst = */emit(MOV(dst, src));
-      }
-   }
+//   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
+  //    this->current_annotation = "swizzle gl_PointSize input";
+    //  for (int vertex = 0; vertex < num_vertices; vertex++) {
+      //   dst_reg dst(ATTR,
+        //             BRW_VARYING_SLOT_COUNT * vertex + VARYING_SLOT_PSIZ);
+//         dst.type = BRW_REGISTER_TYPE_F;
+  //       src_reg src(dst);
+   //      dst.writemask = WRITEMASK_X;
+     //    src.swizzle = BRW_SWIZZLE_WWWW;
+  //       /*inst = */emit(MOV(dst, src));
+    //  }
+//   }
 
    // XXX: modify dispatch in simd4x2 mode for last thread with uneven number of output vertices?
    // 4.7.1:
