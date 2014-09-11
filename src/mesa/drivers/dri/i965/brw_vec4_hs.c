@@ -45,6 +45,7 @@ do_hs_prog(struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    c.key = *key;
    c.hp = hp;
+   c.base.pull_inputs = 1;
 
    const int patch_vertices_out = hp->program.VerticesOut;
    c.prog_data.instances = patch_vertices_out;

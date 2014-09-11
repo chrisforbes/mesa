@@ -47,6 +47,7 @@ extern "C" {
 
 struct brw_vec4_compile {
    GLuint last_scratch; /**< measured in 32-byte (register size) units */
+   GLuint pull_inputs:1;   /**< 1 if we need to emit code to pull inputs */
 };
 
 
