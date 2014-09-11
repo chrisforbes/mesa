@@ -266,8 +266,9 @@ vec4_hs_visitor::emit_urb_slot(int mrf, int sub_reg, int varying)
        * determine which edges should be drawn as wireframe.
        */
       current_annotation = "edge flag";
-      emit(MOV(reg, src_reg(dst_reg(ATTR, VERT_ATTRIB_EDGEFLAG,
-                                    glsl_type::float_type, WRITEMASK_XYZW))));
+      // XXX: HACK
+      //emit(MOV(reg, src_reg(dst_reg(ATTR, VERT_ATTRIB_EDGEFLAG,
+        //                            glsl_type::float_type, WRITEMASK_XYZW))));
       break;
    case BRW_VARYING_SLOT_PAD:
       /* No need to write to this slot */
