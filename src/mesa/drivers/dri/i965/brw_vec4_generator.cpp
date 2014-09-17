@@ -135,9 +135,10 @@ vec4_generator::vec4_generator(struct brw_context *brw,
                                struct gl_program *prog,
                                struct brw_vec4_prog_data *prog_data,
                                void *mem_ctx,
-                               bool debug_flag)
+                               bool debug_flag,
+                               gl_shader_stage stage)
    : brw(brw), shader_prog(shader_prog), prog(prog), prog_data(prog_data),
-     mem_ctx(mem_ctx), debug_flag(debug_flag)
+     mem_ctx(mem_ctx), debug_flag(debug_flag), stage(stage)
 {
    p = rzalloc(mem_ctx, struct brw_compile);
    brw_init_compile(brw, p, mem_ctx);
@@ -1228,6 +1229,18 @@ vec4_generator::generate_untyped_surface_read(vec4_instruction *inst,
    brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
+static const char *
+get_stage_name(gl_shader_stage stage)
+{
+   switch (stage) {
+   case MESA_SHADER_VERTEX: return "vertex";
+   case MESA_SHADER_GEOMETRY: return "geometry";
+   case MESA_SHADER_TESS_CTRL: return "tessellation control";
+   case MESA_SHADER_TESS_EVAL: return "tessellation evaluation";
+   default: return "???";
+   }
+}
+
 void
 vec4_generator::generate_code(const cfg_t *cfg)
 {
@@ -1639,8 +1652,9 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
    if (unlikely(debug_flag)) {
       if (shader_prog) {
-         fprintf(stderr, "Native code for %s vertex shader %d:\n",
+         fprintf(stderr, "Native code for %s %s shader %d:\n",
                  shader_prog->Label ? shader_prog->Label : "unnamed",
+                 get_stage_name(stage),
                  shader_prog->Name);
       } else {
          fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);

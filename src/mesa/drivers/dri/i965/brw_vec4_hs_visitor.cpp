@@ -409,7 +409,7 @@ generate_assembly(struct brw_context *brw,
                   unsigned *final_assembly_size)
 {
    vec4_generator g(brw, shader_prog, prog, prog_data, mem_ctx,
-                    INTEL_DEBUG & DEBUG_TS);
+                    INTEL_DEBUG & DEBUG_TS, MESA_SHADER_TESS_CTRL);
    return g.generate_assembly(cfg, final_assembly_size);
 }
 
