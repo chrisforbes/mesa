@@ -212,7 +212,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
             if (v != NULL)
                v->data.max_array_access = implicit_size - 1;
          }
-         else {
+         else if (array->variable_referenced()->data.mode != ir_var_shader_out) {
             _mesa_glsl_error(&loc, state, "unsized array index must be constant");
          }
       } else if (array->type->fields.array->is_interface()
