@@ -110,7 +110,7 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
       for (unsigned vertex = 0; vertex < num_vertex_inputs; vertex++) {
          attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying] =
             2 * payload_reg + num_patch_inputs + input_array_stride * vertex +
-            slot;
+            slot - num_patch_inputs;
          printf("vert attrib slot %d: vertex %d varying %d val %d\n",
                BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying,
                vertex,
