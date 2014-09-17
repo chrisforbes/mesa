@@ -544,8 +544,15 @@ brw_instruction_name(enum opcode op)
    case GS_OPCODE_FF_SYNC_SET_PRIMITIVES:
       return "gs_ff_sync_set_primitives";
 
+   case HS_OPCODE_GET_INSTANCE_ID:
+      return "hs_get_instance_id";
    case HS_OPCODE_URB_WRITE:
       return "hs_urb_write";
+   case HS_OPCODE_INPUT_READ:
+      return "hs_input_read";
+
+   case DS_OPCODE_GET_TESS_COORD:
+      return "ds_get_tess_coord";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if
