@@ -313,7 +313,9 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
                                  const gl_shader *consumer)
 {
    interface_block_definitions definitions;
-   const bool extra_array_level = consumer->Stage == MESA_SHADER_TESS_CTRL ||
+   /* VS -> GS, VS -> TCS, VS -> TES, TES -> GS */
+   const bool extra_array_level = (producer->Stage == MESA_SHADER_VERTEX &&
+                                   consumer->Stage != MESA_SHADER_FRAGMENT) ||
                                   consumer->Stage == MESA_SHADER_GEOMETRY;
 
    /* Add input interfaces from the consumer to the symbol table. */
