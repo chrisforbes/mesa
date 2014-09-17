@@ -1909,7 +1909,7 @@ brw_vs_emit(struct brw_context *brw,
 
    const unsigned *assembly = NULL;
    vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
-                    mem_ctx, INTEL_DEBUG & DEBUG_VS);
+                    mem_ctx, INTEL_DEBUG & DEBUG_VS, MESA_SHADER_VERTEX);
    assembly = g.generate_assembly(v.cfg, final_assembly_size);
 
    if (unlikely(brw->perf_debug) && shader) {

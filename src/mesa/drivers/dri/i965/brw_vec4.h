@@ -628,7 +628,8 @@ public:
                   struct gl_program *prog,
                   struct brw_vec4_prog_data *prog_data,
                   void *mem_ctx,
-                  bool debug_flag);
+                  bool debug_flag,
+                  gl_shader_stage stage);
    ~vec4_generator();
 
    const unsigned *generate_assembly(const cfg_t *cfg, unsigned *asm_size);
@@ -729,6 +730,7 @@ private:
 
    void *mem_ctx;
    const bool debug_flag;
+   const gl_shader_stage stage;
 };
 
 } /* namespace brw */
