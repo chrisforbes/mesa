@@ -94,9 +94,15 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
 
    assert(!(num_patch_inputs % 2));
 
-   const unsigned num_vertex_inputs =
-      this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL]->TessCtrl.VerticesOut;
+   /*
+    * XXX: Get this from the key!
+    */
+   struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
+   const unsigned num_vertex_inputs = tcs
+      ? tcs->TessCtrl.VerticesOut
+      : MAX_DS_INPUT_VERTICES;
    assert(num_vertex_inputs <= MAX_DS_INPUT_VERTICES);
+
    const unsigned input_array_stride = c->prog_data.base.urb_read_length * 2 - num_patch_inputs;
 
    for (int slot = c->input_vue_map.num_per_patch_slots; slot < c->input_vue_map.num_slots; slot++) {
