@@ -2192,16 +2192,22 @@ update_array_sizes(struct gl_shader_program *prog)
  * tessellation control per-vertex outputs.
  */
 static void
-resize_tes_inputs(struct gl_shader_program *prog)
+resize_tes_inputs(struct gl_context *ctx,
+                  struct gl_shader_program *prog)
 {
    if (prog->_LinkedShaders[MESA_SHADER_TESS_EVAL] == NULL)
       return;
-   assert(prog->_LinkedShaders[MESA_SHADER_TESS_CTRL] != NULL);
 
    gl_shader *const tcs = prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
    gl_shader *const tes = prog->_LinkedShaders[MESA_SHADER_TESS_EVAL];
 
-   const int num_vertices = tcs->TessCtrl.VerticesOut;
+   /* If no control shader is present, then the TES inputs are statically
+    * sized to MaxPatchVertices; the actual size of the arrays won't be
+    * known until draw time.
+    */
+   const int num_vertices = tcs
+      ? tcs->TessCtrl.VerticesOut
+      : ctx->Const.MaxPatchVertices;
 
    tess_eval_array_resize_visitor input_resize_visitor(num_vertices, prog);
    foreach_in_list(ir_instruction, ir, tes->ir) {
@@ -2992,7 +2998,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (!prog->LinkStatus)
       goto done;
 
-   resize_tes_inputs(prog);
+   resize_tes_inputs(ctx, prog);
 
    /* Validate the inputs of each stage with the output of the preceding
     * stage.
