@@ -709,7 +709,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
    /* Store the data in the "actual type" backing storage for the uniform.
     */
    if (!uni->type->is_boolean()) {
-      memcpy(&uni->storage[components * offset], values,
+      memcpy(&uni->storage[size_mul * components * offset], values,
 	     sizeof(uni->storage[0]) * components * count * size_mul);
    } else {
       const union gl_constant_value *src =
