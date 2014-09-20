@@ -243,14 +243,13 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
     *
     *     "If stages is not the special value ALL_SHADER_BITS, and has a bit
     *     set that is not recognized, the error INVALID_VALUE is generated."
-    *
-    * NOT YET SUPPORTED:
-    * GL_TESS_CONTROL_SHADER_BIT
-    * GL_TESS_EVALUATION_SHADER_BIT
     */
    any_valid_stages = GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT;
    if (_mesa_has_geometry_shaders(ctx))
       any_valid_stages |= GL_GEOMETRY_SHADER_BIT;
+   if (ctx->Extensions.ARB_tessellation_shader)
+      any_valid_stages |= GL_TESS_CONTROL_SHADER_BIT |
+                          GL_TESS_EVALUATION_SHADER_BIT;
 
    if (stages != GL_ALL_SHADER_BITS && (stages & ~any_valid_stages) != 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUseProgramStages(Stages)");
@@ -326,6 +325,12 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
 
    if ((stages & GL_GEOMETRY_SHADER_BIT) != 0)
       _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER, shProg, pipe);
+
+   if ((stages & GL_TESS_CONTROL_SHADER_BIT) != 0)
+      _mesa_use_shader_program(ctx, GL_TESS_CONTROL_SHADER, shProg, pipe);
+
+   if ((stages & GL_TESS_EVALUATION_SHADER_BIT) != 0)
+      _mesa_use_shader_program(ctx, GL_TESS_EVALUATION_SHADER, shProg, pipe);
 }
 
 /**
@@ -723,6 +728,8 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
                             pipe->CurrentProgram[MESA_SHADER_VERTEX]->Name);
          goto err;
       }
+
+      /* XXX tess */
    }
 
    /* Section 2.11.11 (Shader Execution), subheading "Validation," of the
@@ -742,6 +749,8 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
        && pipe->CurrentProgram[MESA_SHADER_GEOMETRY]) {
       pipe->InfoLog = ralloc_strdup(pipe, "Program lacks a vertex shader");
       goto err;
+
+      /* XXX: tess */
    }
 
    /* Section 2.11.11 (Shader Execution), subheading "Validation," of the
