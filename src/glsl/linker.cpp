@@ -2791,13 +2791,15 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
    if (num_shaders[MESA_SHADER_TESS_EVAL] > 0 &&
-       num_shaders[MESA_SHADER_VERTEX] == 0) {
+       num_shaders[MESA_SHADER_VERTEX] == 0 &&
+       !prog->SeparateShader) {
       linker_error(prog, "Tessellation evaluation shader must be linked with "
 		   "vertex shader\n");
       goto done;
    }
    if (num_shaders[MESA_SHADER_TESS_CTRL] > 0 &&
-       num_shaders[MESA_SHADER_VERTEX] == 0) {
+       num_shaders[MESA_SHADER_VERTEX] == 0 &&
+       !prog->SeparateShader) {
       linker_error(prog, "Tessellation control shader must be linked with "
 		   "vertex shader\n");
       goto done;
