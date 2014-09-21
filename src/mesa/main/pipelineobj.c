@@ -767,11 +767,11 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
     *           executable vertex shader."
     */
    if (!pipe->CurrentProgram[MESA_SHADER_VERTEX]
-       && pipe->CurrentProgram[MESA_SHADER_GEOMETRY]) {
+       && (pipe->CurrentProgram[MESA_SHADER_GEOMETRY] ||
+           pipe->CurrentProgram[MESA_SHADER_TESS_CTRL] ||
+           pipe->CurrentProgram[MESA_SHADER_TESS_EVAL])) {
       pipe->InfoLog = ralloc_strdup(pipe, "Program lacks a vertex shader");
       goto err;
-
-      /* XXX: tess */
    }
 
    /* Section 2.11.11 (Shader Execution), subheading "Validation," of the
