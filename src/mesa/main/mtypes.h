@@ -3502,6 +3502,9 @@ struct gl_program_constants
 
    /* GL_ARB_shader_image_load_store */
    GLuint MaxImageUniforms;
+
+   /* GL_ARB_tessellation_shader */
+   GLuint MaxPatchVertices;
 };
 
 
@@ -3806,6 +3809,12 @@ struct gl_constants
    GLenum ContextReleaseBehavior;
 
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
+
+   /** GL_ARB_tessellation_shader */
+   GLuint MaxPatchVertices;
+   GLuint MaxTessGenLevel;
+   GLuint MaxTessPatchComponents;
+   GLuint MaxTessControlTotalOutputComponents;
 };
 
 

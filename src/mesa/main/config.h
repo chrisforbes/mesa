@@ -300,6 +300,14 @@
 #define MAX_COMPUTE_IMAGE_UNIFORMS          8
 /*@}*/
 
+/** For GL_ARB_tessellation_shader */
+/*@{*/
+#define MAX_TESS_GEN_LEVEL 64
+#define MAX_PATCH_VERTICES 32
+#define MAX_TESS_PATCH_COMPONENTS 120
+#define MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS 4096
+/*@}*/
+
 /*
  * Color channel component order
  * 
