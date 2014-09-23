@@ -857,6 +857,13 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
          intel_bufferobj_buffer(brw, intel_bo,
                                 binding->Offset,
                                 binding->BufferObject->Size - binding->Offset);
+      /* It's possible that intel_bufferobj_buffer ended up setting
+       * BRW_NEW_UNIFORM_BUFFER here. Unflag it again, since this atom
+       * is run in response to that flag, and this upsets the state atom
+       * validator.
+       */
+      brw->state.dirty.brw &= ~BRW_NEW_UNIFORM_BUFFER;
+
 
       /* Because behavior for referencing outside of the binding's size in the
        * glBindBufferRange case is undefined, we can just bind the whole buffer
