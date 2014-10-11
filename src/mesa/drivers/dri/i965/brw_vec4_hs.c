@@ -204,6 +204,7 @@ brw_upload_hs_prog(struct brw_context *brw)
          do_hs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_TESS_CTRL], hp,
                     &key);
       assert(success);
+      (void)success;
    }
    brw->hs.base.prog_data = &brw->hs.prog_data->base.base;
 

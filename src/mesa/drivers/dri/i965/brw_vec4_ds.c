@@ -224,6 +224,7 @@ brw_upload_ds_prog(struct brw_context *brw)
          do_ds_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_TESS_EVAL], dp,
                     &key);
       assert(success);
+      (void)success;
    }
    brw->ds.base.prog_data = &brw->ds.prog_data->base.base;
 
