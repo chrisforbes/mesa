@@ -107,10 +107,6 @@ do_ds_prog(struct brw_context *brw,
    struct gl_shader *ds = prog->_LinkedShaders[MESA_SHADER_TESS_EVAL];
    int param_count = ds->num_uniform_components * 4;
 
-   /* We also upload clip plane data as uniforms */
-   // XXX: for ds, too?
-   //param_count += MAX_CLIP_PLANES * 4;
-
    c.prog_data.base.base.param =
       rzalloc_array(NULL, const gl_constant_value *, param_count);
    c.prog_data.base.base.pull_param =
@@ -122,16 +118,6 @@ do_ds_prog(struct brw_context *brw,
    c.prog_data.base.base.nr_params = ALIGN(param_count, 4) / 4 + ds->num_samplers;
 
    GLbitfield64 outputs_written = dp->program.Base.OutputsWritten;
-
-   /* In order for legacy clipping to work, we need to populate the clip
-    * distance varying slots whenever clipping is enabled, even if the vertex
-    * shader doesn't write to gl_ClipDistance.
-    */
-   // XXX: what is 'legacy clipping'?
-   //if (c.key.base.userclip_active) {
-      //outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST0);
-      //outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST1);
-   //}
 
    brw_compute_vue_map(brw, &c.prog_data.base.vue_map, outputs_written);
 
