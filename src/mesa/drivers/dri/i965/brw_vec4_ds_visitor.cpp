@@ -278,7 +278,7 @@ brw_ds_emit(struct brw_context *brw,
       (brw_shader *) prog->_LinkedShaders[MESA_SHADER_TESS_EVAL];
 
    if (unlikely(INTEL_DEBUG & DEBUG_TS))
-      brw_dump_ir(brw, "tessellation evaluation", prog, &shader->base, NULL);
+      brw_dump_ir("tessellation evaluation", prog, &shader->base, NULL);
 
    vec4_ds_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
    if (!v.run()) {
