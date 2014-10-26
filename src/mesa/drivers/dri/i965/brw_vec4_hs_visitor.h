@@ -24,7 +24,7 @@
 /**
  * \file brw_vec4_hs_visitor.h
  *
- * Geometry-shader-specific code derived from the vec4_visitor class.
+ * Tessellation-control-shader-specific code derived from the vec4_visitor class.
  */
 
 #ifndef BRW_VEC4_HS_VISITOR_H
@@ -38,6 +38,7 @@ struct brw_hs_prog_key
    struct brw_vec4_prog_key base;
 
    GLbitfield64 input_varyings;
+   GLuint input_vertices;
 };
 
 

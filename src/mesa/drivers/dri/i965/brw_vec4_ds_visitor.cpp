@@ -96,6 +96,7 @@ vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
 
    /*
     * XXX: Get this from the key!
+    * XXX: This isnt even vaguely correct for ARB_sso with tess stages split between programs
     */
    struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
    const unsigned num_vertex_inputs = tcs

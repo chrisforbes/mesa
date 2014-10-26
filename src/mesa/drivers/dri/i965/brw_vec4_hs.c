@@ -197,6 +197,9 @@ brw_upload_hs_prog(struct brw_context *brw)
    /* BRW_NEW_VUE_MAP_VS */
    key.input_varyings = brw->vue_map_vs.slots_valid;
 
+   /* _NEW_PATCH ? */
+   key.input_vertices = ctx->TessCtrlProgram.patch_vertices;
+
    if (!brw_search_cache(&brw->cache, BRW_HS_PROG,
                          &key, sizeof(key),
                          &stage_state->prog_offset, &brw->hs.prog_data)) {
@@ -249,6 +252,7 @@ brw_hs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
     * matches what the tessellation control shader requires.
     */
    key.input_varyings = hp->Base.InputsRead;
+   key.input_vertices = ctx->TessCtrlProgram.patch_vertices;
 
    success = do_hs_prog(brw, prog, bhp, &key);
 
