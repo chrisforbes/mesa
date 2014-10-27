@@ -116,7 +116,7 @@ vec4_hs_visitor::emit_prolog()
       emit(CMP(dst_null_d(), swizzle(src_reg(instance_id), BRW_SWIZZLE_XXXX),
                src_reg(num_instances),
                BRW_CONDITIONAL_NZ));
-      emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
+      emit(IF(BRW_PREDICATE_NORMAL));
    }
 
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
