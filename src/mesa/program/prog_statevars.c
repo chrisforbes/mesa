@@ -717,7 +717,7 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 
       case STATE_DEFAULT_TESS_LEVEL_OUTER:
       case STATE_DEFAULT_TESS_LEVEL_INNER:
-         return _NEW_PROGRAM;
+         return _NEW_PATCH;
 
       default:
          /* unknown state indexes are silently ignored and
