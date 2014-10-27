@@ -4060,7 +4060,7 @@ struct gl_matrix_stack
 #define _NEW_TEXTURE           (1 << 16)  /**< gl_context::Texture */
 #define _NEW_TRANSFORM         (1 << 17)  /**< gl_context::Transform */
 #define _NEW_VIEWPORT          (1 << 18)  /**< gl_context::Viewport */
-/* gap, re-use for core Mesa state only; use ctx->DriverFlags otherwise */
+#define _NEW_PATCH             (1 << 19)  /**< gl_context::TessCtrl */
 #define _NEW_ARRAY             (1 << 20)  /**< gl_context::Array */
 #define _NEW_RENDERMODE        (1 << 21)  /**< gl_context::RenderMode, etc */
 #define _NEW_BUFFERS           (1 << 22)  /**< gl_context::Visual, DrawBuffer, */
