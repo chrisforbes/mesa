@@ -36,7 +36,6 @@ namespace brw {
 vec4_hs_visitor::vec4_hs_visitor(struct brw_context *brw,
                                  struct brw_hs_compile *c,
                                  struct gl_shader_program *prog,
-                                 struct brw_shader *shader,
                                  void *mem_ctx,
                                  bool no_spills)
    : vec4_visitor(brw, &c->base, &c->hp->program.Base, &c->key.base,
@@ -409,13 +408,6 @@ vec4_hs_visitor::compute_array_stride(ir_dereference_array *ir)
       return vec4_visitor::compute_array_stride(ir);
 }
 
-#if 0
-void
-vec4_hs_visitor::visit(ir_barrier *)
-{
-}
-#endif
-
 static const unsigned *
 generate_assembly(struct brw_context *brw,
                   struct gl_shader_program *shader_prog,
@@ -443,7 +435,7 @@ brw_hs_emit(struct brw_context *brw,
    if (unlikely(INTEL_DEBUG & DEBUG_TS))
       brw_dump_ir("tessellation control", prog, &shader->base, NULL);
 
-   vec4_hs_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
+   vec4_hs_visitor v(brw, c, prog, mem_ctx, false /* no_spills */);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);

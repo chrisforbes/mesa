@@ -78,7 +78,6 @@ public:
    vec4_hs_visitor(struct brw_context *brw,
                    struct brw_hs_compile *c,
                    struct gl_shader_program *prog,
-                   struct brw_shader *shader,
                    void *mem_ctx,
                    bool no_spills);
 
