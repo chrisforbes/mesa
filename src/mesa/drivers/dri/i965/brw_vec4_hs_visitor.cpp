@@ -108,6 +108,15 @@ vec4_hs_visitor::emit_prolog()
    int num_vertices = ((brw_hs_prog_key *)key)->input_vertices;
    int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
 
+   if (num_instances % 2) {
+      printf("Emit fixup for execution mask\n");
+
+      dst_reg instance_id = dst_reg(this, glsl_type::int_type);
+      emit(HS_OPCODE_GET_INSTANCE_ID, instance_id);
+      emit(CMP(dst_null_d(), src_reg(instance_id), src_reg(num_instances),
+               BRW_CONDITIONAL_EQ));
+   }
+
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
   //    this->current_annotation = "swizzle gl_PointSize input";
     //  for (int vertex = 0; vertex < num_vertices; vertex++) {
