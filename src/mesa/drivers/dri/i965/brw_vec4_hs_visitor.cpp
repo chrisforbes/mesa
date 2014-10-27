@@ -360,7 +360,7 @@ vec4_hs_visitor::emit_thread_end()
     * and only release the input vertices in that case. */
    /* XXX: this is a dumb way to get the shader */
    struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
-   assert(tcs->TessCtrl.VerticesOut == 1);
+//   assert(tcs->TessCtrl.VerticesOut == 1);
 
    int input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
