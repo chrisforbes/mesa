@@ -106,6 +106,7 @@ vec4_hs_visitor::emit_prolog()
    /* XXX: needs to go in key */
 
    int num_vertices = ((brw_hs_prog_key *)key)->input_vertices;
+   int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
 
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
   //    this->current_annotation = "swizzle gl_PointSize input";
