@@ -111,11 +111,11 @@ vec4_hs_visitor::emit_prolog()
    if (num_instances % 2) {
       printf("Emit fixup for execution mask\n");
 
-      dst_reg instance_id = dst_reg(this, glsl_type::int_type);
+      dst_reg instance_id = dst_reg(this, glsl_type::ivec4_type);
       emit(HS_OPCODE_GET_INSTANCE_ID, instance_id);
       emit(CMP(dst_null_d(), swizzle(src_reg(instance_id), BRW_SWIZZLE_XXXX),
                src_reg(num_instances),
-               BRW_CONDITIONAL_Z));
+               BRW_CONDITIONAL_NZ));
       emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
    }
 
