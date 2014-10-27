@@ -2101,6 +2101,7 @@ _mesa_PatchParameteri(GLenum pname, GLint value)
    }
 
    ctx->TessCtrlProgram.patch_vertices = value;
+   ctx->NewState |= _NEW_PATCH;
 }
 
 
@@ -2113,10 +2114,12 @@ _mesa_PatchParameterfv(GLenum pname, const GLfloat *values)
    case GL_PATCH_DEFAULT_OUTER_LEVEL:
       memcpy(ctx->TessCtrlProgram.patch_default_outer_level, values,
              4 * sizeof(GLfloat));
+      ctx->NewState |= _NEW_PATCH;
       return;
    case GL_PATCH_DEFAULT_INNER_LEVEL:
       memcpy(ctx->TessCtrlProgram.patch_default_inner_level, values,
              2 * sizeof(GLfloat));
+      ctx->NewState |= _NEW_PATCH;
       return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glPatchParameterfv");
