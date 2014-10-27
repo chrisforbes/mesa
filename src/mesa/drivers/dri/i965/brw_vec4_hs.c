@@ -47,6 +47,8 @@ do_hs_prog(struct brw_context *brw,
    c.hp = hp;
    c.base.pull_inputs = 1;
 
+   printf("compile hs: input_vertices=%d\n", c.key.input_vertices);
+
    const int patch_vertices_out = hp->program.VerticesOut;
    c.prog_data.instances = patch_vertices_out;
    c.prog_data.uses_barrier_function = false; // XXX: gp->program.UsesBarrier;
