@@ -115,7 +115,7 @@ vec4_hs_visitor::emit_prolog()
       emit(HS_OPCODE_GET_INSTANCE_ID, instance_id);
       emit(CMP(dst_null_d(), src_reg(instance_id), src_reg(num_instances),
                BRW_CONDITIONAL_Z));
-      emit(IF(BRW_PREDICATE_ALIGN16_ALL4H));
+      emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
    }
 
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
