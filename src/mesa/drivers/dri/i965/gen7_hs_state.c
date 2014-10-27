@@ -125,6 +125,9 @@ upload_hs_state(struct brw_context *brw)
        * hardware can theoretically push vertex data to us, but we can't
        * reach API patch size limits that way, as we would run out of regs.
        */
+
+      printf("hs dispatch_grf_start_reg=%d\n", prog_data->base.dispatch_grf_start_reg);
+
       uint32_t dw5 =
          GEN7_HS_INCLUDE_VERTEX_HANDLES |
          (prog_data->base.dispatch_grf_start_reg <<

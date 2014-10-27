@@ -77,11 +77,16 @@ vec4_hs_visitor::setup_payload()
     */
    reg++;
 
-   /* r1.0 - r4.7 contain the input control point URB handles,
+   /* r1.0 - r4.7 may contain the input control point URB handles,
     * which we use to pull vertex data.
     */
 
+   //int num_vertices = ((brw_hs_prog_key *)key)->input_vertices;
+   //int vertex_handle_regs = (num_vertices + 7) / 8;
+   //reg += vertex_handle_regs;
    reg += 4;
+
+   printf("Push constants start at r%d.0\n", reg);
 
    /* Push constants may start at r5.0 */
 
@@ -99,7 +104,8 @@ vec4_hs_visitor::emit_prolog()
     * component of VARYING_SLOT_PSIZ.
     */
    /* XXX: needs to go in key */
-   int num_vertices = 3;
+
+   int num_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
   //    this->current_annotation = "swizzle gl_PointSize input";
