@@ -114,7 +114,8 @@ vec4_hs_visitor::emit_prolog()
       dst_reg instance_id = dst_reg(this, glsl_type::int_type);
       emit(HS_OPCODE_GET_INSTANCE_ID, instance_id);
       emit(CMP(dst_null_d(), src_reg(instance_id), src_reg(num_instances),
-               BRW_CONDITIONAL_EQ));
+               BRW_CONDITIONAL_Z));
+      emit(IF(BRW_PREDICATE_ALIGN16_ALL4H));
    }
 
 //   if (c->hp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
@@ -367,6 +368,13 @@ vec4_hs_visitor::emit_thread_end()
    }
 
    emit_patch(true /* thread end */);
+
+   int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
+
+   if (num_instances % 2) {
+      printf("Emit endif for fixup for execution mask\n");
+      emit(BRW_OPCODE_ENDIF);
+   }
 }
 
 
