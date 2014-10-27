@@ -341,16 +341,14 @@ vec4_hs_visitor::emit_thread_end()
    /* XXX: Use URB semaphore to determine whether this is the last invocation,
     * and only release the input vertices in that case. */
    /* XXX: this is a dumb way to get the shader */
-//   struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
-  // assert(tcs->TessCtrl.VerticesOut == 1);
+   struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
+   assert(tcs->TessCtrl.VerticesOut == 1);
 
-   /* XXX: needs to be in key */
-//   int num_vertices = 1;
-  // for (int i = 0; i < num_vertices; i++) {
-//      vec4_instruction *inst = emit(HS_OPCODE_URB_READ, );
-//      inst->urb_write_flags = BRW_URB_WRITE_COMPLETE;
-  // }
+   int input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
+   for (int i = 0; i < input_vertices; i += 2) {
+      printf("Release verts %d,%d\n", i, i+1);
+   }
 
    emit_patch(true /* thread end */);
 }
