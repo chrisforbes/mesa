@@ -897,6 +897,25 @@ vec4_generator::generate_hs_input_read(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_hs_input_release(struct brw_reg dst,
+                                          struct brw_reg vertex)
+{
+   /* releases the pair of input vertices starting at `vertex` */
+
+   /* vertex urb handles start at r1.0 and continue up to r4.7 */
+   assert(vertex.file == BRW_IMMEDIATE_VALUE);
+   assert(vertex.type == BRW_REGISTER_TYPE_UD);
+
+   uint32_t vertex_index = vertex.dw1.ud;
+
+   struct brw_reg vertex_handle(brw_vec1_grf(
+            1 + (vertex_index >> 3), vertex_index & 7));
+
+   /* XXX: just demonstrate that we're hitting the right place. */
+   brw_MOV(p, dst, vertex_handle);
+}
+
+void
 vec4_generator::generate_ds_get_tess_coord(struct brw_reg dst)
 {
    /* We want to get R1.0, R1.1, R1.2, R1.4, R1.5, R1.6.
@@ -1608,6 +1627,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case HS_OPCODE_INPUT_READ:
          generate_hs_input_read(dst, src[0], src[1]);
+         break;
+
+      case HS_OPCODE_INPUT_RELEASE:
+         generate_hs_input_release(dst, src[0]);
          break;
 
       case HS_OPCODE_GET_INSTANCE_ID:
