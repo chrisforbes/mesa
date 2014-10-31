@@ -1309,6 +1309,7 @@ struct brw_context
       GLuint nr_cs_entries;
 
       GLuint vs_start;
+      GLuint hs_semaphores_start;
       GLuint hs_start;
       GLuint ds_start;
       GLuint gs_start;

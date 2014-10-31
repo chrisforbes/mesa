@@ -261,7 +261,11 @@ gen7_upload_urb(struct brw_context *brw)
    unsigned hs_wants = 0;
    unsigned ds_chunks = 0;
    unsigned ds_wants = 0;
+   unsigned hs_semaphore_chunks = 0;
+
+
    if (ts_present) {
+      hs_semaphore_chunks = 1;
       // XXX: what's the minimal hs/ds entry size?
       // would needed to be changed below, too
 
@@ -385,9 +389,10 @@ gen7_upload_urb(struct brw_context *brw)
     * - GS
     */
    brw->urb.vs_start = push_constant_chunks;
-   brw->urb.hs_start = push_constant_chunks + vs_chunks;
-   brw->urb.ds_start = push_constant_chunks + vs_chunks + hs_chunks;
-   brw->urb.gs_start = push_constant_chunks + vs_chunks + hs_chunks + ds_chunks;
+   brw->urb.hs_semaphores_start = push_constant_chunks + vs_chunks;
+   brw->urb.hs_start = push_constant_chunks + vs_chunks + hs_semaphore_chunks;
+   brw->urb.ds_start = push_constant_chunks + vs_chunks + hs_semaphore_chunks + hs_chunks;
+   brw->urb.gs_start = push_constant_chunks + vs_chunks + hs_semaphore_chunks + hs_chunks + ds_chunks;
 
    if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_vs_workaround_flush(brw);
