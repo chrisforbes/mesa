@@ -199,7 +199,7 @@ brw_upload_hs_prog(struct brw_context *brw)
    /* BRW_NEW_VUE_MAP_VS */
    key.input_varyings = brw->vue_map_vs.slots_valid;
 
-   /* _NEW_PATCH ? */
+   /* _NEW_PATCH */
    key.input_vertices = ctx->TessCtrlProgram.patch_vertices;
 
    if (!brw_search_cache(&brw->cache, BRW_HS_PROG,
@@ -223,7 +223,7 @@ brw_upload_hs_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_hs_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT | _NEW_BUFFERS | _NEW_TEXTURE),
+      .mesa  = (_NEW_LIGHT | _NEW_BUFFERS | _NEW_TEXTURE | _NEW_PATCH),
       .brw   = BRW_NEW_TESS_CTRL_PROGRAM | BRW_NEW_VUE_MAP_VS,
    },
    .emit = brw_upload_hs_prog
