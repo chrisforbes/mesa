@@ -366,6 +366,8 @@ vec4_hs_visitor::emit_thread_end()
 
    for (int i = 0; i < input_vertices; i += 2) {
       printf("Release verts %d,%d\n", i, i+1);
+      dst_reg r = dst_reg(this, glsl_type::int_type);
+      emit(HS_OPCODE_INPUT_RELEASE, r, src_reg((unsigned)i));
    }
 
    emit_patch(true /* thread end */);
