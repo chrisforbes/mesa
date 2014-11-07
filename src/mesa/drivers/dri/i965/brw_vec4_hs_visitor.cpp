@@ -354,6 +354,13 @@ void
 vec4_hs_visitor::emit_thread_end()
 {
 
+   int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
+
+   if (num_instances % 2) {
+      printf("Emit endif for fixup for execution mask\n");
+      emit(BRW_OPCODE_ENDIF);
+   }
+
    /* Release input vertices */
 
    /* XXX: Use URB semaphore to determine whether this is the last invocation,
@@ -372,13 +379,6 @@ vec4_hs_visitor::emit_thread_end()
    }
 
    emit_patch(true /* thread end */);
-
-   int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
-
-   if (num_instances % 2) {
-      printf("Emit endif for fixup for execution mask\n");
-      emit(BRW_OPCODE_ENDIF);
-   }
 }
 
 
