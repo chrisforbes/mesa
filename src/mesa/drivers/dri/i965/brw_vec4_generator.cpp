@@ -813,20 +813,23 @@ vec4_generator::generate_hs_get_instance_id(struct brw_reg dst)
    brw_push_insn_state(p);
    brw_set_default_access_mode(p, BRW_ALIGN_1);
 
+   /* XXX: where did Broadwell put this field? */
+   assert(brw->gen == 7);
+
    if (brw->is_haswell) {
       brw_SHR(p, get_element_ud(dst, 0),
               get_element_ud(r0, 2),
               brw_imm_ud(HSW_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT - 1));
       brw_AND(p, get_element(dst, 0),
               get_element_ud(dst, 0),
-              brw_imm_ud(HSW_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH << 1));
+              brw_imm_ud(((1<<HSW_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH)-1) << 1));
    } else {
       brw_SHR(p, get_element_ud(dst, 0),
               get_element_ud(r0, 2),
               brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT - 1));
       brw_AND(p, get_element(dst, 0),
               get_element_ud(dst, 0),
-              brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH << 1));
+              brw_imm_ud(((1<<GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH)-1) << 1));
    }
 
    brw_ADD(p, get_element_ud(dst, 4),
