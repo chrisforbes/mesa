@@ -362,13 +362,13 @@ vec4_hs_visitor::emit_thread_end()
    struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
 //   assert(tcs->TessCtrl.VerticesOut == 1);
 
-   int input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
+   unsigned input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
    this->current_annotation = "release input vertices";
-   for (int i = 0; i < input_vertices; i += 2) {
+   for (unsigned i = 0; i < input_vertices; i += 2) {
       printf("Release verts %d,%d\n", i, i+1);
-      dst_reg r = dst_reg(this, glsl_type::int_type);
-      emit(HS_OPCODE_INPUT_RELEASE, r, src_reg((unsigned)i));
+      dst_reg r = dst_reg(this, glsl_type::uint_type);
+      emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i));
    }
 
    emit_patch(true /* thread end */);

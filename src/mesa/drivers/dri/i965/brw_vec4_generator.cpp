@@ -897,22 +897,51 @@ vec4_generator::generate_hs_input_read(struct brw_reg dst,
 }
 
 void
-vec4_generator::generate_hs_input_release(struct brw_reg dst,
+vec4_generator::generate_hs_input_release(vec4_instruction *inst,
+                                          struct brw_reg dst,
                                           struct brw_reg vertex)
 {
-   /* releases the pair of input vertices starting at `vertex` */
+   /* releases the pair of input vertices starting at `vertex`. clobbers
+    * `dst`. */
+   struct brw_context *brw = p->brw;
 
    /* vertex urb handles start at r1.0 and continue up to r4.7 */
    assert(vertex.file == BRW_IMMEDIATE_VALUE);
    assert(vertex.type == BRW_REGISTER_TYPE_UD);
 
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+   assert(dst.type == BRW_REGISTER_TYPE_UD);
+
    uint32_t vertex_index = vertex.dw1.ud;
+   struct brw_reg index_reg = brw_vec2_grf(
+         1 + (vertex_index >> 3), vertex_index & 7);
 
-   struct brw_reg vertex_handle(brw_vec1_grf(
-            1 + (vertex_index >> 3), vertex_index & 7));
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
 
-   /* XXX: just demonstrate that we're hitting the right place. */
-   brw_MOV(p, dst, vertex_handle);
+   /* set up header */
+   brw_MOV(p, dst, brw_imm_ud(0));
+   brw_MOV(p, vec2(dst), retype(index_reg, BRW_REGISTER_TYPE_UD));
+
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, brw_null_reg());
+   brw_set_src0(p, send, dst);
+
+   brw_set_message_descriptor(p, send, BRW_SFID_URB,
+                              1 /* mlen */, 0 /* rlen */,
+                              true /* header */, false /* eot */);
+   brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_READ_HWORD);
+
+   /* we want to release two vertices at a time */
+   brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
+   brw_inst_set_urb_complete(brw, send, 1);
+
+   /* dont bother setting global or per-slot offsets. we're not actually
+    * reading anything from the URB, only releasing handles.
+    */
+
+   brw_pop_insn_state(p);
 }
 
 void
@@ -1630,7 +1659,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
          break;
 
       case HS_OPCODE_INPUT_RELEASE:
-         generate_hs_input_release(dst, src[0]);
+         generate_hs_input_release(inst, dst, src[0]);
          break;
 
       case HS_OPCODE_GET_INSTANCE_ID:
