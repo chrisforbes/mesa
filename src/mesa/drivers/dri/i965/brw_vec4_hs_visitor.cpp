@@ -108,7 +108,7 @@ vec4_hs_visitor::emit_prolog()
    int num_vertices = ((brw_hs_prog_key *)key)->input_vertices;
    int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
 
-   if (num_instances % 2) {
+   if (num_instances % 2 && 0) {
       printf("Emit fixup for execution mask\n");
 
       dst_reg instance_id = dst_reg(this, glsl_type::ivec4_type);
@@ -377,7 +377,7 @@ vec4_hs_visitor::emit_thread_end()
 
    int num_instances = ((brw_hs_prog_data *)prog_data)->instances;
 
-   if (num_instances % 2) {
+   if (num_instances % 2 && 0) {
       printf("Emit endif for fixup for execution mask\n");
       emit(BRW_OPCODE_ENDIF);
    }
