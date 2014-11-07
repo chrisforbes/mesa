@@ -113,8 +113,10 @@ vec4_hs_visitor::emit_prolog()
 
       dst_reg instance_id = dst_reg(this, glsl_type::ivec4_type);
       emit(HS_OPCODE_GET_INSTANCE_ID, instance_id);
+      dst_reg last_instance = dst_reg(this, glsl_type::ivec4_type);
+      emit(ADD(last_instance, src_reg(0u), src_reg(num_instances)));
       emit(CMP(dst_null_d(), swizzle(src_reg(instance_id), BRW_SWIZZLE_XXXX),
-               src_reg(num_instances),
+               src_reg(last_instance),
                BRW_CONDITIONAL_NZ));
       emit(IF(BRW_PREDICATE_NORMAL));
    }
