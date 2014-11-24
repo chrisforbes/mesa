@@ -93,7 +93,8 @@ const struct brw_tracked_state gen7_sbe_state = {
 		_NEW_PROGRAM),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_VUE_MAP_GEOM_OUT),
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_PRIMITIVE),
       .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_sbe_state,
