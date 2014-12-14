@@ -475,6 +475,12 @@ dump_prog_cache(struct brw_context *brw)
 	 case BRW_CACHE_VS_PROG:
 	    name = "VS kernel";
 	    break;
+         case BRW_CACHE_HS_PROG:
+            name = "HS kernel";
+            break;
+         case BRW_CACHE_DS_PROG:
+            name = "DS kernel";
+            break;
 	 case BRW_CACHE_FF_GS_PROG:
 	    name = "Fixed-function GS kernel";
 	    break;

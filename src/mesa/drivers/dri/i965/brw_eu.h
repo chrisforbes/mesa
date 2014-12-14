@@ -194,6 +194,15 @@ ROUND(RNDE)
 
 /* Helpers for SEND instruction:
  */
+
+void brw_set_message_descriptor(struct brw_compile *p,
+                                brw_inst *inst,
+                                enum brw_message_target sfid,
+                                unsigned msg_length,
+                                unsigned response_length,
+                                bool header_present,
+                                bool end_of_thread);
+
 void brw_set_sampler_message(struct brw_compile *p,
                              brw_inst *insn,
                              unsigned binding_table_index,

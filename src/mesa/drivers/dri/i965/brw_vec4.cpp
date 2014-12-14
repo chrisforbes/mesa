@@ -231,6 +231,7 @@ vec4_instruction::is_send_from_grf()
    switch (opcode) {
    case SHADER_OPCODE_SHADER_TIME_ADD:
    case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+   case HS_OPCODE_INPUT_RELEASE:
       return true;
    default:
       return false;
@@ -292,6 +293,8 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
       return 0;
    case GS_OPCODE_FF_SYNC:
       return 1;
+   case HS_OPCODE_URB_WRITE:
+      return 0;
    case SHADER_OPCODE_SHADER_TIME_ADD:
       return 0;
    case SHADER_OPCODE_TEX:
@@ -1669,7 +1672,14 @@ vec4_visitor::run()
    move_push_constants_to_pull_constants();
    split_virtual_grfs();
 
-   const char *stage_name = stage == MESA_SHADER_GEOMETRY ? "gs" : "vs";
+   const char *stage_name;
+   switch (stage) {
+      case MESA_SHADER_VERTEX: stage_name = "vs"; break;
+      case MESA_SHADER_GEOMETRY: stage_name = "gs"; break;
+      case MESA_SHADER_TESS_CTRL: stage_name = "hs"; break;
+      case MESA_SHADER_TESS_EVAL: stage_name = "ds"; break;
+      default: unreachable("not reached");
+   }
 
 #define OPT(pass, args...) do {                                        \
       pass_num++;                                                      \
@@ -1828,7 +1838,7 @@ brw_vs_emit(struct brw_context *brw,
       }
 
       vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
-                       mem_ctx, INTEL_DEBUG & DEBUG_VS);
+                       mem_ctx, INTEL_DEBUG & DEBUG_VS, MESA_SHADER_VERTEX);
       assembly = g.generate_assembly(v.cfg, final_assembly_size);
    }
 

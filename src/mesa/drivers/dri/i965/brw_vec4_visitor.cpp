@@ -1048,7 +1048,14 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->data.mode) {
    case ir_var_shader_in:
       assert(ir->data.location != -1);
-      reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
+      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
+         assert(!"reading per-vertex inputs in DS unsupported");
+
+      /* hack */
+      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
+         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location + BRW_VARYING_SLOT_COUNT);
+      else
+         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
       break;
 
    case ir_var_shader_out:
@@ -1959,10 +1966,34 @@ vec4_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *constant_index;
    src_reg src;
-   int array_stride = compute_array_stride(ir);
 
    constant_index = ir->array_index->constant_expression_value();
 
+   if (c->pull_inputs && ir->variable_referenced()->data.mode == ir_var_shader_in) {
+      assert(!"pull inputs not supported");
+
+      /* emit URB read */
+      /* this is a lot like a UBO read... */
+      src_reg index_reg;
+
+      /* determine vertex index */
+      if (constant_index) {
+         index_reg = src_reg(constant_index->value.i[0]);
+      } else {
+         ir->array_index->accept(this);
+         index_reg = this->result;
+      }
+
+      /* determine offset */
+      ir_variable *var = ir->variable_referenced();
+      src_reg offset_reg = src_reg(var->data.location);
+
+      this->result = src_reg(this, ir->type);
+      emit(HS_OPCODE_INPUT_READ, dst_reg(this->result), index_reg, offset_reg);
+      return;
+   }
+
+   int array_stride = compute_array_stride(ir);
    ir->array->accept(this);
    src = this->result;
 

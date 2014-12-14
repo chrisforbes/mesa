@@ -47,6 +47,7 @@ extern "C" {
 
 struct brw_vec4_compile {
    GLuint last_scratch; /**< measured in 32-byte (register size) units */
+   GLuint pull_inputs:1;   /**< 1 if we need to emit code to pull inputs */
 };
 
 #ifdef __cplusplus
@@ -590,7 +591,8 @@ public:
                   struct gl_program *prog,
                   struct brw_vue_prog_data *prog_data,
                   void *mem_ctx,
-                  bool debug_flag);
+                  bool debug_flag,
+                  gl_shader_stage stage);
    ~vec4_generator();
 
    const unsigned *generate_assembly(const cfg_t *cfg, unsigned *asm_size);
@@ -644,6 +646,15 @@ private:
                             struct brw_reg src0,
                             struct brw_reg src1);
    void generate_gs_set_primitive_id(struct brw_reg dst);
+
+   void generate_hs_get_instance_id(struct brw_reg dst);
+   void generate_hs_urb_write(vec4_instruction *inst);
+   void generate_hs_input_read(struct brw_reg dst, struct brw_reg src0, struct brw_reg src1);
+   void generate_hs_input_release(vec4_instruction *inst,
+                                  struct brw_reg dst, struct brw_reg vertex);
+
+   void generate_ds_get_tess_coord(struct brw_reg dst);
+
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
    void generate_scratch_write(vec4_instruction *inst,
@@ -684,6 +695,7 @@ private:
 
    void *mem_ctx;
    const bool debug_flag;
+   const gl_shader_stage stage;
 };
 
 } /* namespace brw */

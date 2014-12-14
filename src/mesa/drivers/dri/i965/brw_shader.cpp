@@ -27,6 +27,8 @@ extern "C" {
 }
 #include "brw_vs.h"
 #include "brw_gs.h"
+#include "brw_hs.h"
+#include "brw_ds.h"
 #include "brw_fs.h"
 #include "brw_cfg.h"
 #include "glsl/ir_optimization.h"
@@ -59,6 +61,8 @@ brw_shader_precompile(struct gl_context *ctx,
                       struct gl_shader_program *sh_prog)
 {
    struct gl_shader *vs = sh_prog->_LinkedShaders[MESA_SHADER_VERTEX];
+   struct gl_shader *hs = sh_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
+   struct gl_shader *ds = sh_prog->_LinkedShaders[MESA_SHADER_TESS_EVAL];
    struct gl_shader *gs = sh_prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
    struct gl_shader *fs = sh_prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
@@ -66,6 +70,12 @@ brw_shader_precompile(struct gl_context *ctx,
       return false;
 
    if (gs && !brw_gs_precompile(ctx, sh_prog, gs->Program))
+      return false;
+
+   if (ds && !brw_ds_precompile(ctx, sh_prog, ds->Program))
+      return false;
+
+   if (hs && !brw_hs_precompile(ctx, sh_prog, hs->Program))
       return false;
 
    if (vs && !brw_vs_precompile(ctx, sh_prog, vs->Program))
@@ -571,6 +581,18 @@ brw_instruction_name(enum opcode op)
       return "gs_svb_set_dst_index";
    case GS_OPCODE_FF_SYNC_SET_PRIMITIVES:
       return "gs_ff_sync_set_primitives";
+
+   case HS_OPCODE_GET_INSTANCE_ID:
+      return "hs_get_instance_id";
+   case HS_OPCODE_URB_WRITE:
+      return "hs_urb_write";
+   case HS_OPCODE_INPUT_READ:
+      return "hs_input_read";
+   case HS_OPCODE_INPUT_RELEASE:
+      return "hs_input_release";
+
+   case DS_OPCODE_GET_TESS_COORD:
+      return "ds_get_tess_coord";
    }
 
    unreachable("not reached");
@@ -771,6 +793,7 @@ backend_instruction::has_side_effects() const
    switch (opcode) {
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_URB_WRITE_SIMD8:
+   case HS_OPCODE_INPUT_RELEASE:
    case FS_OPCODE_FB_WRITE:
       return true;
    default:
