@@ -35,7 +35,7 @@ gen7_upload_ds_push_constants(struct brw_context *brw)
       (struct brw_tess_eval_program *) brw->tess_eval_program;
 
    if (dp) {
-      /* CACHE_NEW_DS_PROG */
+      /* BRW_NEW_DS_PROG_DATA */
       const struct brw_stage_prog_data *prog_data = &brw->ds.prog_data->base.base;
       gen6_upload_push_constants(brw, &dp->program.Base, prog_data,
                                       stage_state, AUB_TRACE_VS_CONSTANTS);
@@ -46,11 +46,12 @@ gen7_upload_ds_push_constants(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ds_push_constants = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_BATCH |
-                BRW_NEW_TESS_EVAL_PROGRAM |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
-      .cache = CACHE_NEW_DS_PROG,
+      .mesa  = _NEW_TRANSFORM |
+               _NEW_PROGRAM_CONSTANTS,
+      .brw   = BRW_NEW_BATCH |
+               BRW_NEW_TESS_EVAL_PROGRAM |
+               BRW_NEW_PUSH_CONSTANT_ALLOCATION |
+               BRW_NEW_DS_PROG_DATA,
    },
    .emit = gen7_upload_ds_push_constants,
 };
@@ -64,22 +65,8 @@ upload_ds_state(struct brw_context *brw)
    bool active = brw->tess_eval_program;
    if (active)
       assert(brw->tess_ctrl_program);
-   /* CACHE_NEW_DS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->ds.prog_data->base;
-
-   /* BRW_NEW_DS_BINDING_TABLE */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_DS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->bind_bo_offset);
-   ADVANCE_BATCH();
-
-   /* CACHE_NEW_SAMPLER */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_DS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->sampler_offset);
-   ADVANCE_BATCH();
-
-   gen7_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_DS);
+   /* BRW_NEW_DS_PROG_DATA */
+   const struct brw_vue_prog_data *prog_data = &brw->ds.prog_data->base;
 
    // XXX: ivb gt2 gs state requires a cs stall flush here. is this true for ds, too?
 
@@ -93,10 +80,10 @@ upload_ds_state(struct brw_context *brw)
                  GEN7_DS_SAMPLER_COUNT_SHIFT) |
                 ((brw->ds.prog_data->base.base.binding_table.size_bytes / 4) <<
                  GEN7_DS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-      if (brw->ds.prog_data->base.total_scratch) {
+      if (brw->ds.prog_data->base.base.total_scratch) {
          OUT_RELOC(stage_state->scratch_bo,
                    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                   ffs(brw->ds.prog_data->base.total_scratch) - 11);
+                   ffs(brw->ds.prog_data->base.base.total_scratch) - 11);
       } else {
          OUT_BATCH(0);
       }
@@ -134,13 +121,11 @@ upload_ds_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ds_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_CONTEXT |
-                BRW_NEW_TESS_EVAL_PROGRAM |
-                BRW_NEW_DS_BINDING_TABLE |
-                BRW_NEW_BATCH |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
-      .cache = CACHE_NEW_DS_PROG | CACHE_NEW_SAMPLER
+      .mesa  = _NEW_TRANSFORM,
+      .brw   = BRW_NEW_CONTEXT |
+               BRW_NEW_TESS_EVAL_PROGRAM |
+               BRW_NEW_DS_PROG_DATA |
+               BRW_NEW_BATCH,
    },
    .emit = upload_ds_state,
 };

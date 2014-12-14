@@ -35,7 +35,7 @@ gen7_upload_hs_push_constants(struct brw_context *brw)
       (struct brw_tess_ctrl_program *) brw->tess_ctrl_program;
 
    if (hp) {
-      /* CACHE_NEW_HS_PROG */
+      /* BRW_NEW_HS_PROG_DATA */
       const struct brw_stage_prog_data *prog_data = &brw->hs.prog_data->base.base;
       gen6_upload_push_constants(brw, &hp->program.Base, prog_data,
                                       stage_state, AUB_TRACE_VS_CONSTANTS);
@@ -46,11 +46,12 @@ gen7_upload_hs_push_constants(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_hs_push_constants = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_BATCH |
-                BRW_NEW_TESS_CTRL_PROGRAM |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
-      .cache = CACHE_NEW_HS_PROG,
+      .mesa  = _NEW_TRANSFORM |
+               _NEW_PROGRAM_CONSTANTS,
+      .brw   = BRW_NEW_BATCH |
+               BRW_NEW_TESS_CTRL_PROGRAM |
+               BRW_NEW_PUSH_CONSTANT_ALLOCATION |
+               BRW_NEW_HS_PROG_DATA,
    },
    .emit = gen7_upload_hs_push_constants,
 };
@@ -61,27 +62,12 @@ upload_hs_state(struct brw_context *brw)
 {
    const struct brw_stage_state *stage_state = &brw->hs.base;
    /* BRW_NEW_TESS_CTRL_PROGRAM */
-   bool active = brw->tess_ctrl_program;
-   if (active)
-      assert(brw->tess_eval_program);
-   /* CACHE_NEW_HS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->hs.prog_data->base;
+   bool active = brw->tess_ctrl_program && brw->tess_eval_program;
+   /* BRW_NEW_HS_PROG_DATA */
+   const struct brw_vue_prog_data *prog_data = &brw->hs.prog_data->base;
 
-   /* BRW_NEW_HS_BINDING_TABLE */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_HS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->bind_bo_offset);
-   ADVANCE_BATCH();
-
-   /* CACHE_NEW_SAMPLER */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_HS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->sampler_offset);
-   ADVANCE_BATCH();
-
-   gen7_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_HS);
-
-   // XXX: ivb gt2 gs state requires a cs stall flush here. is this true for hs, too?
+   if (!brw->is_haswell && brw->gt == 2 && brw->hs.enabled != active)
+      gen7_emit_cs_stall_flush(brw);
 
    if (active) {
       BEGIN_BATCH(7);
@@ -109,23 +95,21 @@ upload_hs_state(struct brw_context *brw)
                 ((num_instances - 1) <<
                  GEN7_HS_INSTANCE_CONTROL_SHIFT));
       OUT_BATCH(stage_state->prog_offset);
-      if (brw->hs.prog_data->base.total_scratch) {
+      if (brw->hs.prog_data->base.base.total_scratch) {
          OUT_RELOC(stage_state->scratch_bo,
                    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                   ffs(brw->hs.prog_data->base.total_scratch) - 11);
+                   ffs(brw->hs.prog_data->base.base.total_scratch) - 11);
       } else {
          OUT_BATCH(0);
       }
 
       uint32_t dw5 =
-      //include vertex handles?
+         GEN7_HS_INCLUDE_VERTEX_HANDLES |
          (prog_data->base.dispatch_grf_start_reg <<
-          GEN7_HS_DISPATCH_START_GRF_SHIFT) |
-         (prog_data->urb_read_length <<
-          GEN7_HS_URB_READ_LENGTH_SHIFT) |
-         (0 << GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT);
+          GEN7_HS_DISPATCH_START_GRF_SHIFT);
 
-      uint32_t dw6 = 0;
+      /* semaphore URB handle */
+      uint32_t dw6 = brw->urb.hs_semaphores_start * 128;
 
       OUT_BATCH(dw5);
       OUT_BATCH(dw6);
@@ -151,13 +135,11 @@ upload_hs_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_hs_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_CONTEXT |
-                BRW_NEW_TESS_CTRL_PROGRAM |
-                BRW_NEW_HS_BINDING_TABLE |
-                BRW_NEW_BATCH |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
-      .cache = CACHE_NEW_HS_PROG | CACHE_NEW_SAMPLER
+      .mesa  = _NEW_TRANSFORM,
+      .brw   = BRW_NEW_CONTEXT |
+               BRW_NEW_TESS_CTRL_PROGRAM |
+               BRW_NEW_BATCH |
+               BRW_NEW_HS_PROG_DATA,
    },
    .emit = upload_hs_state,
 };

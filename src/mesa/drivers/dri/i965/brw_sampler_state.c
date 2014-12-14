@@ -591,7 +591,6 @@ const struct brw_tracked_state brw_hs_samplers = {
       .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH |
              BRW_NEW_TESS_CTRL_PROGRAM,
-      .cache = 0
    },
    .emit = brw_upload_hs_samplers,
 };
@@ -614,7 +613,6 @@ const struct brw_tracked_state brw_ds_samplers = {
       .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH |
              BRW_NEW_TESS_EVAL_PROGRAM,
-      .cache = 0
    },
    .emit = brw_upload_ds_samplers,
 };
