@@ -179,8 +179,8 @@ const struct brw_tracked_state brw_hs_binding_table = {
       .mesa = 0,
       .brw = BRW_NEW_BATCH |
              BRW_NEW_HS_CONSTBUF |
+             BRW_NEW_HS_PROG_DATA |
              BRW_NEW_SURFACES,
-      .cache = CACHE_NEW_HS_PROG
    },
    .emit = brw_hs_upload_binding_table,
 };
@@ -203,8 +203,8 @@ const struct brw_tracked_state brw_ds_binding_table = {
       .mesa = 0,
       .brw = BRW_NEW_BATCH |
              BRW_NEW_DS_CONSTBUF |
+             BRW_NEW_DS_PROG_DATA |
              BRW_NEW_SURFACES,
-      .cache = CACHE_NEW_DS_PROG
    },
    .emit = brw_ds_upload_binding_table,
 };
