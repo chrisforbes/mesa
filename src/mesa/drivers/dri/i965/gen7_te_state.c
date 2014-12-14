@@ -32,15 +32,16 @@ upload_te_state(struct brw_context *brw)
 {
    /* BRW_NEW_TESS_EVAL_PROGRAM */
    bool active = brw->tess_eval_program;
-   if (active)
-      assert(brw->tess_ctrl_program);
 
    if (active) {
+      /* BRW_NEW_DS_PROG_DATA */
+      struct brw_ds_prog_data *prog_data = brw->ds.prog_data;
+
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_TE << 16 | (4 - 2));
-      OUT_BATCH((brw->ds.prog_data->partitioning << GEN7_TE_PARTITIONING_SHIFT) |
-                (brw->ds.prog_data->output_topology << GEN7_TE_OUTPUT_TOPOLOGY_SHIFT) |
-                (brw->ds.prog_data->domain << GEN7_TE_DOMAIN_SHIFT) |
+      OUT_BATCH((prog_data->partitioning << GEN7_TE_PARTITIONING_SHIFT) |
+                (prog_data->output_topology << GEN7_TE_OUTPUT_TOPOLOGY_SHIFT) |
+                (prog_data->domain << GEN7_TE_DOMAIN_SHIFT) |
                 GEN7_TE_ENABLE);
       OUT_BATCH_F(63.0);
       OUT_BATCH_F(64.0);
@@ -57,11 +58,11 @@ upload_te_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_te_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,//??
-      .brw   = (BRW_NEW_CONTEXT |
-                BRW_NEW_TESS_EVAL_PROGRAM |
-                BRW_NEW_BATCH),//??
-      .cache = CACHE_NEW_DS_PROG
+      .mesa  = 0,
+      .brw   = BRW_NEW_CONTEXT |
+               BRW_NEW_BATCH |
+               BRW_NEW_DS_PROG_DATA |
+               BRW_NEW_TESS_EVAL_PROGRAM,
    },
    .emit = upload_te_state,
 };

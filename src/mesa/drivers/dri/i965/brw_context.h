@@ -654,7 +654,7 @@ struct brw_vs_prog_data {
  */
 struct brw_hs_prog_data
 {
-   struct brw_vec4_prog_data base;
+   struct brw_vue_prog_data base;
 
    /** Number vertices in ouput patch */
    int instances;
@@ -668,7 +668,7 @@ struct brw_hs_prog_data
  */
 struct brw_ds_prog_data
 {
-   struct brw_vec4_prog_data base;
+   struct brw_vue_prog_data base;
 
    enum {
       integer,
