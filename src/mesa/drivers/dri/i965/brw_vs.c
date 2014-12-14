@@ -142,6 +142,69 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
 
 
 /**
+ * Compute the VUE map for tessellation control shader outputs and
+ * tessellation evaluation shader inputs.
+ * XXX: put this somewhere else
+ */
+void
+brw_compute_tess_vue_map(const struct brw_context *const brw,
+                         struct brw_vue_map *vue_map,
+                         const GLbitfield64 slots_valid,
+                         const GLbitfield64 is_patch)
+{
+   vue_map->slots_valid = slots_valid;
+
+   /* gl_Layer and gl_ViewportIndex don't get their own varying slots -- they
+    * are stored in the first VUE slot (VARYING_SLOT_PSIZ).
+    */
+   // XXX: slots_valid &= ~(VARYING_BIT_LAYER | VARYING_BIT_VIEWPORT);
+
+   /* Make sure that the values we store in vue_map->varying_to_slot and
+    * vue_map->slot_to_varying won't overflow the signed chars that are used
+    * to store them.  Note that since vue_map->slot_to_varying sometimes holds
+    * values equal to BRW_VARYING_SLOT_COUNT, we need to ensure that
+    * BRW_VARYING_SLOT_COUNT is <= 127, not 128.
+    */
+   STATIC_ASSERT(BRW_VARYING_SLOT_COUNT <= 127);
+
+   vue_map->num_slots = 0;
+   for (int i = 0; i < BRW_VARYING_SLOT_COUNT; ++i) {
+      vue_map->varying_to_slot[i] = -1;
+      vue_map->slot_to_varying[i] = BRW_VARYING_SLOT_COUNT;
+   }
+
+   assign_vue_slot(vue_map, VARYING_SLOT_TESS_LEVEL_INNER);
+   assign_vue_slot(vue_map, VARYING_SLOT_TESS_LEVEL_OUTER);
+
+   /* first assign per-patch varyings */
+   for (int i = 0; i < VARYING_SLOT_MAX; ++i) {
+      if (!(slots_valid & BITFIELD64_BIT(i)) ||
+          vue_map->varying_to_slot[i] != -1)
+         continue;
+      if (!(is_patch & BITFIELD64_BIT(i)))
+         continue;
+      assign_vue_slot(vue_map, i);
+   }
+
+   if (vue_map->num_slots % 2)
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_PAD);
+   vue_map->num_per_patch_slots = vue_map->num_slots;
+
+   /* then assign per-vertex varyings for each vertex in our patch */
+   for (int i = 0; i < VARYING_SLOT_MAX; ++i) {
+      if (!(slots_valid & BITFIELD64_BIT(i)) ||
+          vue_map->varying_to_slot[i] != -1)
+         continue;
+      if (is_patch & BITFIELD64_BIT(i))
+         continue;
+      assign_vue_slot(vue_map, i);
+   }
+
+   vue_map->num_per_vertex_slots = vue_map->num_slots - vue_map->num_per_patch_slots;
+}
+
+
+/**
  * Decide which set of clip planes should be used when clipping via
  * gl_Position or gl_ClipVertex.
  */
