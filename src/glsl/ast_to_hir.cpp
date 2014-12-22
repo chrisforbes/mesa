@@ -3663,13 +3663,9 @@ ast_declarator_list::hir(exec_list *instructions,
       if (state->has_double() &&
           var->type->contains_double() &&
           var->data.interpolation != INTERP_QUALIFIER_FLAT &&
-          ((state->stage == MESA_SHADER_FRAGMENT && var->data.mode == ir_var_shader_in)
-             )) {
-         const char *var_type = (state->stage == MESA_SHADER_VERTEX) ?
-            "vertex output" : "fragment input";
-         _mesa_glsl_error(&loc, state, "if a %s is (or contains) "
-                          "a double, then it must be qualified with 'flat'",
-                          var_type);
+          ((state->stage == MESA_SHADER_FRAGMENT && var->data.mode == ir_var_shader_in))) {
+         _mesa_glsl_error(&loc, state, "if a fragment input is (or contains) "
+                          "a double, then it must be qualified with 'flat'");
       }
 
       /* Interpolation qualifiers cannot be applied to 'centroid' and
