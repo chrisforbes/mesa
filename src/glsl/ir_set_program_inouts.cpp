@@ -298,6 +298,20 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
    return true;
 }
 
+static bool
+is_multiple_vertices(gl_shader_stage stage, ir_variable *var)
+{
+   if (var->data.patch)
+      return false;
+
+   if (var->data.mode == ir_var_shader_in)
+      return stage == MESA_SHADER_GEOMETRY || stage == MESA_SHADER_TESS_CTRL || stage == MESA_SHADER_TESS_EVAL;
+   if (var->data.mode == ir_var_shader_out)
+      return stage == MESA_SHADER_TESS_CTRL;
+
+   return false;
+}
+
 ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
 {
@@ -312,16 +326,7 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
        */
       if (ir_dereference_variable * const deref_var =
           inner_array->array->as_dereference_variable()) {
-         if ((this->shader_stage == MESA_SHADER_GEOMETRY &&
-              deref_var->var->data.mode == ir_var_shader_in) ||
-             (this->shader_stage == MESA_SHADER_TESS_CTRL &&
-              deref_var->var->data.mode == ir_var_shader_in) ||
-             (this->shader_stage == MESA_SHADER_TESS_CTRL &&
-              deref_var->var->data.mode == ir_var_shader_out &&
-              !deref_var->var->data.patch) ||
-             (this->shader_stage == MESA_SHADER_TESS_EVAL &&
-              deref_var->var->data.mode == ir_var_shader_in &&
-              !deref_var->var->data.patch)) {
+         if (is_multiple_vertices(this->shader_stage, deref_var->var)) {
             /* foo is a geometry shader input, so i is the vertex, and j the
              * part of the input we're accessing.
              */
@@ -339,16 +344,7 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
    } else if (ir_dereference_variable * const deref_var =
               ir->array->as_dereference_variable()) {
       /* ir => foo[i], where foo is a variable. */
-      if ((this->shader_stage == MESA_SHADER_GEOMETRY &&
-           deref_var->var->data.mode == ir_var_shader_in) ||
-          (this->shader_stage == MESA_SHADER_TESS_CTRL &&
-           deref_var->var->data.mode == ir_var_shader_in) ||
-          (this->shader_stage == MESA_SHADER_TESS_CTRL &&
-           deref_var->var->data.mode == ir_var_shader_out &&
-           !deref_var->var->data.patch) ||
-          (this->shader_stage == MESA_SHADER_TESS_EVAL &&
-           deref_var->var->data.mode == ir_var_shader_in &&
-           !deref_var->var->data.patch)) {
+      if (is_multiple_vertices(this->shader_stage, deref_var->var)) {
          /* foo is a geometry shader input, so i is the vertex, and we're
           * accessing the entire input.
           */
