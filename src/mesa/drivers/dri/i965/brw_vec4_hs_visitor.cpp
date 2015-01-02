@@ -168,6 +168,7 @@ vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
                       swizzle(src_inner, BRW_SWIZZLE4(3, 2, 1, 0))));
       inst->force_writemask_all = true;
       break;
+
    case GL_TRIANGLES:
       inst = emit(MOV(brw_writemask(dst_upper, WRITEMASK_YZW),
                       swizzle(src_outer, BRW_SWIZZLE4(3, 2, 1, 0))));
@@ -176,6 +177,10 @@ vec4_hs_visitor::emit_tessellation_factors(struct brw_reg reg)
       inst = emit(MOV(brw_writemask(dst_upper, WRITEMASK_X),
                       swizzle(src_inner, BRW_SWIZZLE_XXXX)));
       inst->force_writemask_all = true;
+      break;
+
+   default:
+      unreachable("Bogus tessellation domain");
    }
 }
 
