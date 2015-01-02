@@ -1050,6 +1050,12 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->data.mode) {
    case ir_var_shader_in:
       assert(ir->data.location != -1);
+
+      if (stage == MESA_SHADER_TESS_EVAL)
+         assert(!"reading inputs in DS unsupported");
+      if (stage == MESA_SHADER_TESS_CTRL)
+         assert(!"reading inputs in HS unsupported");
+
       reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
       break;
 
@@ -1964,10 +1970,14 @@ vec4_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *constant_index;
    src_reg src;
-   int array_stride = compute_array_stride(ir);
 
    constant_index = ir->array_index->constant_expression_value();
 
+   if (c->pull_inputs && ir->variable_referenced()->data.mode == ir_var_shader_in) {
+      assert(!"pull inputs not supported");
+   }
+
+   int array_stride = compute_array_stride(ir);
    ir->array->accept(this);
    src = this->result;
 

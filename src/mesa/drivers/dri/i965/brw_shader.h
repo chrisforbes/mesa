@@ -205,6 +205,12 @@ extern "C" {
 bool brw_vs_precompile(struct gl_context *ctx,
                        struct gl_shader_program *shader_prog,
                        struct gl_program *prog);
+bool brw_hs_precompile(struct gl_context *ctx,
+                       struct gl_shader_program *shader_prog,
+                       struct gl_program *prog);
+bool brw_ds_precompile(struct gl_context *ctx,
+                       struct gl_shader_program *shader_prog,
+                       struct gl_program *prog);
 bool brw_gs_precompile(struct gl_context *ctx,
                        struct gl_shader_program *shader_prog,
                        struct gl_program *prog);

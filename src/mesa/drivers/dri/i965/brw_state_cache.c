@@ -50,6 +50,8 @@
 #include "brw_vs.h"
 #include "brw_wm.h"
 #include "brw_gs.h"
+#include "brw_hs.h"
+#include "brw_ds.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
@@ -361,9 +363,13 @@ brw_init_caches(struct brw_context *brw)
       drm_intel_gem_bo_map_unsynchronized(cache->bo);
 
    cache->aux_compare[BRW_CACHE_VS_PROG] = brw_vs_prog_data_compare;
+   cache->aux_compare[BRW_CACHE_HS_PROG] = brw_hs_prog_data_compare;
+   cache->aux_compare[BRW_CACHE_DS_PROG] = brw_ds_prog_data_compare;
    cache->aux_compare[BRW_CACHE_GS_PROG] = brw_gs_prog_data_compare;
    cache->aux_compare[BRW_CACHE_FS_PROG] = brw_wm_prog_data_compare;
    cache->aux_free[BRW_CACHE_VS_PROG] = brw_stage_prog_data_free;
+   cache->aux_free[BRW_CACHE_HS_PROG] = brw_stage_prog_data_free;
+   cache->aux_free[BRW_CACHE_DS_PROG] = brw_stage_prog_data_free;
    cache->aux_free[BRW_CACHE_GS_PROG] = brw_stage_prog_data_free;
    cache->aux_free[BRW_CACHE_FS_PROG] = brw_stage_prog_data_free;
 }

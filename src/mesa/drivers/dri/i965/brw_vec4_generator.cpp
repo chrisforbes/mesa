@@ -817,6 +817,46 @@ vec4_generator::generate_gs_ff_sync(vec4_instruction *inst,
 }
 
 void
+vec4_generator::generate_hs_get_instance_id(struct brw_reg dst)
+{
+   struct brw_context *brw = p->brw;
+
+   /* On IVB, our invocation ids are:
+    *    r0.2:16-22 << 1, r0.2:16-22 << 1 + 1
+    * On HSW, the field moved one bit:
+    *    r0.2:17-23 << 1, r0.2:17-23 << 1 + 1
+    */
+   dst = retype(dst, BRW_REGISTER_TYPE_UD);
+   struct brw_reg r0(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+
+   /* XXX: where did Broadwell put this field? */
+   assert(brw->gen == 7);
+
+   if (brw->is_haswell) {
+      brw_SHR(p, get_element_ud(dst, 0),
+              get_element_ud(r0, 2),
+              brw_imm_ud(HSW_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT - 1));
+      brw_AND(p, get_element(dst, 0),
+              get_element_ud(dst, 0),
+              brw_imm_ud(((1<<HSW_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH)-1) << 1));
+   } else {
+      brw_SHR(p, get_element_ud(dst, 0),
+              get_element_ud(r0, 2),
+              brw_imm_ud(GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT - 1));
+      brw_AND(p, get_element(dst, 0),
+              get_element_ud(dst, 0),
+              brw_imm_ud(((1<<GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH)-1) << 1));
+   }
+
+   brw_ADD(p, get_element_ud(dst, 4),
+           get_element_ud(dst, 0),
+           brw_imm_ud(1));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
 {
    /* In gen6, PrimitiveID is delivered in R0.1 of the payload */
@@ -826,6 +866,105 @@ vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
    brw_set_default_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, get_element_ud(dst, 0), get_element_ud(src, 1));
    brw_pop_insn_state(p);
+}
+
+void
+vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
+{
+   // XXX: ivb vol2 part1 4.7.1:
+   /* HS threads will be dispatched with the dispatch mask set to 0xFFFF. It is the responsibility of the kernel to
+      modify the execution mask as required (e.g., if operating in SIMD4x2 mode but only the lower half is
+      active, as would happen in one thread is the threads were computing an odd number of OCPs via
+      SIMD4x2 operation).*/
+   // XXX: dispatch mask 16 bit wide? possibly refering to entire lower half of r0.5?
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
+             brw_imm_ud(0xff00));
+   brw_pop_insn_state(p);
+
+   // XXX: ivb vol4 part2 2.4:
+   /* Execution Mask. The low 8 bits of the execution mask on the send instruction determines which DWords
+      from each write data phase are written or which DWords from each read phase are written to the
+      destination GRF register. The execution mask is ignored on URB_ATOMIC* messages, since this is a
+      scalar operation that is always enabled.*/
+   // XXX: ivb vol4 part2 2.4.3.1:
+   /* M0.5[7:0] bits in message header are used for enabling DWs in cull test, at HDC unit by HS kernel, while
+      writing TF data using URB write messages. Cull test is performed on outside TF and HS kernel set the
+      appropriate DW enable, which carry the TF for different domain types. When DW is enabled and if cull
+      test is positive, HS stage will be informed by HDC unit, to cull the HS handle early at HS stage itself.*/
+   // so what does this mean? always enable bits for outside tess factors? only do that if shader has no side effects (e.g.: atomic counters, image store)? Also: what's the HDC unit?
+
+   brw_urb_WRITE(p,
+                 brw_null_reg(), /* dest */
+                 inst->base_mrf, /* starting mrf reg nr */
+                 brw_vec8_grf(0, 0), /* src */
+                 inst->urb_write_flags,
+                 inst->mlen,
+                 0,             /* response len */
+                 inst->offset,  /* urb destination offset */
+                 BRW_URB_SWIZZLE_NONE);
+}
+
+void
+vec4_generator::generate_hs_input_release(vec4_instruction *inst,
+                                          struct brw_reg dst,
+                                          struct brw_reg vertex)
+{
+   /* releases the pair of input vertices starting at `vertex`. clobbers
+    * `dst`. */
+   struct brw_context *brw = p->brw;
+
+   /* vertex urb handles start at r1.0 and continue up to r4.7 */
+   assert(vertex.file == BRW_IMMEDIATE_VALUE);
+   assert(vertex.type == BRW_REGISTER_TYPE_UD);
+
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+   assert(dst.type == BRW_REGISTER_TYPE_UD);
+
+   uint32_t vertex_index = vertex.dw1.ud;
+   struct brw_reg index_reg = brw_vec2_grf(
+         1 + (vertex_index >> 3), vertex_index & 7);
+
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+
+   /* set up header */
+   brw_MOV(p, dst, brw_imm_ud(0));
+   brw_MOV(p, vec2(dst), retype(index_reg, BRW_REGISTER_TYPE_UD));
+
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, brw_null_reg());
+   brw_set_src0(p, send, dst);
+
+   brw_set_message_descriptor(p, send, BRW_SFID_URB,
+                              1 /* mlen */, 0 /* rlen */,
+                              true /* header */, false /* eot */);
+   brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_READ_HWORD);
+
+   /* we want to release two vertices at a time */
+   brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
+   brw_inst_set_urb_complete(brw, send, 1);
+
+   /* dont bother setting global or per-slot offsets. we're not actually
+    * reading anything from the URB, only releasing handles.
+    */
+
+   brw_pop_insn_state(p);
+}
+
+void
+vec4_generator::generate_ds_get_tess_coord(struct brw_reg dst)
+{
+   /* We want to get R1.0, R1.1, R1.2, R1.4, R1.5, R1.6.
+    * and store into dst.0. So generate the instruction:
+    *
+    *     mov(8) g8<1>.xyzF g1<4,4,1>F { align16 WE_normal 1Q };
+    */
+   struct brw_reg r1(brw_vec8_grf(1, 0));
+   brw_MOV(p, brw_writemask(dst, WRITEMASK_XYZW), r1);
 }
 
 void
@@ -1147,6 +1286,18 @@ vec4_generator::generate_untyped_surface_read(vec4_instruction *inst,
    brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
+static const char *
+get_stage_name(gl_shader_stage stage)
+{
+   switch (stage) {
+   case MESA_SHADER_VERTEX: return "vertex";
+   case MESA_SHADER_GEOMETRY: return "geometry";
+   case MESA_SHADER_TESS_CTRL: return "tessellation control";
+   case MESA_SHADER_TESS_EVAL: return "tessellation evaluation";
+   default: return "???";
+   }
+}
+
 void
 vec4_generator::generate_code(const cfg_t *cfg)
 {
@@ -1180,7 +1331,8 @@ vec4_generator::generate_code(const cfg_t *cfg)
           * force_writemask_all in order to make sure the instruction is executed
           * regardless of which channels are enabled.
           */
-         assert(inst->force_writemask_all);
+         /* XXX: disabled for tess */
+         //assert(inst->force_writemask_all);
 
          /* Fix up any <8;8,1> or <0;4,1> source registers to <4;4,1> to satisfy
           * the following register region restrictions (from Graphics BSpec:
@@ -1553,6 +1705,22 @@ vec4_generator::generate_code(const cfg_t *cfg)
          brw_set_default_access_mode(p, BRW_ALIGN_16);
          break;
       }
+
+      case HS_OPCODE_URB_WRITE:
+         generate_hs_urb_write(inst);
+         break;
+
+      case HS_OPCODE_INPUT_RELEASE:
+         generate_hs_input_release(inst, dst, src[0]);
+         break;
+
+      case HS_OPCODE_GET_INSTANCE_ID:
+         generate_hs_get_instance_id(dst);
+         break;
+
+      case DS_OPCODE_GET_TESS_COORD:
+         generate_ds_get_tess_coord(dst);
+         break;
 
       default:
          if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {

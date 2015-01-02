@@ -181,6 +181,8 @@ static const struct brw_tracked_state *gen6_atoms[] =
 static const struct brw_tracked_state *gen7_atoms[] =
 {
    &brw_vs_prog,
+   &brw_hs_prog,
+   &brw_ds_prog,
    &brw_gs_prog,
    &brw_wm_prog,
 
@@ -235,7 +237,6 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_gs_samplers,
    &gen6_multisample_state,
 
-   &gen7_disable_stages,
    &gen7_vs_state,
    &gen7_hs_state,
    &gen7_te_state,
@@ -543,6 +544,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PROGRAM_CACHE),
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
    DEFINE_BIT(BRW_NEW_VUE_MAP_VS),
+   DEFINE_BIT(BRW_NEW_VUE_MAP_HS_OUT),
+   DEFINE_BIT(BRW_NEW_VUE_MAP_DS_OUT),
    DEFINE_BIT(BRW_NEW_VUE_MAP_GEOM_OUT),
    DEFINE_BIT(BRW_NEW_TRANSFORM_FEEDBACK),
    DEFINE_BIT(BRW_NEW_RASTERIZER_DISCARD),

@@ -528,7 +528,7 @@ brw_set_src1(struct brw_compile *p, brw_inst *inst, struct brw_reg reg)
  *       \b before filling out any message-specific data.  Callers can
  *       choose not to fill in irrelevant bits; they will be zero.
  */
-static void
+void
 brw_set_message_descriptor(struct brw_compile *p,
 			   brw_inst *inst,
 			   enum brw_message_target sfid,
