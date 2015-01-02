@@ -45,7 +45,6 @@ do_hs_prog(struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    c.key = *key;
    c.hp = hp;
-   c.base.pull_inputs = 1;
 
    const int patch_vertices_out = hp->program.VerticesOut;
    c.prog_data.instances = patch_vertices_out;
@@ -260,6 +259,7 @@ brw_hs_precompile(struct gl_context *ctx,
     */
    key.input_varyings = hp->Base.InputsRead;
    key.input_vertices = ctx->TessCtrlProgram.patch_vertices;
+   key.ds_primitive_mode = GL_TRIANGLES;
 
    success = do_hs_prog(brw, shader_prog, bhp, &key);
 

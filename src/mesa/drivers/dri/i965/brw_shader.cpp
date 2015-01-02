@@ -587,8 +587,12 @@ brw_instruction_name(enum opcode op)
       return "hs_get_instance_id";
    case HS_OPCODE_URB_WRITE:
       return "hs_urb_write";
+   case HS_OPCODE_INPUT_READ:
+      return "hs_input_read";
    case HS_OPCODE_INPUT_RELEASE:
       return "hs_input_release";
+   case HS_OPCODE_SET_URB_OFFSETS:
+      return "hs_set_urb_offsets";
 
    case DS_OPCODE_GET_TESS_COORD:
       return "ds_get_tess_coord";

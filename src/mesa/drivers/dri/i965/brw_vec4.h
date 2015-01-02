@@ -47,7 +47,6 @@ extern "C" {
 
 struct brw_vec4_compile {
    GLuint last_scratch; /**< measured in 32-byte (register size) units */
-   GLuint pull_inputs:1;   /**< 1 if we need to emit code to pull inputs */
 };
 
 #ifdef __cplusplus
@@ -471,6 +470,8 @@ public:
 
    void emit_constant_values(dst_reg *dst, ir_constant *value);
 
+   void emit_urb_read_from_vertices(ir_dereference_array *ir);
+
    /**
     * Emit the correct dot-product instruction for the type of arguments
     */
@@ -652,8 +653,10 @@ private:
 
    void generate_hs_get_instance_id(struct brw_reg dst);
    void generate_hs_urb_write(vec4_instruction *inst);
+   void generate_hs_input_read(struct brw_reg dst, struct brw_reg header);
    void generate_hs_input_release(vec4_instruction *inst,
                                   struct brw_reg dst, struct brw_reg vertex);
+   void generate_hs_urb_offsets(struct brw_reg dst, struct brw_reg vertex, struct brw_reg offset);
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
 

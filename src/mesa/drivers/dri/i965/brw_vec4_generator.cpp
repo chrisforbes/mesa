@@ -907,6 +907,73 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
                  BRW_URB_SWIZZLE_NONE);
 }
 
+
+void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
+                                             struct brw_reg vertex,
+                                             struct brw_reg offset)
+{
+   /* Generates an URB read/write message header for HS/DS operation.
+    * Inputs are a vertex index, and a byte offset from the beginning of
+    * the vertex. */
+
+   assert(vertex.file == BRW_IMMEDIATE_VALUE);
+   assert(vertex.type == BRW_REGISTER_TYPE_UD);
+   assert(offset.file == BRW_IMMEDIATE_VALUE);
+   assert(offset.type == BRW_REGISTER_TYPE_UD);
+
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+
+   brw_push_insn_state(p);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, dst, brw_imm_ud(0));
+
+   /* m0.5 bits 8-15 are channel enables */
+   brw_MOV(p, get_element_ud(dst, 5), brw_imm_ud(0xff00));
+
+   uint32_t vertex_index = vertex.dw1.ud;
+   struct brw_reg index_reg = brw_vec1_grf(
+         1 + (vertex_index >> 3), vertex_index & 7);
+
+   /* m0.0-0.1: URB handles */
+   brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(index_reg, BRW_REGISTER_TYPE_UD));
+
+   /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
+   brw_MOV(p, vec2(get_element_ud(dst, 3)), brw_imm_ud(offset.dw1.ud >> 4));
+
+   brw_pop_insn_state(p);
+}
+
+void
+vec4_generator::generate_hs_input_read(struct brw_reg dst,
+                                       struct brw_reg header)
+{
+   struct brw_context *brw = p->brw;
+
+   assert(header.file == BRW_GENERAL_REGISTER_FILE);
+   assert(header.type == BRW_REGISTER_TYPE_UD);
+
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, header);
+
+   brw_set_message_descriptor(p, send, BRW_SFID_URB,
+                              1 /* mlen */, 1 /* rlen */,
+                              true /* header */, false /* eot */);
+   brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_READ_OWORD);
+   brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
+   brw_inst_set_urb_per_slot_offset(brw, send, 1);
+
+   brw_pop_insn_state(p);
+
+   /* what happens to swizzles? */
+}
+
 void
 vec4_generator::generate_hs_input_release(vec4_instruction *inst,
                                           struct brw_reg dst,
@@ -1710,8 +1777,16 @@ vec4_generator::generate_code(const cfg_t *cfg)
          generate_hs_urb_write(inst);
          break;
 
+      case HS_OPCODE_INPUT_READ:
+         generate_hs_input_read(dst, src[0]);
+         break;
+
       case HS_OPCODE_INPUT_RELEASE:
          generate_hs_input_release(inst, dst, src[0]);
+         break;
+
+      case HS_OPCODE_SET_URB_OFFSETS:
+         generate_hs_urb_offsets(dst, src[0], src[1]);
          break;
 
       case HS_OPCODE_GET_INSTANCE_ID:

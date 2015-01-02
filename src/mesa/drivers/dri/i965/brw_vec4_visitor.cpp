@@ -26,6 +26,9 @@
 #include "glsl/ir_uniform.h"
 #include "program/sampler.h"
 
+/* XXX hack alert! */
+#include "brw_vec4_hs_visitor.h"
+
 namespace brw {
 
 vec4_instruction::vec4_instruction(vec4_visitor *v,
@@ -1050,13 +1053,14 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->data.mode) {
    case ir_var_shader_in:
       assert(ir->data.location != -1);
+      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
+         assert(!"reading per-vertex inputs in DS unsupported");
 
-      if (stage == MESA_SHADER_TESS_EVAL)
-         assert(!"reading inputs in DS unsupported");
-      if (stage == MESA_SHADER_TESS_CTRL)
-         assert(!"reading inputs in HS unsupported");
-
-      reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
+      /* hack */
+      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
+         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location + BRW_VARYING_SLOT_COUNT);
+      else
+         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
       break;
 
    case ir_var_shader_out:
@@ -1964,18 +1968,86 @@ vec4_visitor::compute_array_stride(ir_dereference_array *ir)
    return type_size(ir->type);
 }
 
+void
+vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
+{
+   /* Emit code to read a variable from the URB. Lowering passes have already
+    * cut up any accesses larger than a vec4. We have two interesting possibilities:
+    *
+    * 1/ A single scalar or vector per vertex:
+    *    in vec4 foo[];    foo[vertex_index]
+    *
+    * 2/ An array per vertex, inside another array (ARB_arrays_of_arrays) or
+    *    inside an interface block:
+    *
+    *    in block { vec4 foo[2]; } bar[]; bar[vertex_index].foo[i]
+    *
+    * Variations involving nested structs, copies of whole arrays or structs, etc should
+    * be covered by lowering passes before reaching this visitor.
+    */
+   ir_variable *var = ir->variable_referenced();
+
+   assert(var->data.mode == ir_var_shader_in);
+   assert(!var->data.patch);  /* Should relax this when applied to TES inputs or TCS output readbacks */
+   assert(type_size(ir->type) == 1);  /* We don't expect non-vec4-sized things here */
+
+   ir_dereference_array *vertex_deref = ir;
+   if (ir->array->as_dereference_array()) {
+      /* This is case 2/ above -- which is reasonably rare */
+      vertex_deref = ir->array->as_dereference_array();
+   }
+
+   ir_constant *constant_index = vertex_deref->array_index->constant_expression_value();
+   /* Should really relax this -- the common case is indexing with gl_InvocationID */
+   assert(constant_index && "non-constant vertex indices not supported");
+
+   src_reg index_reg = src_reg(constant_index->value.u[0]);
+   /* Offset into the VUE in bytes. Array indexing within a vertex will translate to
+    * an adjustment to this offset. */
+   /* XXX: input_vue_map should be moved to a common layer. This won't work for DS! */
+
+   uint32_t location = var->data.location;
+   if (ir != vertex_deref) {
+      /* Case 2/ above: Offset the location due to `i` */
+      ir_constant *constant_index_within_vert = ir->array_index->constant_expression_value();
+      assert(constant_index_within_vert && "non-constant indexing in arrays within a vertex not supported");
+
+      location += constant_index_within_vert->value.u[0] * compute_array_stride(ir);
+   }
+
+   struct brw_vue_map *input_vue_map = &((struct brw_hs_compile *)c)->input_vue_map;
+   uint32_t vue_offset = brw_varying_to_offset(input_vue_map, location);
+   src_reg offset_reg = src_reg(vue_offset);
+
+   /* Set up the message header to reference the proper parts of the URB */
+   dst_reg header = dst_reg(this, glsl_type::uvec4_type);
+   header.writemask = WRITEMASK_XYZW;
+   emit(HS_OPCODE_SET_URB_OFFSETS, header, index_reg, offset_reg);
+
+   /* Issue the actual read */
+   dst_reg temp = dst_reg(this, ir->type);
+   temp.writemask = WRITEMASK_XYZW;
+   emit(HS_OPCODE_INPUT_READ, temp, src_reg(header));
+
+   /* Copy to target. We might end up with some funky writemasks landing in here,
+    * but we really don't want them in the above psuedo-ops.
+    */
+   this->result = src_reg(this, ir->type);
+   emit(MOV(dst_reg(this->result), src_reg(temp)));
+}
+
 
 void
 vec4_visitor::visit(ir_dereference_array *ir)
 {
-   ir_constant *constant_index;
-   src_reg src;
-
-   constant_index = ir->array_index->constant_expression_value();
-
-   if (c->pull_inputs && ir->variable_referenced()->data.mode == ir_var_shader_in) {
-      assert(!"pull inputs not supported");
+   unsigned mode = ir->variable_referenced()->data.mode;
+   if (stage == MESA_SHADER_TESS_CTRL && mode == ir_var_shader_in) {
+      emit_urb_read_from_vertices(ir);
+      return;
    }
+
+   src_reg src;
+   ir_constant *constant_index = ir->array_index->constant_expression_value();
 
    int array_stride = compute_array_stride(ir);
    ir->array->accept(this);
