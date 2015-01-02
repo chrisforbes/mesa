@@ -453,6 +453,17 @@ gen7_cs_stall_every_four_pipe_controls(struct brw_context *brw, uint32_t flags)
    return 0;
 }
 
+static uint32_t
+hsw_stall_before_ro_state_cache_invalidate(struct brw_context *brw, uint32_t flags)
+{
+      if (brw->is_haswell && (flags & READ_ONLY_CACHE_INVALIDATIONS)) {
+         return PIPE_CONTROL_DATA_CACHE_INVALIDATE |
+                PIPE_CONTROL_CS_STALL;
+      }
+
+      return 0;
+}
+
 /**
  * Emit a PIPE_CONTROL with various flushing flags.
  *
@@ -474,6 +485,7 @@ brw_emit_pipe_control_flush(struct brw_context *brw, uint32_t flags)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else if (brw->gen >= 6) {
+      flags |= hsw_stall_before_ro_state_cache_invalidate(brw, flags);
       flags |= gen7_cs_stall_every_four_pipe_controls(brw, flags);
 
       BEGIN_BATCH(5);

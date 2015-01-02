@@ -83,6 +83,10 @@
 #define PIPE_CONTROL_DEPTH_CACHE_FLUSH		(1 << 0)
 #define PIPE_CONTROL_PPGTT_WRITE	(0 << 2)
 #define PIPE_CONTROL_GLOBAL_GTT_WRITE	(1 << 2)
+#define READ_ONLY_CACHE_INVALIDATIONS   (PIPE_CONTROL_INSTRUCTION_INVALIDATE | \
+                                         PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE | \
+                                         PIPE_CONTROL_CONST_CACHE_INVALIDATE | \
+                                         PIPE_CONTROL_STATE_CACHE_INVALIDATE)
 
 /** @} */
 
