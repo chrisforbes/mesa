@@ -37,6 +37,8 @@
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "brw_vs.h"
+#include "brw_hs.h"
+#include "brw_ds.h"
 #include "brw_ff_gs.h"
 #include "brw_gs.h"
 #include "brw_wm.h"
@@ -227,7 +229,6 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_gs_samplers,
    &gen6_multisample_state,
 
-   &gen7_disable_stages,
    &gen7_vs_state,
    &gen7_hs_state,
    &gen7_te_state,
@@ -534,6 +535,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PROGRAM_CACHE),
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
    DEFINE_BIT(BRW_NEW_VUE_MAP_VS),
+   DEFINE_BIT(BRW_NEW_VUE_MAP_HS_OUT),
+   DEFINE_BIT(BRW_NEW_VUE_MAP_DS_OUT),
    DEFINE_BIT(BRW_NEW_VUE_MAP_GEOM_OUT),
    DEFINE_BIT(BRW_NEW_TRANSFORM_FEEDBACK),
    DEFINE_BIT(BRW_NEW_RASTERIZER_DISCARD),
@@ -578,6 +581,11 @@ static void
 brw_upload_programs(struct brw_context *brw)
 {
    brw_upload_vs_prog(brw);
+
+   if (brw->gen >= 7) {
+      brw_upload_hs_prog(brw);
+      brw_upload_ds_prog(brw);
+   }
 
    if (brw->gen < 6)
       brw_upload_ff_gs_prog(brw);
