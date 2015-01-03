@@ -1940,7 +1940,14 @@ void
 vec4_visitor::visit(ir_dereference_variable *ir)
 {
    const struct glsl_type *type = ir->type;
-   dst_reg *reg = variable_storage(ir->var);
+
+   dst_reg *reg;
+   if (stage == MESA_SHADER_TESS_EVAL && ir->var->data.mode == ir_var_shader_in) {
+      emit_urb_read_from_patch_record(ir);
+      reg = this->result;
+   } else {
+      reg = variable_storage(ir->var);
+   }
 
    if (!reg) {
       fail("Failed to find variable storage for %s\n", ir->var->name);
