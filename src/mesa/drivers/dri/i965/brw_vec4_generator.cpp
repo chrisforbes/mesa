@@ -953,6 +953,7 @@ vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
 
    assert(offset.file == BRW_IMMEDIATE_VALUE);
    assert(offset.type == BRW_REGISTER_TYPE_UD);
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
 
    brw_push_insn_state(p);
 
@@ -985,7 +986,7 @@ vec4_generator::generate_hs_input_read(struct brw_reg dst,
    assert(header.file == BRW_GENERAL_REGISTER_FILE);
    assert(header.type == BRW_REGISTER_TYPE_UD);
 
-   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+   //assert(dst.file == BRW_GENERAL_REGISTER_FILE);
 
    brw_push_insn_state(p);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
