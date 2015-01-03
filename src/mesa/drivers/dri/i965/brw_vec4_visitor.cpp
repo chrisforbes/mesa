@@ -2045,6 +2045,8 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
    ir_variable *var = ir->variable_referenced();
    printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d\n",
           var->name, var->data.patch, var->data.location);
+   ir->print();
+   printf("\n");
    assert(!"Not supported");
 }
 
