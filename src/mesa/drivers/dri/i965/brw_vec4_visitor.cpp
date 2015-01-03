@@ -2076,7 +2076,9 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
           var->name, var->data.patch, location, urb_offset);
    ir->print();
    printf("\n");
-   assert(!"Not supported");
+
+   this->result = src_reg(this, ir->type);
+//   assert(!"Not supported");
 }
 
 
