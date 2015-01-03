@@ -471,6 +471,7 @@ public:
    void emit_constant_values(dst_reg *dst, ir_constant *value);
 
    void emit_urb_read_from_vertices(ir_dereference_array *ir);
+   void emit_urb_read_from_patch_record(ir_dereference *ir);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments

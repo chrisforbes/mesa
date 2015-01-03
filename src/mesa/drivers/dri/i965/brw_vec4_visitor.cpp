@@ -2038,11 +2038,26 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
 
 
 void
+vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
+{
+   ir_variable *var = ir->variable_referenced();
+   printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d\n",
+          var->name, var->data.patch, var->data.location);
+   assert(!"Not supported");
+}
+
+
+void
 vec4_visitor::visit(ir_dereference_array *ir)
 {
    unsigned mode = ir->variable_referenced()->data.mode;
    if (stage == MESA_SHADER_TESS_CTRL && mode == ir_var_shader_in) {
       emit_urb_read_from_vertices(ir);
+      return;
+   }
+
+   if (stage == MESA_SHADER_TESS_EVAL && mode == ir_var_shader_in) {
+      emit_urb_read_from_patch_record(ir);
       return;
    }
 
