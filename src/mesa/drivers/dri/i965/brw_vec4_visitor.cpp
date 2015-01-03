@@ -1053,14 +1053,7 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->data.mode) {
    case ir_var_shader_in:
       assert(ir->data.location != -1);
-      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
-         assert(!"reading per-vertex inputs in DS unsupported");
-
-      /* hack */
-      if (stage == MESA_SHADER_TESS_EVAL && !ir->data.patch)
-         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location + BRW_VARYING_SLOT_COUNT);
-      else
-         reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
+      reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
       break;
 
    case ir_var_shader_out:
