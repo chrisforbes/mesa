@@ -944,6 +944,39 @@ void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
    brw_pop_insn_state(p);
 }
 
+
+void
+vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
+                                        struct brw_reg offset)
+{
+   /* Generates an URB read/write message header for HS/DS operation, for the patch URB entry. */
+
+   assert(offset.file == BRW_IMMEDIATE_VALUE);
+   assert(offset.type == BRW_REGISTER_TYPE_UD);
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+
+   brw_push_insn_state(p);
+
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, dst, brw_imm_ud(0));
+
+   /* m0.5 bits 8-15 are channel enables */
+   brw_MOV(p, get_element_ud(dst, 5), brw_imm_ud(0xff00));
+
+   /* DS patch URB handle is delivered in r1.3 */
+   /* XXX: For HS readbacks, this is in r0.0 instead */
+   struct brw_reg urb_handle = brw_vec1_grf(1, 3);
+
+   /* m0.0-0.1: URB handles */
+   brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(urb_handle, BRW_REGISTER_TYPE_UD));
+
+   /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
+   brw_MOV(p, vec2(get_element_ud(dst, 3)), brw_imm_ud(offset.dw1.ud >> 4));
+
+   brw_pop_insn_state(p);
+}
+
 void
 vec4_generator::generate_hs_input_read(struct brw_reg dst,
                                        struct brw_reg header)
@@ -1787,6 +1820,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case HS_OPCODE_SET_URB_OFFSETS:
          generate_hs_urb_offsets(dst, src[0], src[1]);
+         break;
+
+      case DS_OPCODE_SET_URB_OFFSETS:
+         generate_ds_urb_offsets(dst, src[0]);
          break;
 
       case HS_OPCODE_GET_INSTANCE_ID:

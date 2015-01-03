@@ -2082,8 +2082,19 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
    printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
           var->name, var->data.patch, location, urb_offset);
 
+   /* Set up the message header */
+   dst_reg header = dst_reg(this, glsl_type::uvec4_type);
+   header.writemask = WRITEMASK_XYZW;
+   emit(DS_OPCODE_SET_URB_OFFSETS, header, src_reg(urb_offset));
+
+   /* Issue the actual read */
+   dst_reg temp = dst_reg(this, ir->type);
+   temp.writemask = WRITEMASK_XYZW;
+   emit(HS_OPCODE_INPUT_READ, temp, src_reg(header));
+
+   /* Copy to target. */
    this->result = src_reg(this, ir->type);
-//   assert(!"Not supported");
+   emit(MOV(dst_reg(this->result), src_reg(temp)));
 }
 
 

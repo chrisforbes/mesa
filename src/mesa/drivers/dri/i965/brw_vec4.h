@@ -658,6 +658,7 @@ private:
    void generate_hs_input_release(vec4_instruction *inst,
                                   struct brw_reg dst, struct brw_reg vertex);
    void generate_hs_urb_offsets(struct brw_reg dst, struct brw_reg vertex, struct brw_reg offset);
+   void generate_ds_urb_offsets(struct brw_reg dst, struct brw_reg offset);
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
 
