@@ -939,7 +939,7 @@ void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
    brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(index_reg, BRW_REGISTER_TYPE_UD));
 
    /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
-   brw_MOV(p, vec2(get_element_ud(dst, 3)), brw_imm_ud(offset.dw1.ud >> 4));
+   brw_MOV(p, vec2(get_element_ud(dst, 3)), offset);
 
    brw_pop_insn_state(p);
 }
@@ -972,7 +972,7 @@ vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
    brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(urb_handle, BRW_REGISTER_TYPE_UD));
 
    /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
-   brw_MOV(p, vec2(get_element_ud(dst, 3)), brw_imm_ud(offset.dw1.ud >> 4));
+   brw_MOV(p, vec2(get_element_ud(dst, 3)), offset);
 
    brw_pop_insn_state(p);
 }

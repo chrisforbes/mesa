@@ -2023,7 +2023,7 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
    }
 
    struct brw_vue_map *input_vue_map = &((struct brw_hs_compile *)c)->input_vue_map;
-   uint32_t vue_offset = brw_varying_to_offset(input_vue_map, location);
+   uint32_t vue_offset = input_vue_map->varying_to_slot[location];
    src_reg offset_reg = src_reg(vue_offset);
 
    /* Set up the message header to reference the proper parts of the URB */
@@ -2076,8 +2076,8 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
       arr = arr->array->as_dereference_array();
    }
 
-   uint32_t urb_offset = brw_varying_to_offset(input_vue_map, location) +
-                         vertex_index * 16 * input_vue_map->num_per_vertex_slots;
+   uint32_t urb_offset = input_vue_map->varying_to_slot[location] +
+                         vertex_index * input_vue_map->num_per_vertex_slots;
 
    printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
           var->name, var->data.patch, location, urb_offset);
