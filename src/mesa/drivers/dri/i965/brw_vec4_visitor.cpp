@@ -2000,6 +2000,10 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
       vertex_deref = ir->array->as_dereference_array();
    }
 
+   printf("emit_urb_read_from_vertices:\n");
+   ir->print();
+   printf("\n");
+
    ir_constant *constant_index = vertex_deref->array_index->constant_expression_value();
    /* Should really relax this -- the common case is indexing with gl_InvocationID */
    assert(constant_index && "non-constant vertex indices not supported");
