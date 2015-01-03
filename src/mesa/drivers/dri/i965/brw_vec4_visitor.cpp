@@ -1941,10 +1941,12 @@ vec4_visitor::visit(ir_dereference_variable *ir)
 {
    const struct glsl_type *type = ir->type;
 
+   dst_reg temp;
    dst_reg *reg;
    if (stage == MESA_SHADER_TESS_EVAL && ir->var->data.mode == ir_var_shader_in) {
       emit_urb_read_from_patch_record(ir);
-      reg = this->result;
+      temp = dst_reg(this->result);
+      reg = &temp;
    } else {
       reg = variable_storage(ir->var);
    }
