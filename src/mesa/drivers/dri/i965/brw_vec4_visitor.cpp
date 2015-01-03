@@ -28,6 +28,7 @@
 
 /* XXX hack alert! */
 #include "brw_vec4_hs_visitor.h"
+#include "brw_vec4_ds_visitor.h"
 
 namespace brw {
 
@@ -2042,9 +2043,37 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
 void
 vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
 {
+   /* XXX: this needs relaxed to cope with HS output readbacks */
+   assert(stage == MESA_SHADER_TESS_EVAL);
+
    ir_variable *var = ir->variable_referenced();
-   printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d\n",
-          var->name, var->data.patch, var->data.location);
+
+   struct brw_vue_map *input_vue_map = &((struct brw_ds_compile *)c)->input_vue_map;
+
+   uint32_t location = var->data.location;
+   uint32_t vertex_index = 0;
+
+   /* apply adjustment */
+   ir_dereference_array *arr = ir->as_dereference_array();
+   while (arr) {
+      ir_constant *constant_index = arr->array_index->constant_expression_value();
+      assert(constant_index && "non-constant indexing not supported");
+      if (var->data.patch || arr->array->as_dereference_array()) {
+         /* this is indexing within a vertex, or within a patch var */
+         location += constant_index->value.u[0] * compute_array_stride(arr);
+      } else {
+         /* this is vertex indexing. */
+         vertex_index = constant_index->value.u[0];
+      }
+
+      arr = arr->array->as_dereference_array();
+   }
+
+   uint32_t urb_offset = brw_varying_to_offset(input_vue_map, location) +
+                         vertex_index * 16 * input_vue_map->num_per_vertex_slots;
+
+   printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
+          var->name, var->data.patch, location, urb_offset);
    ir->print();
    printf("\n");
    assert(!"Not supported");
