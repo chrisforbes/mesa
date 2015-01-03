@@ -2073,6 +2073,9 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
    uint32_t location = var->data.location;
    uint32_t vertex_index = 0;
 
+   ir->print();
+   printf("\n");
+
    /* apply adjustment */
    ir_dereference_array *arr = ir->as_dereference_array();
    while (arr) {
@@ -2094,8 +2097,6 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
 
    printf("emit_urb_read_from_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
           var->name, var->data.patch, location, urb_offset);
-   ir->print();
-   printf("\n");
 
    this->result = src_reg(this, ir->type);
 //   assert(!"Not supported");
