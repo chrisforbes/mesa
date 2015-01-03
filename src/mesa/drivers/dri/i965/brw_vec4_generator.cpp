@@ -953,7 +953,6 @@ vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
 
    assert(offset.file == BRW_IMMEDIATE_VALUE);
    assert(offset.type == BRW_REGISTER_TYPE_UD);
-   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
 
    brw_push_insn_state(p);
 
