@@ -26,6 +26,7 @@ extern "C" {
  *     - 3 DWords for MI_REPORT_PERF_COUNT itself on Gen6+.  ==> 12 bytes.
  *       On Ironlake, it's 6 DWords, but we have some slack due to the lack of
  *       Sandybridge PIPE_CONTROL madness.
+ *   - Haswell CC_STATE workaround (reusing gen4-5 query spaces)
  */
 #define BATCH_RESERVED 146
 
