@@ -654,7 +654,7 @@ private:
 
    void generate_hs_get_instance_id(struct brw_reg dst);
    void generate_hs_urb_write(vec4_instruction *inst);
-   void generate_hs_input_read(struct brw_reg dst, struct brw_reg header);
+   void generate_vec4_urb_read(struct brw_reg dst, struct brw_reg header);
    void generate_hs_input_release(vec4_instruction *inst,
                                   struct brw_reg dst, struct brw_reg vertex);
    void generate_hs_urb_offsets(struct brw_reg dst, struct brw_reg vertex, struct brw_reg offset);

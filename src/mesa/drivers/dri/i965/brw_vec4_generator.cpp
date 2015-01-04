@@ -978,15 +978,13 @@ vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
 }
 
 void
-vec4_generator::generate_hs_input_read(struct brw_reg dst,
+vec4_generator::generate_vec4_urb_read(struct brw_reg dst,
                                        struct brw_reg header)
 {
    struct brw_context *brw = p->brw;
 
    assert(header.file == BRW_GENERAL_REGISTER_FILE);
    assert(header.type == BRW_REGISTER_TYPE_UD);
-
-   //assert(dst.file == BRW_GENERAL_REGISTER_FILE);
 
    brw_push_insn_state(p);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
@@ -1810,8 +1808,8 @@ vec4_generator::generate_code(const cfg_t *cfg)
          generate_hs_urb_write(inst);
          break;
 
-      case HS_OPCODE_INPUT_READ:
-         generate_hs_input_read(dst, src[0]);
+      case VEC4_OPCODE_URB_READ:
+         generate_vec4_urb_read(dst, src[0]);
          break;
 
       case HS_OPCODE_INPUT_RELEASE:

@@ -46,7 +46,7 @@ can_do_writemask(const struct brw_context *brw,
    case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
    case HS_OPCODE_SET_URB_OFFSETS:
    case DS_OPCODE_SET_URB_OFFSETS:
-   case HS_OPCODE_INPUT_READ:
+   case VEC4_OPCODE_URB_READ:
       return false;
    default:
       /* The MATH instruction on Gen6 only executes in align1 mode, which does

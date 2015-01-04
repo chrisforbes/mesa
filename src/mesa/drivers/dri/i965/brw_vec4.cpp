@@ -240,7 +240,7 @@ vec4_instruction::is_send_from_grf()
    switch (opcode) {
    case SHADER_OPCODE_SHADER_TIME_ADD:
    case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
-   case HS_OPCODE_INPUT_READ:
+   case VEC4_OPCODE_URB_READ:
    case HS_OPCODE_INPUT_RELEASE:
       return true;
    default:

@@ -2034,7 +2034,7 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
    /* Issue the actual read */
    dst_reg temp = dst_reg(this, ir->type);
    temp.writemask = WRITEMASK_XYZW;
-   emit(HS_OPCODE_INPUT_READ, temp, src_reg(header));
+   emit(VEC4_OPCODE_URB_READ, temp, src_reg(header));
 
    /* Copy to target. We might end up with some funky writemasks landing in here,
     * but we really don't want them in the above psuedo-ops.
@@ -2090,7 +2090,7 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
    /* Issue the actual read */
    dst_reg temp = dst_reg(this, ir->type);
    temp.writemask = WRITEMASK_XYZW;
-   emit(HS_OPCODE_INPUT_READ, temp, src_reg(header));
+   emit(VEC4_OPCODE_URB_READ, temp, src_reg(header));
 
    /* Copy to target. */
    this->result = src_reg(this, ir->type);
