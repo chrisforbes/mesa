@@ -664,6 +664,7 @@ private:
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
    void generate_ds_get_primitive_id(struct brw_reg dst);
+   void generate_hs_get_primitive_id(struct brw_reg dst);
 
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);

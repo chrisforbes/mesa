@@ -1112,6 +1112,7 @@ enum opcode {
 
    DS_OPCODE_GET_TESS_COORD,
    DS_OPCODE_GET_PRIMITIVE_ID,
+   HS_OPCODE_GET_PRIMITIVE_ID,
 };
 
 enum brw_urb_write_flags {
