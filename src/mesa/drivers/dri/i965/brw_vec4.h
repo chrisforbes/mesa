@@ -472,6 +472,7 @@ public:
 
    void emit_urb_read_from_vertices(ir_dereference_array *ir);
    void emit_urb_read_from_patch_record(ir_dereference *ir);
+   void emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments

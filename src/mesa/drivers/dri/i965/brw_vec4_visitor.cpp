@@ -2099,6 +2099,51 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
 
 
 void
+vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
+{
+   assert(stage == MESA_SHADER_TESS_CTRL);
+
+   ir_variable *var = ir->variable_referenced();
+
+   uint32_t location = var->data.location;
+   uint32_t vertex_index = 0;
+
+   ir->print();
+   printf("\n");
+
+   /* apply adjustment */
+   ir_dereference_array *arr = ir->as_dereference_array();
+   while (arr) {
+      ir_constant *constant_index = arr->array_index->constant_expression_value();
+      assert(constant_index && "non-constant indexing not supported");
+      if (var->data.patch || arr->array->as_dereference_array()) {
+         /* this is indexing within a vertex, or within a patch var */
+         location += constant_index->value.u[0] * compute_array_stride(arr);
+      } else {
+         /* this is vertex indexing. */
+         vertex_index = constant_index->value.u[0];
+      }
+
+      arr = arr->array->as_dereference_array();
+   }
+
+   uint32_t urb_offset = prog_data->vue_map.varying_to_slot[location] +
+                         vertex_index * prog_data->vue_map.num_per_vertex_slots;
+
+   printf("emit_urb_write_to_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
+          var->name, var->data.patch, location, urb_offset);
+
+   /* Set up the message header */
+   dst_reg header = dst_reg(this, glsl_type::uvec4_type);
+   header.writemask = WRITEMASK_XYZW;
+   emit(DS_OPCODE_SET_URB_OFFSETS, header, src_reg(urb_offset));
+
+   /* XXX */
+   assert(!"emit_urb_write_to_patch_record not finished");
+}
+
+
+void
 vec4_visitor::visit(ir_dereference_array *ir)
 {
    unsigned mode = ir->variable_referenced()->data.mode;
@@ -2395,7 +2440,8 @@ vec4_visitor::visit(ir_assignment *ir)
 
    ir_variable *var = ir->lhs->variable_referenced();
    if (stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out) {
-      assert(!"not supported");
+      emit_urb_write_to_patch_record(ir->lhs, src);
+      return;
    }
 
    for (i = 0; i < type_size(ir->lhs->type); i++) {
