@@ -869,22 +869,19 @@ vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
 }
 
 void
-vec4_generator::generate_hs_urb_write(struct brw_reg payload)
+vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
 {
    struct brw_context *brw = p->brw;
-
-   assert(payload.file == BRW_GENERAL_REGISTER_FILE);
-   assert(payload.type == BRW_REGISTER_TYPE_UD);
 
    brw_push_insn_state(p);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
 
    brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, brw_null_reg());
-   brw_set_src0(p, send, payload);
+   brw_set_src0(p, send, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD));
 
    brw_set_message_descriptor(p, send, BRW_SFID_URB,
-                              2 /* mlen */, 0 /* rlen */,
+                              inst->mlen /* mlen */, 0 /* rlen */,
                               true /* header */, false /* eot */);
    brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_WRITE_OWORD);
    brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
@@ -941,7 +938,7 @@ vec4_generator::generate_hs_output_urb_offsets(struct brw_reg dst,
 
    assert(offset.file == BRW_IMMEDIATE_VALUE);
    assert(offset.type == BRW_REGISTER_TYPE_UD);
-   assert(dst.file == BRW_GENERAL_REGISTER_FILE);
+   assert(dst.file == BRW_GENERAL_REGISTER_FILE || dst.file == BRW_MESSAGE_REGISTER_FILE);
 
    brw_push_insn_state(p);
 
@@ -1825,7 +1822,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
       }
 
       case HS_OPCODE_URB_WRITE:
-         generate_hs_urb_write(src[0]);
+         generate_hs_urb_write(inst);
          break;
 
       case VEC4_OPCODE_URB_READ:
