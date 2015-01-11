@@ -88,16 +88,16 @@ protected:
    virtual void emit_prolog();
    virtual void emit_program_code();
    virtual void emit_thread_end();
-   virtual void emit_urb_write_header(int mrf);
-   virtual vec4_instruction *emit_urb_write_opcode(bool complete);
-   virtual void emit_tessellation_factors(struct brw_reg reg);
-   virtual void emit_patch(const bool thread_end);
-   virtual void emit_urb_slot(int mrf, int sub_reg, int varying);
 
    virtual void visit(ir_barrier *);
 
+   /* we do not use the normal end-of-shader URB write mechanism -- but every vec4 stage
+    * must provide implementations of these:
+    */
+   virtual void emit_urb_write_header(int mrf) {}
+   virtual vec4_instruction *emit_urb_write_opcode(bool complete) { return NULL; }
+
 private:
-   src_reg vertex_count;
    const struct brw_hs_compile * const c;
 };
 
