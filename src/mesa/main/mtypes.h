@@ -2197,6 +2197,7 @@ typedef enum
    /*@{*/
    SYSTEM_VALUE_TESS_COORD,
    SYSTEM_VALUE_VERTICES_IN,    /**< Tessellation vertices in input patch */
+   SYSTEM_VALUE_PRIMITIVE_ID,   /**< Also in Tessellation Control shader */
    /*@}*/
 
    SYSTEM_VALUE_MAX             /**< Number of values */
