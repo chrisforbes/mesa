@@ -57,6 +57,10 @@ vec4_hs_visitor::make_reg_for_system_value(ir_variable *ir)
       this->current_annotation = "initialize gl_InvocationID";
       emit(HS_OPCODE_GET_INSTANCE_ID, *reg);
       break;
+   case SYSTEM_VALUE_PRIMITIVE_ID:
+      this->current_annotation = "primitive id";
+      emit(HS_OPCODE_GET_PRIMITIVE_ID, *reg);
+      break;
    default:
       assert(!"not reached");
       break;
