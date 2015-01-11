@@ -58,6 +58,9 @@ vec4_ds_visitor::make_reg_for_system_value(ir_variable *ir)
       this->current_annotation = "initialize gl_TessCoord";
       emit(DS_OPCODE_GET_TESS_COORD, *reg);
       break;
+   case SYSTEM_VALUE_PRIMITIVE_ID:
+      emit(DS_OPCODE_GET_PRIMITIVE_ID, *reg);
+      break;
    default:
       assert(!"not reached");
       break;

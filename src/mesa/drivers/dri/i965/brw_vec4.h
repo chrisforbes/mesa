@@ -663,6 +663,7 @@ private:
    void generate_ds_urb_offsets(struct brw_reg dst, struct brw_reg offset);
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
+   void generate_ds_get_primitive_id(struct brw_reg dst);
 
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);

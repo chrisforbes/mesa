@@ -600,6 +600,8 @@ brw_instruction_name(enum opcode op)
 
    case DS_OPCODE_GET_TESS_COORD:
       return "ds_get_tess_coord";
+   case DS_OPCODE_GET_PRIMITIVE_ID:
+      return "ds_get_primitive_id";
    }
 
    unreachable("not reached");

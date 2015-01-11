@@ -1083,6 +1083,16 @@ vec4_generator::generate_ds_get_tess_coord(struct brw_reg dst)
 }
 
 void
+vec4_generator::generate_ds_get_primitive_id(struct brw_reg dst)
+{
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_MOV(p, dst, retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_D));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1851,6 +1861,10 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case DS_OPCODE_GET_TESS_COORD:
          generate_ds_get_tess_coord(dst);
+         break;
+
+      case DS_OPCODE_GET_PRIMITIVE_ID:
+         generate_ds_get_primitive_id(dst);
          break;
 
       default:
