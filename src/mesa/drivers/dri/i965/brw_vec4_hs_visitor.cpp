@@ -158,7 +158,7 @@ vec4_hs_visitor::emit_thread_end()
       emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i));
    }
 
-   vec4_instruction *inst = emit(HS_OPCODE_URB_WRITE);
+   vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->mlen = 0;
    inst->urb_write_flags = BRW_URB_WRITE_EOT_COMPLETE;
 }

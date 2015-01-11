@@ -654,7 +654,7 @@ private:
    void generate_gs_set_primitive_id(struct brw_reg dst);
 
    void generate_hs_get_instance_id(struct brw_reg dst);
-   void generate_hs_urb_write(vec4_instruction *inst);
+   void generate_hs_urb_write(struct brw_reg src);
    void generate_vec4_urb_read(struct brw_reg dst, struct brw_reg header);
    void generate_hs_input_release(vec4_instruction *inst,
                                   struct brw_reg dst, struct brw_reg vertex);

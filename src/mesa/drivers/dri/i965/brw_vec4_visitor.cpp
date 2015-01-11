@@ -2134,12 +2134,16 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
           var->name, var->data.patch, location, urb_offset);
 
    /* Set up the message header */
-   dst_reg header = dst_reg(this, glsl_type::uvec4_type);
-   header.writemask = WRITEMASK_XYZW;
-   emit(DS_OPCODE_SET_URB_OFFSETS, header, src_reg(urb_offset));
+   src_reg payload = src_reg(this, glsl_type::uvec4_type, 2);
+   dst_reg temp = dst_reg(payload);
+   emit(DS_OPCODE_SET_URB_OFFSETS, temp, src_reg(urb_offset));
 
-   /* XXX */
-   assert(!"emit_urb_write_to_patch_record not finished");
+   /* Copy data into payload */
+   temp.reg_offset++;
+   emit(MOV(temp, retype(data, BRW_REGISTER_TYPE_UD)));
+
+   /* Emit write */
+   emit(HS_OPCODE_URB_WRITE, dst_null_f(), payload);
 }
 
 
