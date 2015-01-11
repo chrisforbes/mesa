@@ -45,6 +45,7 @@ can_do_writemask(const struct brw_context *brw,
    case VS_OPCODE_PULL_CONSTANT_LOAD:
    case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
    case HS_OPCODE_SET_URB_OFFSETS:
+   case HS_OPCODE_SET_OUTPUT_URB_OFFSETS:
    case DS_OPCODE_SET_URB_OFFSETS:
    case VEC4_OPCODE_URB_READ:
       return false;
