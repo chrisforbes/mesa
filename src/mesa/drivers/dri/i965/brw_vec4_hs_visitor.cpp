@@ -159,7 +159,7 @@ vec4_hs_visitor::emit_thread_end()
    }
 
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
-   inst->mlen = 0;
+   inst->mlen = 1;   /* just the header, no data. */
    inst->urb_write_flags = BRW_URB_WRITE_EOT_COMPLETE;
 }
 

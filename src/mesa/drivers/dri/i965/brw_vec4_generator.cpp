@@ -884,7 +884,7 @@ vec4_generator::generate_hs_urb_write(struct brw_reg payload)
    brw_set_src0(p, send, payload);
 
    brw_set_message_descriptor(p, send, BRW_SFID_URB,
-                              1 /* mlen */, 0 /* rlen */,
+                              2 /* mlen */, 0 /* rlen */,
                               true /* header */, false /* eot */);
    brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_WRITE_OWORD);
    brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
