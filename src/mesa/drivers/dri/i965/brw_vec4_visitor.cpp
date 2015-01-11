@@ -1941,6 +1941,8 @@ vec4_visitor::visit(ir_dereference_variable *ir)
       emit_urb_read_from_patch_record(ir);
       temp = dst_reg(this->result);
       reg = &temp;
+   } else if (stage == MESA_SHADER_TESS_CTRL && ir->var->data.mode == ir_var_shader_in) {
+      unreachable("should not get here");
    } else {
       reg = variable_storage(ir->var);
    }
