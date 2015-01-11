@@ -2136,7 +2136,7 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    /* Set up the message header */
    src_reg payload = src_reg(this, glsl_type::uvec4_type, 2);
    dst_reg temp = dst_reg(payload);
-   emit(DS_OPCODE_SET_URB_OFFSETS, temp, src_reg(urb_offset));
+   emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, temp, src_reg(urb_offset));
 
    /* Copy data into payload */
    temp.reg_offset++;

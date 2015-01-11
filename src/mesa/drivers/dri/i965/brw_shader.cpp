@@ -593,6 +593,8 @@ brw_instruction_name(enum opcode op)
       return "hs_input_release";
    case HS_OPCODE_SET_URB_OFFSETS:
       return "hs_set_urb_offsets";
+   case HS_OPCODE_SET_OUTPUT_URB_OFFSETS:
+      return "hs_set_output_urb_offsets";
    case DS_OPCODE_SET_URB_OFFSETS:
       return "ds_set_urb_offsets";
 
