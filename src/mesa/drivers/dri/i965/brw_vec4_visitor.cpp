@@ -2393,6 +2393,11 @@ vec4_visitor::visit(ir_assignment *ir)
       emit_bool_to_cond_code(ir->condition, &predicate);
    }
 
+   ir_variable *var = ir->lhs->variable_referenced();
+   if (stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out) {
+      assert(!"not supported");
+   }
+
    for (i = 0; i < type_size(ir->lhs->type); i++) {
       vec4_instruction *inst = emit(MOV(dst, src));
       inst->predicate = predicate;
