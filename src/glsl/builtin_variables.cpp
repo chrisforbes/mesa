@@ -880,7 +880,7 @@ builtin_variable_generator::generate_vs_special_vars()
 void
 builtin_variable_generator::generate_tcs_special_vars()
 {
-   add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");// XXX: or sysval?
+   add_system_value(SYSTEM_VALUE_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
    add_system_value(SYSTEM_VALUE_VERTICES_IN, int_t, "gl_PatchVerticesIn");
    add_system_value(SYSTEM_VALUE_INVOCATION_ID, int_t, "gl_InvocationID");
 
@@ -900,7 +900,7 @@ builtin_variable_generator::generate_tcs_special_vars()
 void
 builtin_variable_generator::generate_tes_special_vars()
 {
-   add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");// XXX: or sysval?
+   add_system_value(SYSTEM_VALUE_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
    add_system_value(SYSTEM_VALUE_VERTICES_IN, int_t, "gl_PatchVerticesIn");
    add_system_value(SYSTEM_VALUE_TESS_COORD, vec3_t, "gl_TessCoord");
 
