@@ -708,7 +708,6 @@ private:
    const char *stage_name;
    const char *stage_abbrev;
    const bool debug_flag;
-   const gl_shader_stage stage;
 };
 
 } /* namespace brw */

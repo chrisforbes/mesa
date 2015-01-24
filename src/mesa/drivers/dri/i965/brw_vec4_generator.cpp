@@ -1421,18 +1421,6 @@ vec4_generator::generate_untyped_surface_read(vec4_instruction *inst,
    brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
-static const char *
-get_stage_name(gl_shader_stage stage)
-{
-   switch (stage) {
-   case MESA_SHADER_VERTEX: return "vertex";
-   case MESA_SHADER_GEOMETRY: return "geometry";
-   case MESA_SHADER_TESS_CTRL: return "tessellation control";
-   case MESA_SHADER_TESS_EVAL: return "tessellation evaluation";
-   default: return "???";
-   }
-}
-
 void
 vec4_generator::generate_code(const cfg_t *cfg)
 {
