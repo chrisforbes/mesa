@@ -65,6 +65,7 @@ public:
    virtual void visit(ir_dereference_variable *);
    virtual void visit(ir_dereference_record *);
    virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_barrier *);
 
    void create_function(ir_function *ir);
 
@@ -750,6 +751,12 @@ nir_visitor::visit(ir_assignment *ir)
    } else {
       nir_instr_insert_after_cf_list(this->cf_node_list, &store->instr);
    }
+}
+
+void
+nir_visitor::visit(ir_barrier *ir)
+{
+   assert(!"Not implemented");
 }
 
 /*
