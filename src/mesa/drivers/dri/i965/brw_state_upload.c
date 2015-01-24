@@ -232,8 +232,10 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_gs_binding_table,
    &brw_wm_binding_table,
 
-   &brw_fs_samplers,
+   &brw_fs_samplers,    /* Is there a reason this goes first? */
    &brw_vs_samplers,
+   &brw_hs_samplers,
+   &brw_ds_samplers,
    &brw_gs_samplers,
    &gen6_multisample_state,
 
