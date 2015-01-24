@@ -71,6 +71,8 @@ extern const struct brw_tracked_state brw_state_base_address;
 extern const struct brw_tracked_state brw_urb_fence;
 extern const struct brw_tracked_state brw_vs_prog;
 extern const struct brw_tracked_state brw_vs_samplers;
+extern const struct brw_tracked_state brw_hs_samplers;
+extern const struct brw_tracked_state brw_ds_samplers;
 extern const struct brw_tracked_state brw_gs_samplers;
 extern const struct brw_tracked_state brw_vs_ubo_surfaces;
 extern const struct brw_tracked_state brw_vs_abo_surfaces;
