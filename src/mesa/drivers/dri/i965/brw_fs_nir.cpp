@@ -83,7 +83,7 @@ void
 fs_visitor::emit_nir_code()
 {
    /* first, lower the GLSL IR shader to NIR */
-   lower_output_reads(shader->base.ir);
+   lower_output_reads(MESA_SHADER_FRAGMENT, shader->base.ir);
    nir_shader *nir = glsl_to_nir(shader->base.ir, NULL, true);
    nir_validate_shader(nir);
 
