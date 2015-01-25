@@ -1344,7 +1344,27 @@ assign_varying_locations(struct gl_context *ctx,
                          unsigned num_tfeedback_decls,
                          tfeedback_decl *tfeedback_decls)
 {
-   varying_matches matches(ctx->Const.DisableVaryingPacking,
+   /* The current varying packing transform assumes that everything can be
+    * written together either at the end of the VS, or at EmitVertex.
+    * This isn't true for tessellation shaders:
+    * - Each TCS invocation only writes a subset of the outputs, corresponding
+    *   to its own output vertex.
+    * - For patch outputs, different invocations may write different components
+    *   of the same output.
+    */
+   bool disable_packing = ctx->Const.DisableVaryingPacking ||
+         (producer && producer->Stage == MESA_SHADER_TESS_CTRL) ||
+         (consumer && consumer->Stage == MESA_SHADER_TESS_EVAL);
+
+   if (ctx->Const.DisableVaryingPacking) {
+      /* Transform feedback code assumes varyings are packed, so if the driver
+       * has disabled varying packing, make sure it does not support transform
+       * feedback.
+       */
+      assert(!ctx->Extensions.EXT_transform_feedback);
+   }
+
+   varying_matches matches(disable_packing,
                            consumer && consumer->Stage == MESA_SHADER_FRAGMENT);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
@@ -1499,13 +1519,7 @@ assign_varying_locations(struct gl_context *ctx,
    hash_table_dtor(consumer_inputs);
    hash_table_dtor(consumer_interface_inputs);
 
-   if (ctx->Const.DisableVaryingPacking) {
-      /* Transform feedback code assumes varyings are packed, so if the driver
-       * has disabled varying packing, make sure it does not support transform
-       * feedback.
-       */
-      assert(!ctx->Extensions.EXT_transform_feedback);
-   } else {
+   if (!disable_packing) {
       if (producer) {
          lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_out,
                                producer_vertices, producer);
