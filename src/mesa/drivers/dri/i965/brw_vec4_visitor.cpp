@@ -2006,11 +2006,15 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
    ir->print();
    printf("\n");
 
+   src_reg index_reg;
    ir_constant *constant_index = vertex_deref->array_index->constant_expression_value();
-   /* Should really relax this -- the common case is indexing with gl_InvocationID */
-   assert(constant_index && "non-constant vertex indices not supported");
+   if (constant_index) {
+      index_reg = src_reg(constant_index->value.u[0]);
+   } else {
+      vertex_deref->array_index->accept(this);
+      index_reg = this->result;
+   }
 
-   src_reg index_reg = src_reg(constant_index->value.u[0]);
    /* Offset into the VUE in bytes. Array indexing within a vertex will translate to
     * an adjustment to this offset. */
    /* XXX: input_vue_map should be moved to a common layer. This won't work for DS! */
@@ -2108,7 +2112,7 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    ir_variable *var = ir->variable_referenced();
 
    uint32_t location = var->data.location;
-   uint32_t vertex_index = 0;
+   src_reg vertex_index = src_reg(0u);
 
    ir->print();
    printf("\n");
@@ -2117,26 +2121,40 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    ir_dereference_array *arr = ir->as_dereference_array();
    while (arr) {
       ir_constant *constant_index = arr->array_index->constant_expression_value();
-      assert(constant_index && "non-constant indexing not supported");
       if (var->data.patch || arr->array->as_dereference_array()) {
          /* this is indexing within a vertex, or within a patch var */
+         assert(constant_index && "non-constant indexing not supported");
          location += constant_index->value.u[0] * compute_array_stride(arr);
       } else {
          /* this is vertex indexing. */
-         vertex_index = constant_index->value.u[0];
+         if (constant_index)
+            vertex_index = src_reg(constant_index->value.u[0]);
+         else {
+            arr->array_index->accept(this);
+            vertex_index = this->result;
+         }
       }
 
       arr = arr->array->as_dereference_array();
    }
 
-   uint32_t urb_offset = prog_data->vue_map.varying_to_slot[location] +
-                         vertex_index * prog_data->vue_map.num_per_vertex_slots;
+   /* XXX: can we lean on the optimizer to be clearer? */
+   src_reg urb_offset, temp;
+   if (vertex_index.file == IMM) {
+      urb_offset = src_reg(prog_data->vue_map.num_per_vertex_slots * vertex_index.fixed_hw_reg.dw1.ud +
+                           prog_data->vue_map.varying_to_slot[location]);
+   } else {
+      urb_offset = src_reg(this, glsl_type::uint_type);
+      temp = src_reg(this, glsl_type::uint_type);
+      emit(MUL(dst_reg(temp), vertex_index, src_reg(prog_data->vue_map.num_per_vertex_slots)));
+      emit(ADD(dst_reg(urb_offset), temp, src_reg(prog_data->vue_map.varying_to_slot[location])));
+   }
 
-   printf("emit_urb_write_to_patch_record %s is_patch=%d loc=%d urb_offset=%d\n",
-          var->name, var->data.patch, location, urb_offset);
+   printf("emit_urb_write_to_patch_record %s is_patch=%d loc=%d urb_offset=--\n",
+          var->name, var->data.patch, location);
 
    /* Set up the message header */
-   emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), src_reg(urb_offset));
+   emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), urb_offset);
 
    /* Copy data into payload */
    emit(MOV(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), retype(data, BRW_REGISTER_TYPE_UD)));

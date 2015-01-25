@@ -91,11 +91,6 @@ protected:
    virtual vec4_instruction *emit_urb_write_opcode(bool complete);
 
 private:
-   int setup_varying_inputs(int payload_reg, int *attribute_map);
-   void emit_control_data_bits();
-
-   src_reg vertex_count;
-   src_reg control_data_bits;
    const struct brw_ds_compile * const c;
 };
 

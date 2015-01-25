@@ -70,83 +70,9 @@ vec4_ds_visitor::make_reg_for_system_value(ir_variable *ir)
 }
 
 
-int
-vec4_ds_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
-{
-   /* For tessellation evaluation shaders there are N copies of the input attributes, where N
-    * is the number of input vertices.  attribute_map[BRW_VARYING_SLOT_COUNT *
-    * i + j] represents attribute j for vertex i.
-    *
-    * Note that DS inputs are read from the VUE 256 bits (2 vec4's) at a time,
-    * so the total number of input slots that will be delivered to the DS (and
-    * thus the stride of the input arrays) is urb_read_length * 2.
-    */
-
-   int num_patch_inputs = 0;
-
-   num_patch_inputs = 0;
-   for (int slot = 0; slot < c->input_vue_map.num_per_patch_slots; slot++) {
-      const int varying = c->input_vue_map.slot_to_varying[slot];
-      attribute_map[varying] = 2 * payload_reg + num_patch_inputs;
-      printf("patch attrib slot %d: varying %d val %d\n",
-            varying,
-            varying,
-            attribute_map[varying]);
-      num_patch_inputs++;
-   }
-
-   assert(!(num_patch_inputs % 2));
-
-   /*
-    * XXX: Get this from the key!
-    * XXX: This isnt even vaguely correct for ARB_sso with tess stages split between programs
-    */
-   struct gl_shader *tcs = this->shader_prog->_LinkedShaders[MESA_SHADER_TESS_CTRL];
-   const unsigned num_vertex_inputs = tcs
-      ? tcs->TessCtrl.VerticesOut
-      : MAX_DS_INPUT_VERTICES;
-   assert(num_vertex_inputs <= MAX_DS_INPUT_VERTICES);
-
-   const unsigned input_array_stride = c->prog_data.base.urb_read_length * 2 - num_patch_inputs;
-
-   for (int slot = c->input_vue_map.num_per_patch_slots; slot < c->input_vue_map.num_slots; slot++) {
-      const int varying = c->input_vue_map.slot_to_varying[slot];
-      for (unsigned vertex = 0; vertex < num_vertex_inputs; vertex++) {
-         attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying] =
-            2 * payload_reg + num_patch_inputs + input_array_stride * vertex +
-            slot - num_patch_inputs;
-         printf("vert attrib slot %d: vertex %d varying %d val %d\n",
-               BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying,
-               vertex,
-               varying,
-               attribute_map[BRW_VARYING_SLOT_COUNT * (vertex + 1) + varying]);
-      }
-   }
-
-   //prog_data->urb_read_length = (nr_attributes + 1) / 2;
-
-   //unsigned vue_entries =
-      //MAX2(nr_attributes, prog_data->vue_map.num_slots);
-   //prog_data->urb_entry_size = ALIGN(vue_entries, 4) / 4;
-
-   int regs_used = (num_patch_inputs + 1) / 2;
-   regs_used += (input_array_stride * num_vertex_inputs + 1) / 2;
-   return payload_reg + regs_used;
-}
-
-
 void
 vec4_ds_visitor::setup_payload()
 {
-   int attribute_map[BRW_VARYING_SLOT_COUNT * (MAX_DS_INPUT_VERTICES + 1)];
-
-   /* If a tessellation evaluation shader tries to read from an input that wasn't written by
-    * the tessellation control shader, that produces undefined results, but it shouldn't
-    * crash anything.  So initialize attribute_map to zeros--that ensures that
-    * these undefined results are read from r0.
-    */
-   memset(attribute_map, 0, sizeof(attribute_map));
-
    int reg = 0;
 
    /* The payload always contains important data in r0 and r1, which contains
@@ -156,10 +82,6 @@ vec4_ds_visitor::setup_payload()
    reg += 2;
 
    reg = setup_uniforms(reg);
-
-   reg = setup_varying_inputs(reg, attribute_map);
-
-   lower_attributes_to_hw_regs(attribute_map, true);
 
    this->first_non_payload_grf = reg;
 }
