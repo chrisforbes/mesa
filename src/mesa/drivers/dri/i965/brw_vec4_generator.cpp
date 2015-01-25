@@ -901,8 +901,10 @@ void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
     * Inputs are a vertex index, and a byte offset from the beginning of
     * the vertex. */
 
-   assert(vertex.file == BRW_IMMEDIATE_VALUE);
-   assert(vertex.type == BRW_REGISTER_TYPE_UD);
+   /* If `vertex` is not an immediate, we clobber a0.0 */
+
+   assert(vertex.file == BRW_IMMEDIATE_VALUE || vertex.file == BRW_GENERAL_REGISTER_FILE);
+   assert(vertex.type == BRW_REGISTER_TYPE_UD || vertex.type == BRW_REGISTER_TYPE_D);
    assert(offset.file == BRW_IMMEDIATE_VALUE);
    assert(offset.type == BRW_REGISTER_TYPE_UD);
 
@@ -916,12 +918,27 @@ void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
    /* m0.5 bits 8-15 are channel enables */
    brw_MOV(p, get_element_ud(dst, 5), brw_imm_ud(0xff00));
 
-   uint32_t vertex_index = vertex.dw1.ud;
-   struct brw_reg index_reg = brw_vec1_grf(
-         1 + (vertex_index >> 3), vertex_index & 7);
-
    /* m0.0-0.1: URB handles */
-   brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(index_reg, BRW_REGISTER_TYPE_UD));
+   if (vertex.file == BRW_IMMEDIATE_VALUE) {
+      uint32_t vertex_index = vertex.dw1.ud;
+      struct brw_reg index_reg = brw_vec1_grf(
+            1 + (vertex_index >> 3), vertex_index & 7);
+
+      brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(index_reg, BRW_REGISTER_TYPE_UD));
+   } else {
+      /* indirect via a0.0 */
+      struct brw_reg addr = brw_address_reg(0);
+
+      /* bottom half: m0.0 = g[1.0 + vertex.0]UD */
+      brw_ADD(p, addr, get_element_ud(vertex, 0), brw_imm_uw(0x8));
+      brw_SHL(p, addr, addr, brw_imm_ud(2));
+      brw_MOV(p, get_element_ud(dst, 0), deref_1ud(brw_indirect(0, 0), 0));
+
+      /* top half: m0.1 = g[1.0 + vertex.4]UD */
+      brw_ADD(p, addr, get_element_ud(vertex, 4), brw_imm_uw(0x8));
+      brw_SHL(p, addr, addr, brw_imm_ud(2));
+      brw_MOV(p, get_element_ud(dst, 1), deref_1ud(brw_indirect(0, 0), 0));
+   }
 
    /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
    brw_MOV(p, vec2(get_element_ud(dst, 3)), offset);
@@ -936,7 +953,7 @@ vec4_generator::generate_hs_output_urb_offsets(struct brw_reg dst,
 {
    /* Generates an URB read/write message header for HS/DS operation, for the patch URB entry. */
 
-   assert(offset.file == BRW_IMMEDIATE_VALUE);
+   assert(offset.file == BRW_IMMEDIATE_VALUE || offset.file == BRW_GENERAL_REGISTER_FILE);
    assert(offset.type == BRW_REGISTER_TYPE_UD);
    assert(dst.file == BRW_GENERAL_REGISTER_FILE || dst.file == BRW_MESSAGE_REGISTER_FILE);
 
@@ -956,7 +973,7 @@ vec4_generator::generate_hs_output_urb_offsets(struct brw_reg dst,
    brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(urb_handle, BRW_REGISTER_TYPE_UD));
 
    /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
-   brw_MOV(p, vec2(get_element_ud(dst, 3)), offset);
+   brw_MOV(p, vec2(get_element_ud(dst, 3)), stride(offset, 8, 2, 4));
 
    brw_pop_insn_state(p);
 }
