@@ -2157,7 +2157,7 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), urb_offset);
 
    /* Copy data into payload */
-   emit(MOV(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), retype(data, BRW_REGISTER_TYPE_UD)));
+   emit(MOV(retype(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), data.type), data));
 
    /* Emit write */
    vec4_instruction *inst = emit(HS_OPCODE_URB_WRITE, dst_null_f());
