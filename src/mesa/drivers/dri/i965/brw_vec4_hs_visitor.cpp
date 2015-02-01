@@ -150,8 +150,15 @@ vec4_hs_visitor::emit_thread_end()
 
    /* Release input vertices */
 
-   /* XXX: Use URB semaphore to determine whether this is the last invocation,
-    * and only release the input vertices in that case. */
+   if (num_instances > 2) {
+      this->current_annotation = "check if last thread to complete";
+      dst_reg val = dst_reg(this, glsl_type::uint_type);
+      emit(HS_OPCODE_URB_SEMAPHORE_INCR, val);
+      emit(CMP(dst_null_d(), swizzle(src_reg(val), BRW_SWIZZLE_XXXX),
+               src_reg((uint32_t)((num_instances+1)/2 - 1)),
+               BRW_CONDITIONAL_EQ));
+      emit(IF(BRW_PREDICATE_NORMAL));
+   }
 
    unsigned input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
@@ -165,6 +172,14 @@ vec4_hs_visitor::emit_thread_end()
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->mlen = 1;   /* just the header, no data. */
    inst->urb_write_flags = BRW_URB_WRITE_EOT_COMPLETE;
+
+   if (num_instances > 2) {
+      /* re-zero the URB semaphore */
+      this->current_annotation = "reset urb semaphore";
+      dst_reg scratch = dst_reg(this, glsl_type::uint_type);
+      emit(HS_OPCODE_URB_SEMAPHORE_RESET, scratch);
+      emit(BRW_OPCODE_ENDIF);
+   }
 }
 
 

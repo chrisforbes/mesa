@@ -1120,6 +1120,93 @@ vec4_generator::generate_hs_get_primitive_id(struct brw_reg dst)
 }
 
 void
+vec4_generator::generate_hs_urb_semaphore_incr(struct brw_reg dst)
+{
+   /* clobbers dst during setup, then result will be written there. */
+   struct brw_context *brw = p->brw;
+
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+
+   struct brw_reg r0_2 = retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD);
+   struct brw_reg addr = vec1(retype(brw_address_reg(0), BRW_REGISTER_TYPE_UD));
+
+   const uint32_t mask = brw->is_haswell
+         ? HSW_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK
+         : GEN7_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK;
+
+   brw_AND(p, get_element_ud(dst, 0), r0_2, brw_imm_ud(mask));
+
+   /* r0.2:31-24 is DWord-granular offset into URB semaphores region.
+    * We want it in descriptor:13-3.
+    */
+   brw_SHR(p, addr, r0_2, brw_imm_ud(21));
+
+   /* a0.0 |= <descriptor> */
+   brw_inst *or_inst = brw_next_insn(p, BRW_OPCODE_OR);
+   brw_set_dest(p, or_inst, addr);
+   brw_set_src0(p, or_inst, addr);
+   brw_set_message_descriptor(p, or_inst, (brw_message_target) 0 /* normally SFID, but cmod clobber */,
+                              1 /* mlen */, 1 /* rlen */,
+                              true /* header */, false /* eot */);
+   brw_inst_set_urb_opcode(brw, or_inst, GEN7_URB_OPCODE_ATOMIC_INC);
+   brw_inst_set_src1_reg_type(p->brw, or_inst, BRW_REGISTER_TYPE_UD);
+
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, dst);   /* header is here */
+   brw_set_indirect_send_descriptor(p, send, BRW_SFID_URB, addr);
+
+   brw_MOV(p, dst, get_element_ud(dst, 0));
+
+   brw_pop_insn_state(p);
+}
+
+void
+vec4_generator::generate_hs_urb_semaphore_reset(struct brw_reg dst)
+{
+   /* clobbers dst during setup, returns nothing. */
+   struct brw_context *brw = p->brw;
+
+   brw_push_insn_state(p);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+
+   struct brw_reg r0_2 = retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD);
+   struct brw_reg addr = vec1(retype(brw_address_reg(0), BRW_REGISTER_TYPE_UD));
+
+   const uint32_t mask = brw->is_haswell
+         ? HSW_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK
+         : GEN7_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK;
+
+   brw_MOV(p, dst, brw_imm_ud(0u));
+   brw_AND(p, get_element_ud(dst, 0), r0_2, brw_imm_ud(mask));
+
+   /* r0.2:31-24 is DWord-granular offset into URB semaphores region.
+    * We want it in descriptor:13-3.
+    */
+   brw_SHR(p, addr, r0_2, brw_imm_ud(21));
+
+   /* a0.0 |= <descriptor> */
+   brw_inst *or_inst = brw_next_insn(p, BRW_OPCODE_OR);
+   brw_set_dest(p, or_inst, addr);
+   brw_set_src0(p, or_inst, addr);
+   brw_set_message_descriptor(p, or_inst, (brw_message_target) 0 /* normally SFID, but cmod clobber */,
+                              1 /* mlen */, 0 /* rlen */,
+                              true /* header */, false /* eot */);
+   brw_inst_set_urb_opcode(brw, or_inst, GEN7_URB_OPCODE_ATOMIC_MOV);
+   brw_inst_set_src1_reg_type(p->brw, or_inst, BRW_REGISTER_TYPE_UD);
+
+   brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, brw_null_reg());   /* no writeback */
+   brw_set_src0(p, send, dst);   /* header is here */
+   brw_set_indirect_send_descriptor(p, send, BRW_SFID_URB, addr);
+
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1884,6 +1971,14 @@ vec4_generator::generate_code(const cfg_t *cfg)
 
       case HS_OPCODE_GET_PRIMITIVE_ID:
          generate_hs_get_primitive_id(dst);
+         break;
+
+      case HS_OPCODE_URB_SEMAPHORE_INCR:
+         generate_hs_urb_semaphore_incr(dst);
+         break;
+
+      case HS_OPCODE_URB_SEMAPHORE_RESET:
+         generate_hs_urb_semaphore_reset(dst);
          break;
 
       default:

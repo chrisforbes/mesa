@@ -666,6 +666,9 @@ private:
    void generate_ds_get_primitive_id(struct brw_reg dst);
    void generate_hs_get_primitive_id(struct brw_reg dst);
 
+   void generate_hs_urb_semaphore_incr(struct brw_reg dst);
+   void generate_hs_urb_semaphore_reset(struct brw_reg dst);
+
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
    void generate_scratch_write(vec4_instruction *inst,

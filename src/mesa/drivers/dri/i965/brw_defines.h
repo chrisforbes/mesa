@@ -1113,6 +1113,9 @@ enum opcode {
    DS_OPCODE_GET_TESS_COORD,
    DS_OPCODE_GET_PRIMITIVE_ID,
    HS_OPCODE_GET_PRIMITIVE_ID,
+
+   HS_OPCODE_URB_SEMAPHORE_INCR,
+   HS_OPCODE_URB_SEMAPHORE_RESET,
 };
 
 enum brw_urb_write_flags {
@@ -1821,9 +1824,13 @@ enum brw_message_target {
 # define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH          (22 - 16 + 1)
 # define GEN7_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT          16
 
+# define GEN7_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK          INTEL_MASK(11, 0)
+
 # define HSW_HS_PAYLOAD_INSTANCE_NUMBER_MASK            INTEL_MASK(23, 17)
 # define HSW_HS_PAYLOAD_INSTANCE_NUMBER_WIDTH           (23 - 17 + 1)
 # define HSW_HS_PAYLOAD_INSTANCE_NUMBER_SHIFT           17
+
+# define HSW_HS_PAYLOAD_SEMAPHORE_HANDLE_MASK           INTEL_MASK(12, 0)
 
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
 /* DW1 */

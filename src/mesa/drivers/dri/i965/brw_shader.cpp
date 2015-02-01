@@ -604,6 +604,11 @@ brw_instruction_name(enum opcode op)
       return "ds_get_primitive_id";
    case HS_OPCODE_GET_PRIMITIVE_ID:
       return "hs_get_primitive_id";
+
+   case HS_OPCODE_URB_SEMAPHORE_INCR:
+      return "hs_urb_semaphore_incr";
+   case HS_OPCODE_URB_SEMAPHORE_RESET:
+      return "hs_urb_semaphore_reset";
    }
 
    unreachable("not reached");
@@ -979,6 +984,8 @@ backend_instruction::has_side_effects() const
    case SHADER_OPCODE_URB_WRITE_SIMD8:
    case HS_OPCODE_INPUT_RELEASE:
    case FS_OPCODE_FB_WRITE:
+   case HS_OPCODE_URB_SEMAPHORE_INCR:
+   case HS_OPCODE_URB_SEMAPHORE_RESET:
       return true;
    default:
       return false;
