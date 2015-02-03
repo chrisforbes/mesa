@@ -133,10 +133,8 @@ do_ds_prog(struct brw_context *brw,
    brw_compute_tess_vue_map(brw, &c.input_vue_map, c.key.input_varyings,
                             dp->program.IsPatch);
 
-   /* DS inputs are read from the VUE 256 bits (2 vec4's) at a time, so we
-    * need to program a URB read length of ceiling(num_slots / 2).
-    */
-   c.prog_data.base.urb_read_length = (c.input_vue_map.num_slots + 1) / 2;
+   /* We always have our DS pull from the patch URB entry via messages. */
+   c.prog_data.base.urb_read_length = 0;
 
    void *mem_ctx = ralloc_context(NULL);
    unsigned program_size;

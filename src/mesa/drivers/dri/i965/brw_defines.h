@@ -1850,6 +1850,7 @@ enum brw_message_target {
 # define GEN7_DS_URB_ENTRY_READ_OFFSET_SHIFT            4
 /* DW5 */
 # define GEN7_DS_MAX_THREADS_SHIFT                      25
+# define HSW_DS_MAX_THREADS_SHIFT                       21
 # define GEN7_DS_STATISTICS_ENABLE                      (1 << 10)
 # define GEN7_DS_COMPUTE_W_COORDINATE_ENABLE            (1 << 2)
 # define GEN7_DS_ENABLE                                 (1 << 0)

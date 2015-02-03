@@ -1042,7 +1042,8 @@ vec4_generator::generate_vec4_urb_read(struct brw_reg dst,
 void
 vec4_generator::generate_hs_input_release(vec4_instruction *inst,
                                           struct brw_reg dst,
-                                          struct brw_reg vertex)
+                                          struct brw_reg vertex,
+                                          struct brw_reg is_unpaired)
 {
    /* releases the pair of input vertices starting at `vertex`. clobbers
     * `dst`. */
@@ -1054,6 +1055,9 @@ vec4_generator::generate_hs_input_release(vec4_instruction *inst,
 
    assert(dst.file == BRW_GENERAL_REGISTER_FILE);
    assert(dst.type == BRW_REGISTER_TYPE_UD);
+
+   assert(is_unpaired.file == BRW_IMMEDIATE_VALUE);
+   assert(is_unpaired.type == BRW_REGISTER_TYPE_UD);
 
    uint32_t vertex_index = vertex.dw1.ud;
    struct brw_reg index_reg = brw_vec2_grf(
@@ -1077,7 +1081,7 @@ vec4_generator::generate_hs_input_release(vec4_instruction *inst,
    brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_READ_HWORD);
 
    /* we want to release two vertices at a time */
-   brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
+   brw_inst_set_urb_swizzle_control(brw, send, is_unpaired.dw1.ud ? BRW_URB_SWIZZLE_NONE : BRW_URB_SWIZZLE_INTERLEAVE);
    brw_inst_set_urb_complete(brw, send, 1);
 
    /* dont bother setting global or per-slot offsets. we're not actually
@@ -1942,7 +1946,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
          break;
 
       case HS_OPCODE_INPUT_RELEASE:
-         generate_hs_input_release(inst, dst, src[0]);
+         generate_hs_input_release(inst, dst, src[0], src[1]);
          break;
 
       case HS_OPCODE_SET_URB_OFFSETS:

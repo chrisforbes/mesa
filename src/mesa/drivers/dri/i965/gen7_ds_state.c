@@ -88,19 +88,28 @@ upload_ds_state(struct brw_context *brw)
          OUT_BATCH(0);
       }
       uint32_t dw4 =
-         (prog_data->base.dispatch_grf_start_reg <<
-          GEN7_DS_DISPATCH_START_GRF_SHIFT) |
-         (prog_data->urb_read_length <<
-          GEN7_DS_URB_READ_LENGTH_SHIFT) |
+         (prog_data->base.dispatch_grf_start_reg << GEN7_DS_DISPATCH_START_GRF_SHIFT) |
+         (0 << GEN7_DS_URB_READ_LENGTH_SHIFT) |
          (0 << GEN7_DS_URB_ENTRY_READ_OFFSET_SHIFT);
       OUT_BATCH(dw4);
 
-      uint32_t dw5 =
-         ((brw->max_ds_threads - 1) << GEN7_DS_MAX_THREADS_SHIFT) |
-         GEN7_DS_STATISTICS_ENABLE |
-         (brw->ds.prog_data->domain == tri ? GEN7_DS_COMPUTE_W_COORDINATE_ENABLE : 0) |
-         //ds cache disable?
-         GEN7_DS_ENABLE;
+      /* DS will pull from the patch URB entry */
+      assert(!prog_data->urb_read_length);
+
+      uint32_t dw5;
+      if (brw->is_haswell) {
+         dw5 = ((brw->max_ds_threads - 1) << HSW_DS_MAX_THREADS_SHIFT) |
+            GEN7_DS_STATISTICS_ENABLE |
+            (brw->ds.prog_data->domain == tri ? GEN7_DS_COMPUTE_W_COORDINATE_ENABLE : 0) |
+            //ds cache disable?
+            GEN7_DS_ENABLE;
+      } else {
+         dw5 = ((brw->max_ds_threads - 1) << GEN7_DS_MAX_THREADS_SHIFT) |
+            GEN7_DS_STATISTICS_ENABLE |
+            (brw->ds.prog_data->domain == tri ? GEN7_DS_COMPUTE_W_COORDINATE_ENABLE : 0) |
+            //ds cache disable?
+            GEN7_DS_ENABLE;
+      }
       OUT_BATCH(dw5);
       ADVANCE_BATCH();
    } else {

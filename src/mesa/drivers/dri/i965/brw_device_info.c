@@ -191,6 +191,7 @@ static const struct brw_device_info brw_device_info_hsw_gt3 = {
    .max_vs_threads = 280,
    .max_gs_threads = 256,
    .max_wm_threads = 408,
+   .max_ds_threads = 280,
    .urb = {
       .size = 512,
       .min_vs_entries = 64,

@@ -166,7 +166,8 @@ vec4_hs_visitor::emit_thread_end()
 
    for (unsigned i = 0; i < input_vertices; i += 2) {
       dst_reg r = dst_reg(this, glsl_type::uint_type);
-      emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i));
+      bool is_unpaired = (i == input_vertices - 1) && (input_vertices & 1);
+      emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i), src_reg((unsigned)is_unpaired));
    }
 
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
