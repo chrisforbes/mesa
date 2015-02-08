@@ -90,24 +90,7 @@ vec4_ds_visitor::setup_payload()
 void
 vec4_ds_visitor::emit_prolog()
 {
-   /* If the tessellation evaluation shader uses the gl_PointSize input, we
-    * need to fix it up to account for the fact that the tessellation control
-    * shader stored it in the w component of VARYING_SLOT_PSIZ.
-    */
-   if (c->dp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
-      this->current_annotation = "swizzle gl_PointSize input";
-      // XXX: for (int vertex = 0; vertex < c->hp->program.VerticesOut; vertex++) {
-      for (int vertex = 0; vertex < 2; vertex++) {
-         /* hack */
-         dst_reg dst(ATTR,
-                     BRW_VARYING_SLOT_COUNT * (vertex+1) + VARYING_SLOT_PSIZ);
-         dst.type = BRW_REGISTER_TYPE_F;
-         src_reg src(dst);
-         dst.writemask = WRITEMASK_X;
-         src.swizzle = BRW_SWIZZLE_WWWW;
-         /*vec4_instruction *inst = */emit(MOV(dst, src));
-      }
-   }
+   /* nothing special here */
 
    this->current_annotation = NULL;
 }
