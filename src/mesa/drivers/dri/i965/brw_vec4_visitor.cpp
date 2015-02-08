@@ -1996,37 +1996,37 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
    assert(!var->data.patch);  /* Should relax this when applied to TES inputs or TCS output readbacks */
    assert(type_size(ir->type) == 1);  /* We don't expect non-vec4-sized things here */
 
-   ir_dereference_array *vertex_deref = ir;
-   if (ir->array->as_dereference_array()) {
-      /* This is case 2/ above -- which is reasonably rare */
-      vertex_deref = ir->array->as_dereference_array();
+   uint32_t location = var->data.location;
+   src_reg index_reg;
+
+   /* apply adjustment */
+   ir_dereference_array *arr = ir->as_dereference_array();
+   while (arr) {
+      ir_constant *constant_index = arr->array_index->constant_expression_value();
+      if (arr->array->as_dereference_array()) {
+         /* this is indexing within a vertex */
+         assert(constant_index && "non-constant indexing within a vertex not supported");
+         location += constant_index->value.u[0] * compute_array_stride(arr);
+      } else {
+         /* this is vertex indexing. */
+         if (constant_index) {
+            index_reg = src_reg(constant_index->value.u[0]);
+         } else {
+            arr->array_index->accept(this);
+            index_reg = this->result;
+         }
+      }
+
+      arr = arr->array->as_dereference_array();
    }
 
    printf("emit_urb_read_from_vertices:\n");
    ir->print();
    printf("\n");
 
-   src_reg index_reg;
-   ir_constant *constant_index = vertex_deref->array_index->constant_expression_value();
-   if (constant_index) {
-      index_reg = src_reg(constant_index->value.u[0]);
-   } else {
-      vertex_deref->array_index->accept(this);
-      index_reg = this->result;
-   }
-
    /* Offset into the VUE in bytes. Array indexing within a vertex will translate to
     * an adjustment to this offset. */
    /* XXX: input_vue_map should be moved to a common layer. This won't work for DS! */
-
-   uint32_t location = var->data.location;
-   if (ir != vertex_deref) {
-      /* Case 2/ above: Offset the location due to `i` */
-      ir_constant *constant_index_within_vert = ir->array_index->constant_expression_value();
-      assert(constant_index_within_vert && "non-constant indexing in arrays within a vertex not supported");
-
-      location += constant_index_within_vert->value.u[0] * compute_array_stride(ir);
-   }
 
    struct brw_vue_map *input_vue_map = &((struct brw_hs_compile *)c)->input_vue_map;
    uint32_t vue_offset = input_vue_map->varying_to_slot[location];
