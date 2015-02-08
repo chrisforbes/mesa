@@ -170,10 +170,6 @@ vec4_hs_visitor::emit_thread_end()
       emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i), src_reg((unsigned)is_unpaired));
    }
 
-   vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
-   inst->mlen = 1;   /* just the header, no data. */
-   inst->urb_write_flags = BRW_URB_WRITE_EOT_COMPLETE;
-
    if (num_instances > 2) {
       /* re-zero the URB semaphore */
       this->current_annotation = "reset urb semaphore";
@@ -181,6 +177,10 @@ vec4_hs_visitor::emit_thread_end()
       emit(HS_OPCODE_URB_SEMAPHORE_RESET, scratch);
       emit(BRW_OPCODE_ENDIF);
    }
+
+   vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
+   inst->mlen = 1;   /* just the header, no data. */
+   inst->urb_write_flags = BRW_URB_WRITE_EOT_COMPLETE;
 }
 
 
