@@ -29,8 +29,6 @@
 
 #include "brw_vec4_ds_visitor.h"
 
-const unsigned MAX_DS_INPUT_VERTICES = 32;
-
 namespace brw {
 
 vec4_ds_visitor::vec4_ds_visitor(struct brw_context *brw,
