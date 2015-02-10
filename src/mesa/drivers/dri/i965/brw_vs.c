@@ -200,6 +200,8 @@ brw_compute_tess_vue_map(const struct brw_context *const brw,
       assign_vue_slot(vue_map, i);
    }
 
+   if (vue_map->num_slots % 2)
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_PAD);
    vue_map->num_per_vertex_slots = vue_map->num_slots - vue_map->num_per_patch_slots;
 }
 
