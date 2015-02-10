@@ -306,14 +306,22 @@ brw_upload_gs_prog(struct brw_context *brw)
                         _NEW_TEXTURE,
                         BRW_NEW_GEOMETRY_PROGRAM |
                         BRW_NEW_TRANSFORM_FEEDBACK |
+                        BRW_NEW_VUE_MAP_DS_OUT |
                         BRW_NEW_VUE_MAP_VS))
       return;
 
    if (gp == NULL) {
       /* No geometry shader.  Vertex data just passes straight through. */
-      if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
-         brw->vue_map_geom_out = brw->vue_map_vs;
-         brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
+      if (brw->gen >= 7) {
+         if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_DS_OUT) {
+            brw->vue_map_geom_out = brw->vue_map_ds_out;
+            brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
+         }
+      } else {
+         if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
+            brw->vue_map_geom_out = brw->vue_map_vs;
+            brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
+         }
       }
 
       if (brw->gen == 6 &&
@@ -363,6 +371,7 @@ brw_upload_gs_prog(struct brw_context *brw)
       brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
    }
 }
+
 
 bool
 brw_gs_precompile(struct gl_context *ctx,
