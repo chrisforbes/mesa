@@ -873,9 +873,6 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
 {
    struct brw_context *brw = p->brw;
 
-   brw_push_insn_state(p);
-   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
-
    brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, brw_null_reg());
    brw_set_src0(p, send, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD));
@@ -886,8 +883,6 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
    brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_WRITE_OWORD);
    brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
    brw_inst_set_urb_per_slot_offset(brw, send, 1);
-
-   brw_pop_insn_state(p);
 
    /* what happens to swizzles? */
 }
