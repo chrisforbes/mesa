@@ -995,12 +995,11 @@ vec4_generator::generate_ds_urb_offsets(struct brw_reg dst,
 
    /* DS patch URB handle is delivered in r1.3 */
    /* XXX: For HS readbacks, this is in r0.0 instead */
-   struct brw_reg urb_handle = brw_vec1_grf(1, 3);
+   struct brw_reg urb_handle = retype(brw_vec1_grf(1, 3), BRW_REGISTER_TYPE_UD);
 
    /* m0.0-0.1: URB handles */
-   brw_MOV(p, vec2(get_element_ud(dst, 0)), retype(urb_handle, BRW_REGISTER_TYPE_UD));
    /* High bits of r1.3 are reserved, not guaranteed delivered as zero */
-   brw_AND(p, vec2(get_element_ud(dst, 0)), vec2(get_element_ud(dst, 0)), brw_imm_ud(0x1fff));
+   brw_AND(p, vec2(get_element_ud(dst, 0)), urb_handle, brw_imm_ud(0x1fff));
 
    /* m0.3-0.4: 128bit-granular offsets into the URB from the handles */
    brw_MOV(p, vec2(get_element_ud(dst, 3)), offset);
