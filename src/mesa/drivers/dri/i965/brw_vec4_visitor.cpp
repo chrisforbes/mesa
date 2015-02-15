@@ -2117,6 +2117,7 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    ir->print();
    printf("\n");
 
+
    /* apply adjustment */
    ir_dereference_array *arr = ir->as_dereference_array();
    while (arr) {
@@ -2150,19 +2151,25 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
       emit(ADD(dst_reg(urb_offset), temp, src_reg(prog_data->vue_map.varying_to_slot[location])));
    }
 
-   printf("emit_urb_write_to_patch_record %s is_patch=%d loc=%d urb_offset=--\n",
-          var->name, var->data.patch, location);
+   uint32_t owords = type_size(ir->type);
+   printf("emit_urb_write_to_patch_record %s is_patch=%d loc=%d owords=%d\n",
+          var->name, var->data.patch, location, owords);
 
-   /* Set up the message header */
-   emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), urb_offset);
+   for (uint32_t i = 0; i < owords; i++) {
 
-   /* Copy data into payload */
-   emit(MOV(retype(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), data.type), data));
+      /* Set up the message header */
+      emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), urb_offset);
 
-   /* Emit write */
-   vec4_instruction *inst = emit(HS_OPCODE_URB_WRITE, dst_null_f());
-   inst->base_mrf = 2;
-   inst->mlen = 2;
+      /* Copy data into payload */
+      emit(MOV(retype(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), data.type), data));
+
+      /* Emit write */
+      vec4_instruction *inst = emit(HS_OPCODE_URB_WRITE, dst_null_f(), src_reg(i));
+      inst->base_mrf = 2;
+      inst->mlen = 2;
+
+      data.reg_offset++;
+   }
 }
 
 
@@ -2398,6 +2405,12 @@ vec4_visitor::visit(ir_assignment *ir)
 	 emit_bool_to_cond_code(ir->condition, &predicate);
       }
 
+      ir_variable *var = ir->lhs->variable_referenced();
+      if (stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out) {
+         emit_urb_write_to_patch_record(ir->lhs, src);
+         return;
+      }
+
       /* emit_block_move doesn't account for swizzles in the source register.
        * This should be ok, since the source register is a structure or an
        * array, and those can't be swizzled.  But double-check to be sure.
@@ -2408,6 +2421,7 @@ vec4_visitor::visit(ir_assignment *ir)
               : BRW_SWIZZLE_NOOP));
 
       emit_block_move(&dst, &src, ir->rhs->type, predicate);
+
       return;
    }
 

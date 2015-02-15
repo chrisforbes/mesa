@@ -869,9 +869,12 @@ vec4_generator::generate_gs_set_primitive_id(struct brw_reg dst)
 }
 
 void
-vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
+vec4_generator::generate_hs_urb_write(vec4_instruction *inst, struct brw_reg shared_offset)
 {
    struct brw_context *brw = p->brw;
+
+   assert(shared_offset.file == BRW_IMMEDIATE_VALUE);
+   assert(shared_offset.type == BRW_REGISTER_TYPE_UD);
 
    brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, brw_null_reg());
@@ -883,6 +886,7 @@ vec4_generator::generate_hs_urb_write(vec4_instruction *inst)
    brw_inst_set_urb_opcode(brw, send, BRW_URB_OPCODE_WRITE_OWORD);
    brw_inst_set_urb_swizzle_control(brw, send, BRW_URB_SWIZZLE_INTERLEAVE);
    brw_inst_set_urb_per_slot_offset(brw, send, 1);
+   brw_inst_set_urb_global_offset(brw, send, shared_offset.dw1.ud);
 
    /* what happens to swizzles? */
 }
@@ -1934,7 +1938,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
       }
 
       case HS_OPCODE_URB_WRITE:
-         generate_hs_urb_write(inst);
+         generate_hs_urb_write(inst, src[0]);
          break;
 
       case VEC4_OPCODE_URB_READ:
