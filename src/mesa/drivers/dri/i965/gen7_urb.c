@@ -303,7 +303,7 @@ gen7_upload_urb(struct brw_context *brw)
     * requirements of each stage.
     */
    unsigned total_needs = push_constant_chunks +
-                          vs_chunks + hs_chunks + ds_chunks + gs_chunks;
+                          vs_chunks + hs_chunks + hs_semaphore_chunks + ds_chunks + gs_chunks;
    assert(total_needs <= urb_chunks);
 
    /* Mete out remaining space (if any) in proportion to "wants". */
@@ -335,7 +335,7 @@ gen7_upload_urb(struct brw_context *brw)
 
    /* Sanity check that we haven't over-allocated. */
    assert(push_constant_chunks +
-          vs_chunks + hs_chunks + ds_chunks + gs_chunks <= urb_chunks);
+          vs_chunks + hs_chunks + hs_semaphore_chunks + ds_chunks + gs_chunks <= urb_chunks);
 
    /* Finally, compute the number of entries that can fit in the space
     * allocated to each stage.
