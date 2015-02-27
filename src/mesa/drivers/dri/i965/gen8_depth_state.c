@@ -335,17 +335,18 @@ cache_mode1_write_pma_stall_bits(struct brw_context *brw,
 
    brw->pma_stall_bits = pma_stall_bits;
 
-   /* According to the PIPE_CONTROL documentation, software should emit a
-    * PIPE_CONTROL with the CS Stall and Depth Cache Flush bits set prior
-    * to the LRI.  If stencil buffer writes are enabled, then a Render Cache
-    * Flush is also necessary.
-    */
-   const uint32_t render_cache_flush =
-      ctx->Stencil._WriteEnabled ? PIPE_CONTROL_RENDER_TARGET_FLUSH : 0;
+
    brw_emit_pipe_control_flush(brw,
                                PIPE_CONTROL_CS_STALL |
-                               PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-                               render_cache_flush);
+                               PIPE_CONTROL_DEPTH_CACHE_FLUSH);
+
+   /* According to the PIPE_CONTROL documentation, SW must issue a pipe-control
+    * with Render Target Cache Flush bit in addition to Depth-flush.
+    */
+   if (ctx->Stencil._WriteEnabled) {
+      assert(brw->gen == 8);
+      intel_batchbuffer_emit_mi_flush(brw);
+   }
 
    /* CACHE_MODE_1 is a non-privileged register. */
    BEGIN_BATCH(3);
@@ -353,16 +354,6 @@ cache_mode1_write_pma_stall_bits(struct brw_context *brw,
    OUT_BATCH(GEN7_CACHE_MODE_1);
    OUT_BATCH(GEN8_HIZ_PMA_MASK_BITS | pma_stall_bits);
    ADVANCE_BATCH();
-
-   /* After the LRI, a PIPE_CONTROL with both the Depth Stall and Depth Cache
-    * Flush bits is often necessary.  We do it regardless because it's easier.
-    * The render cache flush is also necessary if stencil writes are enabled.
-    */
-   brw_emit_pipe_control_flush(brw,
-                               PIPE_CONTROL_DEPTH_STALL |
-                               PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-                               render_cache_flush);
-
 }
 
 /* Enable PMA IFF we meet the constraints */
