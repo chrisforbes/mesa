@@ -369,6 +369,9 @@ cache_mode1_write_pma_stall_bits(struct brw_context *brw,
 static void
 enable_pma(struct brw_context *brw)
 {
+   if (brw->gen >= 9)
+      return;
+
    uint32_t bits = 0;
    if (pma_fix_enable(brw))
       bits |= GEN8_HIZ_NP_PMA_FIX_ENABLE | GEN8_HIZ_NP_EARLY_Z_FAILS_DISABLE;
@@ -379,6 +382,9 @@ enable_pma(struct brw_context *brw)
 static void
 disable_pma(struct brw_context *brw)
 {
+   if (brw->gen >= 9)
+      return;
+
    cache_mode1_write_pma_stall_bits(brw, 0);
 }
 
