@@ -988,6 +988,8 @@ struct intel_batchbuffer {
       uint16_t used;
       int reloc_count;
    } saved;
+
+   bool finished;
 };
 
 #define BRW_MAX_XFB_STREAMS 4

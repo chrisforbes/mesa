@@ -209,6 +209,11 @@ brw_new_batch(struct brw_context *brw)
 static void
 brw_finish_batch(struct brw_context *brw)
 {
+   /* Tell subsequent calls that they don't need to bother flushing. Handily,
+    * this prevents recursing indefinitely.
+    */
+   brw->batch.finished = true;
+
    /* Capture the closing pipeline statistics register values necessary to
     * support query objects (in the non-hardware context world).
     */
@@ -327,6 +332,8 @@ _intel_batchbuffer_flush(struct brw_context *brw,
       fprintf(stderr, "waiting for idle\n");
       drm_intel_bo_wait_rendering(brw->batch.bo);
    }
+
+   brw->batch.finished = false;
 
    /* Start a new batch buffer. */
    brw_new_batch(brw);

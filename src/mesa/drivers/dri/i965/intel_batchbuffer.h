@@ -117,6 +117,11 @@ static inline void
 intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
                                 enum brw_gpu_ring ring)
 {
+   if (brw->batch.finished) {
+      assert(brw->batch.ring != UNKNOWN_RING);
+      return;
+   }
+
    /* If we're switching rings, implicitly flush the batch. */
    if (unlikely(ring != brw->batch.ring) && brw->batch.ring != UNKNOWN_RING &&
        brw->gen >= 6) {
