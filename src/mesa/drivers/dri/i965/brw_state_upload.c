@@ -335,7 +335,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &gen8_vertices,
 
    &haswell_cut_index,
-   &gen8_pma_fix,
+   &gen8_pma,
 };
 
 static void

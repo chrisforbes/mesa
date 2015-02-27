@@ -322,7 +322,8 @@ pma_fix_enable(const struct brw_context *brw)
 }
 
 static void
-write_pma_stall_bits(struct brw_context *brw, uint32_t pma_stall_bits)
+cache_mode1_write_pma_stall_bits(struct brw_context *brw,
+                                 uint32_t pma_stall_bits)
 {
    struct gl_context *ctx = &brw->ctx;
 
@@ -364,17 +365,24 @@ write_pma_stall_bits(struct brw_context *brw, uint32_t pma_stall_bits)
 
 }
 
+/* Enable PMA IFF we meet the constraints */
 static void
-gen8_emit_pma_stall_workaround(struct brw_context *brw)
+enable_pma(struct brw_context *brw)
 {
    uint32_t bits = 0;
    if (pma_fix_enable(brw))
       bits |= GEN8_HIZ_NP_PMA_FIX_ENABLE | GEN8_HIZ_NP_EARLY_Z_FAILS_DISABLE;
 
-   write_pma_stall_bits(brw, bits);
+   cache_mode1_write_pma_stall_bits(brw, bits);
 }
 
-const struct brw_tracked_state gen8_pma_fix = {
+static void
+disable_pma(struct brw_context *brw)
+{
+   cache_mode1_write_pma_stall_bits(brw, 0);
+}
+
+const struct brw_tracked_state gen8_pma = {
    .dirty = {
       .mesa = _NEW_BUFFERS |
               _NEW_COLOR |
@@ -383,7 +391,7 @@ const struct brw_tracked_state gen8_pma_fix = {
               _NEW_STENCIL,
       .brw = BRW_NEW_FS_PROG_DATA,
    },
-   .emit = gen8_emit_pma_stall_workaround
+   .emit = enable_pma
 };
 
 /**
@@ -400,7 +408,7 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
       return;
 
    /* Disable the PMA stall fix since we're about to do a HiZ operation. */
-   write_pma_stall_bits(brw, 0);
+   disable_pma(brw);
 
    assert(mt->first_level == 0);
    assert(mt->logical_depth0 >= 1);
