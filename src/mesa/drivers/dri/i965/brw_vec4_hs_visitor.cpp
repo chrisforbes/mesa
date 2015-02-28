@@ -40,7 +40,7 @@ vec4_hs_visitor::vec4_hs_visitor(struct brw_context *brw,
                                  bool no_spills)
    : vec4_visitor(brw, &c->base, &c->hp->program.Base, &c->key.base,
                   &c->prog_data.base, prog, MESA_SHADER_TESS_CTRL, mem_ctx,
-                  INTEL_DEBUG & DEBUG_TS, no_spills,
+                  no_spills,
                   ST_HS, ST_HS_WRITTEN, ST_HS_RESET),
      c(c)
 {

@@ -39,7 +39,7 @@ vec4_ds_visitor::vec4_ds_visitor(struct brw_context *brw,
                                  bool no_spills)
    : vec4_visitor(brw, &c->base, &c->dp->program.Base, &c->key.base,
                   &c->prog_data.base, prog, MESA_SHADER_TESS_EVAL, mem_ctx,
-                  INTEL_DEBUG & DEBUG_TS, no_spills,
+                  no_spills,
                   ST_DS, ST_DS_WRITTEN, ST_DS_RESET),
      c(c)
 {
