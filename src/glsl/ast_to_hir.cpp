@@ -702,7 +702,9 @@ find_innermost_array_index(ir_rvalue *rv)
 {
    ir_dereference_array *last = NULL;
    while (rv) {
-      if (rv->as_dereference_array()) {
+      if (rv->as_swizzle()) {
+         rv = rv->as_swizzle()->val;
+      } else if (rv->as_dereference_array()) {
          last = rv->as_dereference_array();
          rv = last->array;
       } else if (rv->as_dereference_record())
