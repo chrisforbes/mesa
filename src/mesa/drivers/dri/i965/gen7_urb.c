@@ -143,12 +143,15 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
     */
    if (brw->gen < 8 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_cs_stall_flush(brw);
+
+   printf("gen7_emit_push_constant_state\n");
 }
 
 const struct brw_tracked_state gen7_push_constant_space = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT |
+         BRW_NEW_BATCH |
              BRW_NEW_GEOMETRY_PROGRAM |
              BRW_NEW_TESS_CTRL_PROGRAM |
              BRW_NEW_TESS_EVAL_PROGRAM,
