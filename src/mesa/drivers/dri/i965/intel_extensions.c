@@ -326,10 +326,12 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_stencil_texturing = true;
    }
 
+#if 0
    if (brw->gen == 5 || can_write_oacontrol(brw)) {
       ctx->Extensions.AMD_performance_monitor = true;
       ctx->Extensions.INTEL_performance_query = true;
    }
+#endif
 
    if (ctx->API == API_OPENGL_CORE)
       ctx->Extensions.ARB_base_instance = true;

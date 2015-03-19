@@ -630,6 +630,7 @@ gen7_emit_cs_stall_flush(struct brw_context *brw)
 {
    brw_emit_pipe_control_write(brw,
                                PIPE_CONTROL_CS_STALL
+                               | PIPE_CONTROL_TLB_INVALIDATE
                                | PIPE_CONTROL_WRITE_IMMEDIATE,
                                brw->batch.workaround_bo, 0,
                                0, 0);
@@ -713,6 +714,7 @@ intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
          }
 
          flags |= PIPE_CONTROL_INSTRUCTION_INVALIDATE |
+                  PIPE_CONTROL_TLB_INVALIDATE |
                   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
                   PIPE_CONTROL_VF_CACHE_INVALIDATE |
                   PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |

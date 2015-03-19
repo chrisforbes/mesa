@@ -59,7 +59,11 @@ gen6_upload_push_constants(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
 
    if (prog_data->nr_params == 0) {
-      stage_state->push_const_size = 0;
+      if (stage_state == &brw->hs.base)
+         stage_state->push_const_size = 4;
+      else
+         stage_state->push_const_size = 0;
+      fprintf(stderr, "nope\n");
    } else {
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.
@@ -86,7 +90,7 @@ gen6_upload_push_constants(struct brw_context *brw,
          param[i] = *prog_data->param[i];
       }
 
-      if (0) {
+      if (1) {
 	 fprintf(stderr, "%s constants:\n",
                  _mesa_shader_stage_to_string(stage_state->stage));
 	 for (i = 0; i < prog_data->nr_params; i++) {

@@ -146,8 +146,12 @@ static void gen6_set_prim(struct brw_context *brw,
 
    hw_prim = get_hw_prim_for_gl_prim(prim->mode);
 
-   if (prim->mode == GL_PATCHES)
+   if (prim->mode == GL_PATCHES) {
       hw_prim += prim->patch_vertices;
+      assert(hw_prim != _3DPRIM_PATCHLIST_0);
+      brw->state.dirty.brw |=  (BRW_NEW_PRIMITIVE | BRW_NEW_HS_PROG_DATA);
+      brw->primitive = hw_prim;
+   }
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
