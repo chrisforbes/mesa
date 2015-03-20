@@ -948,7 +948,8 @@ void vec4_generator::generate_hs_urb_offsets(struct brw_reg dst,
 
 void
 vec4_generator::generate_hs_output_urb_offsets(struct brw_reg dst,
-                                               struct brw_reg offset)
+                                               struct brw_reg offset,
+                                               struct brw_reg write_mask)
 {
    /* Generates an URB read/write message header for HS/DS operation, for the patch URB entry. */
 
@@ -956,14 +957,20 @@ vec4_generator::generate_hs_output_urb_offsets(struct brw_reg dst,
    assert(offset.type == BRW_REGISTER_TYPE_UD);
    assert(dst.file == BRW_GENERAL_REGISTER_FILE || dst.file == BRW_MESSAGE_REGISTER_FILE);
 
+   assert(write_mask.file == BRW_IMMEDIATE_VALUE);
+   assert(write_mask.type == BRW_REGISTER_TYPE_UD);
+
    brw_push_insn_state(p);
 
    brw_set_default_access_mode(p, BRW_ALIGN_1);
    brw_set_default_mask_control(p, BRW_MASK_DISABLE);
    brw_MOV(p, dst, brw_imm_ud(0));
 
-   /* m0.5 bits 8-15 are channel enables */
-   brw_MOV(p, get_element_ud(dst, 5), brw_imm_ud(0xff00));
+   unsigned mask = write_mask.dw1.ud;
+
+   /* m0.5 bits 8-15 are channel enables: take the writemask given, and propagate
+    * into both sets of channels */
+   brw_MOV(p, get_element_ud(dst, 5), brw_imm_ud((mask << 8) | (mask << 12)));
 
    /* HS patch URB handle is delivered in r0.0 */
    struct brw_reg urb_handle = brw_vec1_grf(0, 0);
@@ -1970,7 +1977,7 @@ vec4_generator::generate_code(const cfg_t *cfg)
          break;
 
       case HS_OPCODE_SET_OUTPUT_URB_OFFSETS:
-         generate_hs_output_urb_offsets(dst, src[0]);
+         generate_hs_output_urb_offsets(dst, src[0], src[1]);
          break;
 
       case DS_OPCODE_SET_URB_OFFSETS:

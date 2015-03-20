@@ -2125,7 +2125,7 @@ vec4_visitor::emit_urb_read_from_patch_record(ir_dereference *ir)
 
 
 void
-vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
+vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data, unsigned write_mask)
 {
    assert(stage == MESA_SHADER_TESS_CTRL);
 
@@ -2137,6 +2137,14 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    ir->print();
    printf("\n");
 
+   if (!write_mask)
+      write_mask = WRITEMASK_XYZW;
+
+   /* reswizzle the tess factors */
+   if (!strncmp(var->name, "gl_TessLevel", 12)) {
+      /* XXX: this isnt proper at all. */
+      write_mask = 0xf;
+   }
 
    /* apply adjustment */
    ir_dereference_array *arr = ir->as_dereference_array();
@@ -2178,7 +2186,8 @@ vec4_visitor::emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data)
    for (uint32_t i = 0; i < owords; i++) {
 
       /* Set up the message header */
-      emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW), urb_offset);
+      emit(HS_OPCODE_SET_OUTPUT_URB_OFFSETS, dst_reg(MRF, 2, glsl_type::uvec4_type, WRITEMASK_XYZW),
+           urb_offset, src_reg(write_mask));
 
       /* Copy data into payload */
       emit(MOV(retype(dst_reg(MRF, 3, glsl_type::uvec4_type, WRITEMASK_XYZW), data.type), data));
@@ -2415,6 +2424,8 @@ vec4_visitor::visit(ir_assignment *ir)
 {
    dst_reg dst = get_assignment_lhs(ir->lhs, this);
    enum brw_predicate predicate = BRW_PREDICATE_NONE;
+   ir_variable *var = ir->lhs->variable_referenced();
+   bool is_explicit_write = stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out;
 
    if (!ir->lhs->type->is_scalar() &&
        !ir->lhs->type->is_vector()) {
@@ -2423,12 +2434,6 @@ vec4_visitor::visit(ir_assignment *ir)
 
       if (ir->condition) {
 	 emit_bool_to_cond_code(ir->condition, &predicate);
-      }
-
-      ir_variable *var = ir->lhs->variable_referenced();
-      if (stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out) {
-         emit_urb_write_to_patch_record(ir->lhs, src);
-         return;
       }
 
       /* emit_block_move doesn't account for swizzles in the source register.
@@ -2440,7 +2445,11 @@ vec4_visitor::visit(ir_assignment *ir)
               ? swizzle_for_size(ir->rhs->type->vector_elements)
               : BRW_SWIZZLE_NOOP));
 
-      emit_block_move(&dst, &src, ir->rhs->type, predicate);
+      if (is_explicit_write) {
+         emit_urb_write_to_patch_record(ir->lhs, src, ir->write_mask);
+      } else {
+         emit_block_move(&dst, &src, ir->rhs->type, predicate);
+      }
 
       return;
    }
@@ -2487,7 +2496,7 @@ vec4_visitor::visit(ir_assignment *ir)
    src.swizzle = BRW_SWIZZLE4(swizzles[0], swizzles[1],
 			      swizzles[2], swizzles[3]);
 
-   if (try_rewrite_rhs_to_dst(ir, dst, src, pre_rhs_inst, last_rhs_inst)) {
+   if (!is_explicit_write && try_rewrite_rhs_to_dst(ir, dst, src, pre_rhs_inst, last_rhs_inst)) {
       return;
    }
 
@@ -2495,9 +2504,8 @@ vec4_visitor::visit(ir_assignment *ir)
       emit_bool_to_cond_code(ir->condition, &predicate);
    }
 
-   ir_variable *var = ir->lhs->variable_referenced();
-   if (stage == MESA_SHADER_TESS_CTRL && var->data.mode == ir_var_shader_out) {
-      emit_urb_write_to_patch_record(ir->lhs, src);
+   if (is_explicit_write) {
+      emit_urb_write_to_patch_record(ir->lhs, src, ir->write_mask);
       return;
    }
 
