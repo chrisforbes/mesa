@@ -2062,11 +2062,18 @@ vec4_visitor::emit_urb_read_from_vertices(ir_dereference_array *ir)
    temp.writemask = WRITEMASK_XYZW;
    emit(VEC4_OPCODE_URB_READ, temp, src_reg(header));
 
+   /* Apply workaround swizzles: gl_PointSize is stored in the .w component by the VS.
+    * The other channels contain various flags. */
+   src_reg temp_src(temp);
+   if (var->data.location == VARYING_SLOT_PSIZ) {
+      temp_src.swizzle = SWIZZLE_WWWW;
+   }
+
    /* Copy to target. We might end up with some funky writemasks landing in here,
     * but we really don't want them in the above psuedo-ops.
     */
    this->result = src_reg(this, ir->type);
-   emit(MOV(dst_reg(this->result), src_reg(temp)));
+   emit(MOV(dst_reg(this->result), src_reg(temp_src)));
 }
 
 
