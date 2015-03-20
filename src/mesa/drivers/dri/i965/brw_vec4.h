@@ -305,7 +305,7 @@ public:
 
    void emit_urb_read_from_vertices(ir_dereference_array *ir);
    void emit_urb_read_from_patch_record(ir_dereference *ir);
-   void emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data);
+   void emit_urb_write_to_patch_record(ir_dereference *ir, src_reg data, unsigned write_mask);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments
@@ -490,7 +490,7 @@ private:
    void generate_hs_input_release(vec4_instruction *inst,
                                   struct brw_reg dst, struct brw_reg vertex, struct brw_reg is_unpaired);
    void generate_hs_urb_offsets(struct brw_reg dst, struct brw_reg vertex, struct brw_reg offset);
-   void generate_hs_output_urb_offsets(struct brw_reg dst, struct brw_reg offset);
+   void generate_hs_output_urb_offsets(struct brw_reg dst, struct brw_reg offset, struct brw_reg write_mask);
    void generate_ds_urb_offsets(struct brw_reg dst, struct brw_reg offset);
 
    void generate_ds_get_tess_coord(struct brw_reg dst);
