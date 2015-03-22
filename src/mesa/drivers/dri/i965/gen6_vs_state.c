@@ -61,13 +61,17 @@ gen6_upload_push_constants(struct brw_context *brw,
    printf("gen6_upload_push_constants prog=%p stage=(%d)%p nr_params=%d\n", prog, stage_state->stage, stage_state, prog_data->nr_params);
 
    if (prog_data->nr_params == 0) {
-      if (stage_state == &brw->hs.base)
-         stage_state->push_const_size = 16;  /* 4 */
-      else
+      if (stage_state == &brw->hs.base) {
+         stage_state->push_const_size = 2;//16;  /* 4 */
+         gl_constant_value *param = brw_state_batch(brw, type,
+                                 16 * sizeof(gl_constant_value),
+                                 32, &stage_state->push_const_offset);
+      }
+      else {
          stage_state->push_const_size = 0;
+         stage_state->push_const_offset = 0;
+      }
 
-      stage_state->push_const_offset = 0;
-      fprintf(stderr, "nope\n");
    } else {
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.
