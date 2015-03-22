@@ -396,7 +396,7 @@ gen7_upload_urb(struct brw_context *brw)
    brw->urb.ds_start = push_constant_chunks + vs_chunks + hs_semaphore_chunks + hs_chunks;
    brw->urb.gs_start = push_constant_chunks + vs_chunks + hs_semaphore_chunks + hs_chunks + ds_chunks;
 
-   if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
+//   if (brw->gen == 7 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw,
                        brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start,
