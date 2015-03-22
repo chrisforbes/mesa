@@ -187,6 +187,7 @@ gen7_upload_urb(struct brw_context *brw)
     * skip the rest of the logic.
     */
    if (!(brw->state.dirty.brw & BRW_NEW_CONTEXT) &&
+       !(brw->state.dirty.brw & BRW_NEW_HS_PROG_DATA) &&
        brw->urb.vsize == vs_size &&
        brw->urb.gs_present == gs_present &&
        brw->urb.gsize == gs_size &&
