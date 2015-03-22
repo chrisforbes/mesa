@@ -64,9 +64,6 @@ gen7_allocate_push_constants(struct brw_context *brw)
    unsigned multiplier =
       (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 2 : 1;
 
-   /* HACK*/
-   multiplier = 1;
-
    // XXX: is fragment shader optional? if so: don't allocate constant buffer space for it.
 
    /* BRW_NEW_GEOMETRY_PROGRAM */

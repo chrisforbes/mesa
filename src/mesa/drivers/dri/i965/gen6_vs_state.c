@@ -62,7 +62,7 @@ gen6_upload_push_constants(struct brw_context *brw,
 
    if (prog_data->nr_params == 0) {
       if (stage_state == &brw->hs.base) {
-         stage_state->push_const_size = 2;//16;  /* 4 */
+         stage_state->push_const_size = 1;//16;  /* 4 */
          gl_constant_value *param = brw_state_batch(brw, type,
                                  16 * sizeof(gl_constant_value),
                                  32, &stage_state->push_const_offset);
