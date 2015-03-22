@@ -154,7 +154,7 @@ const struct brw_tracked_state gen7_push_constant_space = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT |
-         BRW_NEW_BATCH |
+//         BRW_NEW_BATCH |
              BRW_NEW_GEOMETRY_PROGRAM |
              BRW_NEW_TESS_CTRL_PROGRAM |
              BRW_NEW_TESS_EVAL_PROGRAM,
@@ -455,6 +455,8 @@ const struct brw_tracked_state gen7_urb = {
       .brw = BRW_NEW_CONTEXT |
              BRW_NEW_DS_PROG_DATA |
              BRW_NEW_GEOMETRY_PROGRAM |
+             BRW_NEW_TESS_CTRL_PROGRAM |
+             BRW_NEW_TESS_EVAL_PROGRAM |
              BRW_NEW_GS_PROG_DATA |
              BRW_NEW_HS_PROG_DATA |
              BRW_NEW_VS_PROG_DATA,
