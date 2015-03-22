@@ -141,7 +141,7 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
     *
     * No such restriction exists for Haswell or Baytrail.
     */
-   if (brw->gen < 8 && !brw->is_haswell && !brw->is_baytrail)
+//   if (brw->gen < 8 && !brw->is_haswell && !brw->is_baytrail)
       gen7_emit_cs_stall_flush(brw);
 
    printf("gen7_emit_push_constant_state\n");
