@@ -59,7 +59,11 @@ gen6_upload_push_constants(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
 
    if (prog_data->nr_params == 0) {
-      stage_state->push_const_size = 0;
+      if (stage_state == &brw->hs.base)
+         stage_state->push_const_size = 4;
+      else
+         stage_state->push_const_size = 0;
+      fprintf(stderr, "nope\n");
    } else {
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.
