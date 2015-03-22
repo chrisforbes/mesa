@@ -90,7 +90,7 @@ gen6_upload_push_constants(struct brw_context *brw,
          param[i] = *prog_data->param[i];
       }
 
-      if (0) {
+      if (1) {
 	 fprintf(stderr, "%s constants:\n",
                  _mesa_shader_stage_to_string(stage_state->stage));
 	 for (i = 0; i < prog_data->nr_params; i++) {
