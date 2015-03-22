@@ -630,6 +630,7 @@ gen7_emit_cs_stall_flush(struct brw_context *brw)
 {
    brw_emit_pipe_control_write(brw,
                                PIPE_CONTROL_CS_STALL
+                               | PIPE_CONTROL_TLB_INVALIDATE
                                | PIPE_CONTROL_WRITE_IMMEDIATE,
                                brw->batch.workaround_bo, 0,
                                0, 0);
