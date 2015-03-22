@@ -714,6 +714,7 @@ intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
          }
 
          flags |= PIPE_CONTROL_INSTRUCTION_INVALIDATE |
+                  PIPE_CONTROL_TLB_INVALIDATE |
                   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
                   PIPE_CONTROL_VF_CACHE_INVALIDATE |
                   PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
