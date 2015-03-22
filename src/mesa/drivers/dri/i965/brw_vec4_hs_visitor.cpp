@@ -149,7 +149,7 @@ vec4_hs_visitor::emit_thread_end()
    }
 
    /* Release input vertices */
-
+/*
    if (num_instances > 2) {
       this->current_annotation = "check if last thread to complete";
       dst_reg val = dst_reg(this, glsl_type::uint_type);
@@ -159,7 +159,7 @@ vec4_hs_visitor::emit_thread_end()
                BRW_CONDITIONAL_EQ));
       emit(IF(BRW_PREDICATE_NORMAL));
    }
-
+*/
    unsigned input_vertices = ((brw_hs_prog_key *)key)->input_vertices;
 
    this->current_annotation = "release input vertices";
@@ -169,14 +169,14 @@ vec4_hs_visitor::emit_thread_end()
       bool is_unpaired = (i == input_vertices - 1) && (input_vertices & 1);
       emit(HS_OPCODE_INPUT_RELEASE, r, src_reg(i), src_reg((unsigned)is_unpaired));
    }
-
+/*
    if (num_instances > 2) {
       /* re-zero the URB semaphore */
-      this->current_annotation = "reset urb semaphore";
+/*      this->current_annotation = "reset urb semaphore";
       dst_reg scratch = dst_reg(this, glsl_type::uint_type);
       emit(HS_OPCODE_URB_SEMAPHORE_RESET, scratch);
       emit(BRW_OPCODE_ENDIF);
-   }
+   }*/
 
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->mlen = 1;   /* just the header, no data. */
