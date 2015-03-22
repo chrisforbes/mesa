@@ -405,11 +405,11 @@ gen7_upload_urb(struct brw_context *brw)
                        brw->urb.nr_gs_entries, gs_size, brw->urb.gs_start);
 
    /* Force the semaphore area to zero. */
-   BEGIN_BATCH(2);
+/*   BEGIN_BATCH(2);
    OUT_BATCH(GEN7_MI_URB_CLEAR | (2 - 2));
    OUT_BATCH(((brw->urb.hs_semaphores_start * 256) << GEN7_MI_URB_CLEAR_OFFSET_SHIFT) |
              ((hs_semaphore_chunks * 256) << GEN7_MI_URB_CLEAR_LENGTH_SHIFT));
-   ADVANCE_BATCH();
+   ADVANCE_BATCH();  */
 }
 
 void

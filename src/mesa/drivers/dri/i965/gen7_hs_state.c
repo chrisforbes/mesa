@@ -115,7 +115,7 @@ upload_hs_state(struct brw_context *brw)
           GEN7_HS_DISPATCH_START_GRF_SHIFT);
 
       /* semaphore URB handle */
-      uint32_t dw6 = brw->urb.hs_semaphores_start * 128;
+      uint32_t dw6 =0;// brw->urb.hs_semaphores_start * 128;
 
       OUT_BATCH(dw5);
       OUT_BATCH(dw6);
