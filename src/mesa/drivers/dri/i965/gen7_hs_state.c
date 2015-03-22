@@ -66,7 +66,7 @@ upload_hs_state(struct brw_context *brw)
    /* BRW_NEW_HS_PROG_DATA */
    const struct brw_vue_prog_data *prog_data = &brw->hs.prog_data->base;
 
-   if (!brw->is_haswell && brw->gt == 2 && brw->hs.enabled != active)
+//   if (!brw->is_haswell && brw->gt == 2 && brw->hs.enabled != active)
       gen7_emit_cs_stall_flush(brw);
 
    if (active) {
