@@ -58,6 +58,8 @@ gen6_upload_push_constants(struct brw_context *brw,
 {
    struct gl_context *ctx = &brw->ctx;
 
+   printf("gen6_upload_push_constants prog=%p stage=%p nr_params=%d\n", prog, stage_state, prog_data->nr_params);
+
    if (prog_data->nr_params == 0) {
       if (stage_state == &brw->hs.base)
          stage_state->push_const_size = 4;
