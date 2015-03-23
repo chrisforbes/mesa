@@ -75,7 +75,8 @@ gen6_upload_push_constants(struct brw_context *brw,
    } else {
 
       /* hack: never do push consts for HS */
-      if (stage_state->stage == MESA_SHADER_TESS_CTRL) {
+      if (stage_state->stage == MESA_SHADER_TESS_CTRL || stage_state->stage == MESA_SHADER_TESS_EVAL) {
+         printf("skipping push constants for stage %d\n", stage_state->stage);
          stage_state->push_const_size = 0;
          stage_state->push_const_offset = 0;
          return;
