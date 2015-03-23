@@ -73,17 +73,17 @@ gen7_allocate_push_constants(struct brw_context *brw)
    if (gs_present)
       stages += 1;
    bool ts_present = brw->tess_eval_program;
-//   if (ts_present) {
-//      assert(brw->tess_ctrl_program);
-//      stages += 2;
-//   }
+   if (ts_present) {
+      assert(brw->tess_ctrl_program);
+      stages += 2;
+   }
 
    unsigned vs_size, hs_size = 0, ds_size = 0, gs_size = 0;
    avail_size -= (vs_size = avail_size / stages--);
-//   if (ts_present) {
-//      avail_size -= (hs_size = avail_size / stages--);
-//      avail_size -= (ds_size = avail_size / stages--);
-//   }
+   if (ts_present) {
+      avail_size -= (hs_size = avail_size / stages--);
+      avail_size -= (ds_size = avail_size / stages--);
+   }
    if (gs_present)
       avail_size -= (gs_size = avail_size / stages--);
    unsigned fs_size = avail_size;
