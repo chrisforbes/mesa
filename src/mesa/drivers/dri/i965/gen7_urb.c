@@ -122,6 +122,8 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
    OUT_BATCH(hs_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    offset += hs_size;
 
+   printf("3DSTATE_PUSH_CONSTANT_ALLOC_HS\n");
+
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_DS << 16 | (2 - 2));
    OUT_BATCH(ds_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    offset += ds_size;

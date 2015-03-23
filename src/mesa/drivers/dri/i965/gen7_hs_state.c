@@ -46,6 +46,7 @@ gen7_upload_hs_push_constants(struct brw_context *brw)
       gen7_emit_cs_stall_flush(brw);
 
    gen7_upload_constant_state(brw, stage_state, hp, _3DSTATE_CONSTANT_HS);
+   printf("3DSTATE_CONSTANT_HS\n");
 
       gen7_emit_cs_stall_flush(brw);
 }

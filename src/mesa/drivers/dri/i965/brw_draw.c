@@ -284,6 +284,8 @@ static void brw_emit_prim(struct brw_context *brw,
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
+   printf("3DPRIMITIVE\n");
+
    if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
    }
