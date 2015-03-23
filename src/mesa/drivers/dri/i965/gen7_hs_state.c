@@ -75,6 +75,7 @@ upload_hs_state(struct brw_context *brw)
 
 //   if (!brw->is_haswell && brw->gt == 2 && brw->hs.enabled != active)
       gen7_emit_cs_stall_flush(brw);
+      brw_emit_pipe_control_flush(brw, PIPE_CONTROL_STATE_CACHE_INVALIDATE | (1<<7)); /* = HDC?, wait for flushes */
 
    if (active) {
       BEGIN_BATCH(7);
