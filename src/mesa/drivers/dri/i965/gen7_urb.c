@@ -277,8 +277,7 @@ gen7_upload_urb(struct brw_context *brw)
 
 
    if (ts_present) {
-      //hs_semaphore_chunks = 1;
-      hs_semaphore_chunks = 0;      // NEVER
+      hs_semaphore_chunks = 1;
       // XXX: what's the minimal hs/ds entry size?
       // would needed to be changed below, too
 

@@ -84,11 +84,14 @@ upload_hs_state(struct brw_context *brw)
       /* A URB_FENCE command must be issued subsequent to any change to the value in this field and
          before any subsequent pipeline processing (e.g., via 3DPRIMITIVE or CONSTANT_BUFFER). See
          Graphics Processing Engine (Command Ordering Rules).*/
-      //brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
-      OUT_BATCH(((ALIGN(stage_state->sampler_count, 4)/4) <<
-                 GEN7_HS_SAMPLER_COUNT_SHIFT) |
-                ((brw->hs.prog_data->base.base.binding_table.size_bytes / 4) <<
-                 GEN7_HS_BINDING_TABLE_ENTRY_COUNT_SHIFT) |
+
+
+
+      OUT_BATCH(
+//            ((ALIGN(stage_state->sampler_count, 4)/4) <<
+  //               GEN7_HS_SAMPLER_COUNT_SHIFT) |
+    //            ((brw->hs.prog_data->base.base.binding_table.size_bytes / 4) <<
+      //           GEN7_HS_BINDING_TABLE_ENTRY_COUNT_SHIFT) |
                 ((brw->max_hs_threads - 1) << GEN7_HS_MAX_THREADS_SHIFT));
       // We operate in simd4x2
       const int num_instances = (brw->hs.prog_data->instances + 1) / 2;
@@ -117,7 +120,7 @@ upload_hs_state(struct brw_context *brw)
           GEN7_HS_DISPATCH_START_GRF_SHIFT);
 
       /* semaphore URB handle */
-      uint32_t dw6 =0;// brw->urb.hs_semaphores_start * 128;
+      uint32_t dw6 = brw->urb.hs_semaphores_start * 128;
 
       OUT_BATCH(dw5);
       OUT_BATCH(dw6);
