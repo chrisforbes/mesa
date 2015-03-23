@@ -73,6 +73,14 @@ gen6_upload_push_constants(struct brw_context *brw,
       }
 
    } else {
+
+      /* hack: never do push consts for HS */
+      if (stage_state->stage == MESA_SHADER_TESS_CTRL) {
+         stage_state->push_const_size = 0;
+         stage_state->push_const_offset = 0;
+         return;
+      }
+
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.
        */
