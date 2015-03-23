@@ -141,7 +141,7 @@ upload_gs_state(struct brw_context *brw)
       OUT_BATCH(0); /* scratch space base offset */
       OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
                 (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-                GEN7_GS_INCLUDE_VERTEX_HANDLES |
+   //             GEN7_GS_INCLUDE_VERTEX_HANDLES |
                 (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
       OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
                 GEN6_GS_STATISTICS_ENABLE);

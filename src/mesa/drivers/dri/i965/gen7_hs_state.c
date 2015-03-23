@@ -97,7 +97,7 @@ upload_hs_state(struct brw_context *brw)
        * includes scratch memory availability.
        */
       OUT_BATCH(GEN7_HS_ENABLE |
-                GEN7_HS_STATISTICS_ENABLE |
+//                GEN7_HS_STATISTICS_ENABLE |
                 ((num_instances - 1) <<
                  GEN7_HS_INSTANCE_CONTROL_SHIFT));
       OUT_BATCH(stage_state->prog_offset);
@@ -126,7 +126,7 @@ upload_hs_state(struct brw_context *brw)
       OUT_BATCH((0 << GEN7_HS_SAMPLER_COUNT_SHIFT) |
                 (0 << GEN7_HS_BINDING_TABLE_ENTRY_COUNT_SHIFT) |
                 (0 << GEN7_HS_MAX_THREADS_SHIFT));
-      OUT_BATCH(GEN7_HS_STATISTICS_ENABLE);
+      OUT_BATCH(0);//GEN7_HS_STATISTICS_ENABLE);
       OUT_BATCH(0); /* prog_bo */
       OUT_BATCH(0); /* scratch space base offset */
       OUT_BATCH((1 << GEN7_HS_DISPATCH_START_GRF_SHIFT) |
