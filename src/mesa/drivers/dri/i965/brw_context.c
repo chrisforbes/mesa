@@ -735,6 +735,8 @@ brwCreateContext(gl_api api,
    brw->has_swizzling = screen->hw_has_swizzling;
 
    brw->vs.base.stage = MESA_SHADER_VERTEX;
+   brw->hs.base.stage = MESA_SHADER_TESS_CTRL;
+   brw->ds.base.stage = MESA_SHADER_TESS_EVAL;
    brw->gs.base.stage = MESA_SHADER_GEOMETRY;
    brw->wm.base.stage = MESA_SHADER_FRAGMENT;
    if (brw->gen >= 8) {
