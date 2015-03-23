@@ -113,6 +113,14 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
 {
    unsigned offset = 0;
 
+   if (brw->is_haswell && brw->gt == 3) {
+      assert(!(vs_size & 1));
+      assert(!(hs_size & 1));
+      assert(!(ds_size & 1));
+      assert(!(gs_size & 1));
+      assert(!(fs_size & 1));
+   }
+
    BEGIN_BATCH(10);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
    OUT_BATCH(vs_size | offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
