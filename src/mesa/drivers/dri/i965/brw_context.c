@@ -538,6 +538,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.MaxProgramTextureGatherComponents = 1;
 
    ctx->Const.MaxUniformBlockSize = 65536;
+   ctx->Const.SubPixelBits = 8;
 
    for (int i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_program_constants *prog = &ctx->Const.Program[i];
